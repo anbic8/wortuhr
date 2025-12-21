@@ -42,7 +42,7 @@ void setup() {
   // Initialize Serial Monitor
   Serial.begin(115200);
   
-  EEPROM.begin(sizeof(struct settings)+sizeof(struct MyColor)+sizeof(struct design)+sizeof(geburtstage) );
+  EEPROM.begin(sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) );
   EEPROM.get( 0, user_connect );
   
   
@@ -105,7 +105,7 @@ for (int i=0; i<4; i++) {
 Serial.println();
 
 
-    EEPROM.get(sizeof(struct settings) + sizeof(struct MyColor), user_design );
+    EEPROM.get(sizeof(settings) + sizeof(MyColor), user_design );
    mqttenable = user_design.mqttenable;
     Serial.print("MQTT ENABLE: ");
     Serial.println(mqttenable);
@@ -144,7 +144,7 @@ Serial.println();
     dimm
   };
 
-  EEPROM.put(sizeof(struct settings)+sizeof(struct MyColor), customDesign);
+  EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
   EEPROM.commit();
     }
 
@@ -190,7 +190,7 @@ neuefarbe();
 
 
 
-  EEPROM.get( sizeof(struct settings) + sizeof(struct MyColor)+ sizeof(design) , geburtstage );
+  EEPROM.get( sizeof(settings) + sizeof(MyColor)+ sizeof(design) , geburtstage );
 }
 
 void loop() {

@@ -21,7 +21,7 @@ void handlebirthday() {
             }
         }
 
-        EEPROM.put(sizeof(struct settings)+sizeof(struct MyColor)+sizeof(struct design), geburtstage);
+        EEPROM.put(sizeof(settings)+sizeof(MyColor)+sizeof(design), geburtstage);
   EEPROM.commit();
         EEPROM.commit();
         String body="<h2>Die Tage wurden gespeichert!</h2></div></body></html>";

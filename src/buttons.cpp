@@ -86,7 +86,7 @@ void bt2click(){
     dimm
   };
 
-  EEPROM.put(sizeof(struct settings)+sizeof(struct MyColor), customDesign);
+  EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
   EEPROM.commit();
   }
 

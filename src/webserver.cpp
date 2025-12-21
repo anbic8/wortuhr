@@ -55,7 +55,7 @@ void handleWifi() {
   // Checkbox prüfen (nur vorhanden, wenn angehakt)
   user_design.mqttenable = server.hasArg("mqttenable") ? true : false;
 
-  EEPROM.put(sizeof(struct settings)+sizeof(struct MyColor), user_design);
+  EEPROM.put(sizeof(settings)+sizeof(MyColor), user_design);
   EEPROM.commit();
 
 
@@ -106,7 +106,7 @@ void handledesignPath() {
     mqttenable
   };
 
-  EEPROM.put(sizeof(struct settings)+sizeof(struct MyColor), customDesign);
+  EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
   EEPROM.commit();
     String htmlContent;
 
@@ -374,7 +374,7 @@ void handlecolorPath() {
     server.arg("anitime").toInt(),
     server.arg("anidepth").toInt()
   };
-  EEPROM.put(sizeof(struct settings), customVar);
+  EEPROM.put(sizeof(settings), customVar);
   EEPROM.commit();
   readTime();
   //readTimeRCT();

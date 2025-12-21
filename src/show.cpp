@@ -96,7 +96,7 @@ void showClock(){
   }else{
 
   if(gebstat==1){
-    EEPROM.get(sizeof(struct settings), user_color );
+    EEPROM.get(sizeof(settings), user_color );
     vordergrundschema = user_color.vs;
     gebstat=0;
   }

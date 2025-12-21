@@ -58,7 +58,7 @@ void hintergrunderstellen(int farbe1[3], int farbe2[3]){
 
 void neuefarbe(){
 
- EEPROM.get(sizeof(struct settings), user_color );
+ EEPROM.get(sizeof(settings), user_color );
   
   if(user_color.vf1>-1){
   v1 = user_color.vf1;
@@ -111,7 +111,7 @@ void savecolor(){
     anitimeint,
     anidepth
   };
-  EEPROM.put(sizeof(struct settings), customVar);
+  EEPROM.put(sizeof(settings), customVar);
   EEPROM.commit();
 }
 
