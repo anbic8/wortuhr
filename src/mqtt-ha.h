@@ -1,13 +1,13 @@
-void publishOnOffConfig();
-void publishEffectConfig();
-void publishAnimationConfig();
+bool publishOnOffConfig();
+bool publishEffectConfig();
+bool publishAnimationConfig();
 
-void publishV1LightConfig();
-void publishV2LightConfig();
-void publishH1LightConfig();
-void publishH2LightConfig();
-void publishVsConfig();
-void publishHsConfig();
-void publishEfxTimeConfig();
-void publishAniTimeConfig();
-void publishAniDepthConfig();
+bool publishV1LightConfig();
+bool publishV2LightConfig();
+bool publishH1LightConfig();
+bool publishH2LightConfig();
+bool publishVsConfig();
+bool publishHsConfig();
+bool publishEfxTimeConfig();
+bool publishAniTimeConfig();
+bool publishAniDepthConfig();

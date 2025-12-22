@@ -1,10 +1,35 @@
 #include "mqtt-ha.h"
-#include <PubSubClient.h>
 #include "globals.h"
+#include "mqtt.h"
+#include <PubSubClient.h>
 #include <ArduinoJson.h>
 
+// Helper: publish with debug about sizes and connection
+static bool pubWithCheck(const char* topic, const char* payload, bool retain=true) {
+  size_t len = strlen(payload);
+  Serial.printf("Publish -> %s len=%u, MQTT_MAX_PACKET_SIZE=%d\n", topic, (unsigned)len, MQTT_MAX_PACKET_SIZE);
+  // ensure client is still connected
+  if (!client.connected()) {
+    Serial.printf("Publish FAILED for %s (connected=0 before publish, client.state()=%d) - skipping publish\n", topic, client.state());
+    return false;
+  }
+
+  bool ok = client.publish(topic, payload, retain);
+  if (!ok) {
+    // single retry after yielding to network
+    Serial.printf("Publish attempt failed for %s, retrying after client.loop()\n", topic);
+    client.loop();
+    delay(200);
+    ok = client.publish(topic, payload, retain);
+  }
+  if (!ok) {
+    Serial.printf("Publish FAILED for %s (connected=%d, client.state()=%d)\n", topic, client.connected(), client.state());
+  }
+  return ok;
+}
+
 // --- Funktion, die Home Assistant per Discovery konfiguriert ---
-void publishOnOffConfig() {
+bool publishOnOffConfig() {
     StaticJsonDocument<512> cfg;
   cfg["name"]          = "Wortuhr Power";
   cfg["unique_id"]     = "wortuhr_power";
@@ -30,11 +55,12 @@ JsonObject dev = cfg.createNestedObject("device");
   Serial.println(buf);
 
   // Publish und Ergebnis
-  bool ok = client.publish("homeassistant/switch/wortuhr_power/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/switch/wortuhr_power/config", buf, false);
   Serial.printf("Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  return ok;
 }
 
-void publishEffectConfig() {
+bool publishEffectConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Übergangseffekt";
   cfg["unique_id"]    = "wortuhr_efx";
@@ -69,10 +95,11 @@ void publishEffectConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_efx/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_efx/config", buf, false);
   Serial.printf("Effect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishAnimationConfig() {
+bool publishAnimationConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationseffekt";
   cfg["unique_id"]    = "wortuhr_ani";
@@ -104,11 +131,12 @@ void publishAnimationConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_ani/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_ani/config", buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
 
-void publishV1LightConfig() {
+bool publishV1LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Vordergrundfarbe 1";
   cfg["unique_id"]     = "wortuhr_v1";
@@ -134,11 +162,12 @@ void publishV1LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = client.publish("homeassistant/light/wortuhr_v1/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/light/wortuhr_v1/config", buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
 
-void publishV2LightConfig() {
+bool publishV2LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Vordergrundfarbe 2";
   cfg["unique_id"]     = "wortuhr_v2";
@@ -164,11 +193,12 @@ void publishV2LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = client.publish("homeassistant/light/wortuhr_v2/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/light/wortuhr_v2/config", buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
 
-void publishH1LightConfig() {
+bool publishH1LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Hintergrundfarbe 1";
   cfg["unique_id"]     = "wortuhr_h1";
@@ -194,10 +224,11 @@ void publishH1LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = client.publish("homeassistant/light/wortuhr_h1/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/light/wortuhr_h1/config", buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishH2LightConfig() {
+bool publishH2LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Hintergrundfarbe 2";
   cfg["unique_id"]     = "wortuhr_h2";
@@ -223,10 +254,11 @@ void publishH2LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = client.publish("homeassistant/light/wortuhr_h2/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/light/wortuhr_h2/config", buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishVsConfig() {
+bool publishVsConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Vordergrundfarbschema";
   cfg["unique_id"]    = "wortuhr_vs";
@@ -258,10 +290,11 @@ void publishVsConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_vs/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_vs/config", buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishHsConfig() {
+bool publishHsConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Hintergrundfarbschema";
   cfg["unique_id"]    = "wortuhr_hs";
@@ -293,10 +326,11 @@ void publishHsConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_hs/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_hs/config", buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishEfxTimeConfig() {
+bool publishEfxTimeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Übergangsgeschwindigkeit";
   cfg["unique_id"]    = "wortuhr_efxtime";
@@ -325,10 +359,11 @@ void publishEfxTimeConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_efxtime/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_efxtime/config", buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishAniTimeConfig() {
+bool publishAniTimeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationsgeschwindigkeit";
   cfg["unique_id"]    = "wortuhr_anitime";
@@ -357,10 +392,11 @@ void publishAniTimeConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_anitime/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_anitime/config", buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }
-void publishAniDepthConfig() {
+bool publishAniDepthConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationsstärke";
   cfg["unique_id"]    = "wortuhr_anidepth";
@@ -389,6 +425,7 @@ void publishAniDepthConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = client.publish("homeassistant/select/wortuhr_anidepth/config", buf, true);
+  bool ok = pubWithCheck("homeassistant/select/wortuhr_anidepth/config", buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
 }

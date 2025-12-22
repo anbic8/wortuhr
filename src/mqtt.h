@@ -3,6 +3,7 @@
 
 void connectToMQTT();
 void publishAll();
+void forceMqttReconnect();
 
 
 void publishEffectState();

@@ -1,54 +1,79 @@
 #include "mqtt.h"
 #include "mqtt-callback.h"
 #include "mqtt-ha.h"
-#include <PubSubClient.h>
 #include "globals.h"
+#include <PubSubClient.h>
+
+// Non-blocking connect: try once every mqttRetryMs
+static unsigned long lastMqttAttempt = 0;
+// Backoff between connect attempts (in ms). Increased to reduce reconnect storms.
+static unsigned long mqttRetryMs = 15000;
+
+static void mqttOnConnected() {
+  client.subscribe(topicOnCmd);
+  client.subscribe(topicEfxCmd);
+  client.subscribe(topicAniCmd);
+  client.subscribe(topicV1Cmd);
+  client.subscribe(topicV2Cmd);
+  client.subscribe(topicH1Cmd);
+  client.subscribe(topicH2Cmd);
+  client.subscribe(topicVsCmd);
+  client.subscribe(topicHsCmd);
+  client.subscribe(topicEfxTimeCmd);
+  client.subscribe(topicAniTimeCmd);
+  client.subscribe(topicAniDepthCmd);
+  // small settle time after connect
+  delay(200);
+  client.loop();
+  // Only run discovery publishes when needed (e.g., after firmware update)
+  if (discoveryNeeded) {
+    const int pauseMs = 500; // pause between publishes (increased to reduce broker/TCP pressure)
+    bool ok = true;
+    ok = publishOnOffConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishEffectConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishV1LightConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishV2LightConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishAnimationConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishH1LightConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishH2LightConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishVsConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishHsConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishEfxTimeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishAniTimeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishAniDepthConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    // if all OK, store firmware version so discovery runs only after updates
+    if (ok) {
+      discoveryNeeded = false;
+      saveFirmwareVersion();
+    }
+  }
+  // initial states
+  publishAll();
+}
 
 void connectToMQTT() {
-  while (!client.connected()) {
-    Serial.println("Verbinde mit MQTT...");
-    if (client.connect("WortuhrClient", user_connect.mqtt_user, user_connect.mqtt_password)) {
+  if (client.connected()) return;
+  if (millis() - lastMqttAttempt < mqttRetryMs) return;
+  lastMqttAttempt = millis();
+  Serial.println("Versuche MQTT-Verbindung...");
+  // build a unique client id using device id + chip id to avoid collisions
+  char clientId[48];
+  snprintf(clientId, sizeof(clientId), "%s_%lu", DEVICE_ID, ESP.getChipId());
+  Serial.print("Using MQTT clientId: "); Serial.println(clientId);
+
+  if (client.connect(clientId, user_connect.mqtt_user, user_connect.mqtt_password)) {
+    // give library a moment to settle and ensure still connected
+    delay(100);
+    client.loop();
+    if (client.connected()) {
       Serial.println("MQTT verbunden!");
-
-
-      client.subscribe(topicOnCmd);
-      client.subscribe(topicEfxCmd);
-      client.subscribe(topicAniCmd);
-      client.subscribe(topicV1Cmd);
-      client.subscribe(topicV2Cmd);
-      client.subscribe(topicH1Cmd);
-      client.subscribe(topicH2Cmd);
-      client.subscribe(topicVsCmd);
-      client.subscribe(topicHsCmd);
-      client.subscribe(topicEfxTimeCmd);
-      client.subscribe(topicAniTimeCmd);
-      client.subscribe(topicAniDepthCmd);
-  // … subscribe für alle Topics …
-  
-  publishOnOffConfig();
-  publishEffectConfig();
-  publishV1LightConfig();
-  publishV2LightConfig();
-  publishAnimationConfig();
-  publishH1LightConfig();
-  publishH2LightConfig();
-  publishVsConfig();
-  publishHsConfig();
-  publishEfxTimeConfig();
-  publishAniTimeConfig();
-  publishAniDepthConfig();
-  publishOnOffConfig();
-  // … publish Config für alle weiteren Entitäten …
-  // initiale States senden:
-    publishAll();
-  // … und so weiter …
-      
+      mqttOnConnected();
     } else {
-      Serial.print("Fehler, rc=");
-      Serial.println(client.state());
-      Serial.println("Erneuter Versuch in 5 Sekunden...");
-      delay(5000);
+      Serial.print("Verbunden, aber sofort getrennt, state="); Serial.println(client.state());
     }
+  } else {
+    Serial.print("Fehler, rc=");
+    Serial.println(client.state());
   }
 }
 
@@ -200,4 +225,14 @@ void publishAniDepthState() {
   uint8_t idx = constrain(anidepth, 0, 3);
   const char* opt = effectdepthOptions[idx];
   client.publish(topicAniDepthState, opt, true);
+}
+
+// Force an immediate reconnect attempt: disconnect and reset timer
+void forceMqttReconnect() {
+  Serial.println("Forcing MQTT reconnect...");
+  if (client.connected()) {
+    client.disconnect();
+  }
+  // set last attempt to now so connectToMQTT will wait mqttRetryMs before next attempt
+  lastMqttAttempt = millis();
 }

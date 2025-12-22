@@ -103,6 +103,11 @@ const char *password = "123456789";
 
 settings user_connect = {};
 
+// Whether Home Assistant discovery publish should run on next MQTT connect
+bool discoveryNeeded = true;
+// Home Assistant discovery enabled (persisted in EEPROM)
+bool haDiscoveryEnabled = true;
+
 /* Globals */
 time_t now;                         // this are the seconds since Epoch (1970) - UTC
 struct tm tm;                              // the structure tm holds time information in a more convenient way

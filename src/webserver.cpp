@@ -54,9 +54,24 @@ void handleWifi() {
 
   // Checkbox prüfen (nur vorhanden, wenn angehakt)
   user_design.mqttenable = server.hasArg("mqttenable") ? true : false;
+  
+  // Home Assistant discovery flag (optional checkbox)
+  bool ha_flag = server.hasArg("ha_enable") ? (server.arg("ha_enable")=="1") : false;
+  haDiscoveryEnabled = ha_flag;
 
   EEPROM.put(sizeof(settings)+sizeof(MyColor), user_design);
+
+  // persist design + commit
   EEPROM.commit();
+
+  // persist HA flag (single byte after version slot)
+  int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+  int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1;
+  int haFlagOffset = verOffset + VERSION_STR_MAX;
+  EEPROM.begin(eepromTotalSize);
+  EEPROM.write(haFlagOffset, ha_flag ? 1 : 0);
+  EEPROM.commit();
+  EEPROM.end();
 
 
   String htmlContent;
@@ -79,9 +94,15 @@ void handleWifi() {
     }else {
       mqttenablenr = 0;
     }
+    int haenablenr;
+    if (haDiscoveryEnabled == true) {
+      haenablenr = 1;
+    } else {
+      haenablenr = 0;
+    }
     // Aus Flash lesen und in String schreiben
     htmlContent += FPSTR(htmlhead);
-  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='"+mqttenablenr+"'><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
+  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='"+String(mqttenablenr)+"' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Discovery <input type='checkbox' name='ha_enable' value='"+String(haenablenr)+"' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
 
     server.send(200,   "text/html", htmlContent );
   }
@@ -190,36 +211,15 @@ void handledesignPath() {
 void handlecolorPath() {
 
   String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Color Setup</h1><br/>";
-    String vf1form ="<div class='form-floating'><label for='vf1'>Vordergrundfarbe 1</label><select name='vf1' id='vf1'>";
+    // Color pickers: show current palette color as default
+    char buf[8];
+    sprintf(buf, "#%02X%02X%02X", farben[v1][0], farben[v1][1], farben[v1][2]);
+    String vf1_hex = String(buf);
+    sprintf(buf, "#%02X%02X%02X", farben[v2][0], farben[v2][1], farben[v2][2]);
+    String vf2_hex = String(buf);
 
-    String myauswahl1 = " ";
-
-      for(int i=0;i<anzahlfarben;i++){
-      if(i==v1){
-        myauswahl1 ="selected";
-      }else{
-        myauswahl1 = " ";
-      }
-      vf1form=vf1form+"<option value="+i+" "+myauswahl1+">"+htmlfarben[i]+"</option>";
-    };
-
-    vf1form = vf1form + "</select> </div>";
-
-
-   String vf2form = "<div class='form-floating'><label for='vf2'>Vordergrundfarbe 2</label><select name='vf2' id='vf2'>";
-
-  String myauswahl2 = " ";
-
-    for(int i=0;i<anzahlfarben;i++){
-      if(i==v2){
-        myauswahl2 ="selected";
-      }else{
-        myauswahl2 = " ";
-      }
-      vf2form=vf2form+"<option value="+i+" "+myauswahl2+">"+htmlfarben[i]+"</option>";
-    }
-
-    vf2form = vf2form + "</select> </div>";
+    String vf1form = "<div class='form-floating'><label for='vf1_color'>Vordergrundfarbe 1</label><input type='color' id='vf1_color' name='vf1_color' value='"+vf1_hex+"'></div>";
+    String vf2form = "<div class='form-floating'><label for='vf2_color'>Vordergrundfarbe 2</label><input type='color' id='vf2_color' name='vf2_color' value='"+vf2_hex+"'></div>";
 
     String vsform = "<div class='form-floating'><label for='vs'>Vordergrundschema</label><select name='vs' id='vs'>";
 
@@ -236,36 +236,13 @@ void handlecolorPath() {
 
     vsform = vsform + "</select> </div><br>";
 
-    String hf1form ="<div class='form-floating'><label for='hf1'>Hintergrundfarbe 1</label><select name='hf1' id='hf1'>";
+    sprintf(buf, "#%02X%02X%02X", farben[h1][0], farben[h1][1], farben[h1][2]);
+    String hf1_hex = String(buf);
+    sprintf(buf, "#%02X%02X%02X", farben[h2][0], farben[h2][1], farben[h2][2]);
+    String hf2_hex = String(buf);
 
-     myauswahl1 = " ";
-
-      for(int i=0;i<anzahlfarben;i++){
-      if(i==h1){
-        myauswahl1 ="selected";
-      }else{
-        myauswahl1 = " ";
-      }
-      hf1form=hf1form+"<option value="+i+" "+myauswahl1+">"+htmlfarben[i]+"</option>";
-    };
-
-    hf1form = hf1form + "</select> </div>";
-
-
-   String hf2form = "<div class='form-floating'><label for='hf2'>Hintergrundfarbe 2</label><select name='hf2' id='hf2'>";
-
-   myauswahl2 = " ";
-
-    for(int i=0;i<anzahlfarben;i++){
-      if(i==h2){
-        myauswahl2 ="selected";
-      }else{
-        myauswahl2 = " ";
-      }
-      hf2form=hf2form+"<option value="+i+" "+myauswahl2+">"+htmlfarben[i]+"</option>";
-    }
-
-    hf2form = hf2form + "</select> </div>";
+    String hf1form = "<div class='form-floating'><label for='hf1_color'>Hintergrundfarbe 1</label><input type='color' id='hf1_color' name='hf1_color' value='"+hf1_hex+"'></div>";
+    String hf2form = "<div class='form-floating'><label for='hf2_color'>Hintergrundfarbe 2</label><input type='color' id='hf2_color' name='hf2_color' value='"+hf2_hex+"'></div>";
 
     String hsform = "<div class='form-floating'><label for='hs'>Hintergrundschema</label><select name='hs' id='hs'>";
 
@@ -361,26 +338,75 @@ void handlecolorPath() {
 
   if (server.method() == HTTP_POST) {
 
-      MyColor customVar = {
-    server.arg("vf1").toInt(),
-    server.arg("vf2").toInt(),
-    server.arg("vs").toInt(),
-    server.arg("hf1").toInt(),
-    server.arg("hf2").toInt(),
-    server.arg("hs").toInt(),
-    server.arg("efx").toInt(),
-    server.arg("efxtime").toInt(),
-    server.arg("ani").toInt(),
-    server.arg("anitime").toInt(),
-    server.arg("anidepth").toInt()
-  };
-  EEPROM.put(sizeof(settings), customVar);
-  EEPROM.commit();
-  readTime();
-  //readTimeRCT();
-  neuefarbe();
+    // Helper: convert #RRGGBB into nearest palette index
+    auto hexToNearestIndex = [&](const String &hex, int fallback)->int {
+      if (hex.length() == 0) return fallback;
+      String s = hex;
+      if (s.charAt(0) == '#') s = s.substring(1);
+      if (s.length() != 6) return fallback;
+      int r = (int)strtol(s.substring(0,2).c_str(), nullptr, 16);
+      int g = (int)strtol(s.substring(2,4).c_str(), nullptr, 16);
+      int b = (int)strtol(s.substring(4,6).c_str(), nullptr, 16);
+      unsigned long bestDist = 0xFFFFFFFFUL;
+      int bestIdx = fallback;
+      for (int i=0;i<anzahlfarben;i++){
+        long dr = r - farben[i][0];
+        long dg = g - farben[i][1];
+        long db = b - farben[i][2];
+        unsigned long dist = (unsigned long)(dr*dr + dg*dg + db*db);
+        if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+      }
+      return bestIdx;
+    };
+
+    int vf1_idx = v1;
+    if (server.hasArg("vf1_color")) {
+      vf1_idx = hexToNearestIndex(server.arg("vf1_color"), v1);
+    } else if (server.hasArg("vf1")) {
+      vf1_idx = server.arg("vf1").toInt();
+    }
+
+    int vf2_idx = v2;
+    if (server.hasArg("vf2_color")) {
+      vf2_idx = hexToNearestIndex(server.arg("vf2_color"), v2);
+    } else if (server.hasArg("vf2")) {
+      vf2_idx = server.arg("vf2").toInt();
+    }
+
+    int hf1_idx = h1;
+    if (server.hasArg("hf1_color")) {
+      hf1_idx = hexToNearestIndex(server.arg("hf1_color"), h1);
+    } else if (server.hasArg("hf1")) {
+      hf1_idx = server.arg("hf1").toInt();
+    }
+
+    int hf2_idx = h2;
+    if (server.hasArg("hf2_color")) {
+      hf2_idx = hexToNearestIndex(server.arg("hf2_color"), h2);
+    } else if (server.hasArg("hf2")) {
+      hf2_idx = server.arg("hf2").toInt();
+    }
+
+    MyColor customVar = {
+      vf1_idx,
+      vf2_idx,
+      server.arg("vs").toInt(),
+      hf1_idx,
+      hf2_idx,
+      server.arg("hs").toInt(),
+      server.arg("efx").toInt(),
+      server.arg("efxtime").toInt(),
+      server.arg("ani").toInt(),
+      server.arg("anitime").toInt(),
+      server.arg("anidepth").toInt()
+    };
+
+    EEPROM.put(sizeof(settings), customVar);
+    EEPROM.commit();
+    readTime();
+    neuefarbe();
     body = body+"<div><p>Deine Farbeinstellung wurde gespeichert!</p></div>"+"<p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>";
-String htmlContent;
+    String htmlContent;
 
     // Aus Flash lesen und in String schreiben
     htmlContent += FPSTR(htmlhead);
@@ -397,6 +423,35 @@ String htmlContent;
     htmlContent += FPSTR(htmlhead);
     htmlContent += body;
     server.send(200,   "text/html", htmlContent);
+  }
+}
+
+void handleHAConfig() {
+  // Simple page to enable/disable Home Assistant discovery
+  if (server.method() == HTTP_POST) {
+    bool enabled = server.hasArg("ha_enable") && server.arg("ha_enable") == "1";
+    haDiscoveryEnabled = enabled;
+    // persist single byte after version slot
+    int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+    int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1;
+    int haFlagOffset = verOffset + VERSION_STR_MAX;
+    EEPROM.begin(eepromTotalSize);
+    EEPROM.write(haFlagOffset, enabled ? 1 : 0);
+    EEPROM.commit();
+    EEPROM.end();
+    String html = FPSTR(htmlhead);
+    html += "<main class='form-signin'><h1>Home Assistant</h1><p>Einstellung gespeichert. Die Uhr wird neu gestartet.</p></main></body></html>";
+    server.send(200, "text/html", html);
+    delay(1200);
+    ESP.restart();
+  } else {
+    String html = FPSTR(htmlhead);
+    html += "<main class='form-signin'><form action='/ha' method='post'><h1>Home Assistant</h1>";
+    html += "<label>Enable Home Assistant discovery</label> ";
+    html += "<input type='checkbox' name='ha_enable' value='1' ";
+    if (haDiscoveryEnabled) html += "checked";
+    html += "> <br/><button type='submit'>Save</button></form></main></body></html>";
+    server.send(200, "text/html", html);
   }
 }
 

@@ -5,6 +5,9 @@
 #include <NTPClient.h> 
 #include <WiFiUdp.h>
 #include <Adafruit_NeoPixel.h>
+#ifndef MQTT_MAX_PACKET_SIZE
+#define MQTT_MAX_PACKET_SIZE 1024
+#endif
 #include "OneButton.h"
 #include <Arduino.h>
 #ifdef __AVR__
@@ -44,8 +47,11 @@ extern ESP8266WebServer server;
 #define DEVICE_ID       "wortuhr_02"
 #define DEVICE_NAME     "Wortuhr"
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "3.0.3"
+#define FW_VERSION "4.0.3"
 #define CONFIG_URL "http://wortuhr.local"
+
+// Size of firmware version string stored in EEPROM
+#define VERSION_STR_MAX 16
 
 // NTP configuration
 #define MY_NTP_SERVER "at.pool.ntp.org"           
@@ -220,6 +226,10 @@ extern int matrix[11][11];
 extern int matrixanzeige[11][11];
 extern int geburtstage[5][3];
 
+// Whether Home Assistant discovery publish should run on next MQTT connect
+extern bool discoveryNeeded;
+extern bool haDiscoveryEnabled;
+
 // Animation arrays
 extern int t1[11];
 extern int t2[28];
@@ -234,4 +244,7 @@ extern const char htmlinfo[] PROGMEM;
 
 #endif // GLOBALS_H
 extern const char htmlrecht[] PROGMEM;
+
+// Save current firmware version to EEPROM (implementation in main.cpp)
+void saveFirmwareVersion();
 

@@ -11,6 +11,7 @@ void handleInfo();
 void handledatenschutz();
 void handleWifi();
 void handlebirthday();
+void handleHAConfig();
 // void handlesettime();
 void handlecolorPath();
 void handledesignPath();
