@@ -239,37 +239,24 @@ Serial.println();
 //Bayrische Version
 
   Serial.println("Bayrisches Setting wird geladen");
-  for(int i=0;i<12;i++){
-      for(int k=0;k<9;k++){
-        matrixminmap[i][k]=baymatrixminmap[i][k];
-      }
-    };
-    iist = bayiist;
-  for(int i=0;i<12;i++){
-      for(int k=0;k<6;k++){
-        matrixstundenmap[i][k]=baymatrixstundenmap[i][k];
-      }
-    };
+  // Use bayrisch lists at runtime (buildLedMappings will pick bay lists when dbv==1)
+  iist = bayiist;
   nexthour = baynexthour;
   
   };
     //Umschalten auf viertel vor
     if(dvv==1){
-      
-    matrixminmap[9][0] = 2;
-    matrixminmap[9][1] = 4;
-    matrixminmap[9][2] = 10;
-    matrixminmap[9][3] = 3;
-    matrixminmap[9][4] = 0;
-    matrixminmap[9][5] = 2;
+      // dvv (viertel vor) handled by buildLedMappings using alternate static list
     }
  
  
 
   //Wire.begin(5, 13);
  
- startup();
-neuefarbe();
+  // rebuild LED index mappings (after possible bay/viertel substitutions)
+  buildLedMappings();
+  startup();
+  neuefarbe();
 
 
 

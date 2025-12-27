@@ -213,9 +213,12 @@ void handlecolorPath() {
   String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Color Setup</h1><br/>";
     // Color pickers: show current palette color as default
     char buf[8];
-    sprintf(buf, "#%02X%02X%02X", farben[v1][0], farben[v1][1], farben[v1][2]);
+    int tmpc[3];
+    getPaletteColor((uint8_t)v1, tmpc);
+    sprintf(buf, "#%02X%02X%02X", tmpc[0], tmpc[1], tmpc[2]);
     String vf1_hex = String(buf);
-    sprintf(buf, "#%02X%02X%02X", farben[v2][0], farben[v2][1], farben[v2][2]);
+    getPaletteColor((uint8_t)v2, tmpc);
+    sprintf(buf, "#%02X%02X%02X", tmpc[0], tmpc[1], tmpc[2]);
     String vf2_hex = String(buf);
 
     String vf1form = "<div class='form-floating'><label for='vf1_color'>Vordergrundfarbe 1</label><input type='color' id='vf1_color' name='vf1_color' value='"+vf1_hex+"'></div>";
@@ -236,9 +239,11 @@ void handlecolorPath() {
 
     vsform = vsform + "</select> </div><br>";
 
-    sprintf(buf, "#%02X%02X%02X", farben[h1][0], farben[h1][1], farben[h1][2]);
+    getPaletteColor((uint8_t)h1, tmpc);
+    sprintf(buf, "#%02X%02X%02X", tmpc[0], tmpc[1], tmpc[2]);
     String hf1_hex = String(buf);
-    sprintf(buf, "#%02X%02X%02X", farben[h2][0], farben[h2][1], farben[h2][2]);
+    getPaletteColor((uint8_t)h2, tmpc);
+    sprintf(buf, "#%02X%02X%02X", tmpc[0], tmpc[1], tmpc[2]);
     String hf2_hex = String(buf);
 
     String hf1form = "<div class='form-floating'><label for='hf1_color'>Hintergrundfarbe 1</label><input type='color' id='hf1_color' name='hf1_color' value='"+hf1_hex+"'></div>";
@@ -350,9 +355,11 @@ void handlecolorPath() {
       unsigned long bestDist = 0xFFFFFFFFUL;
       int bestIdx = fallback;
       for (int i=0;i<anzahlfarben;i++){
-        long dr = r - farben[i][0];
-        long dg = g - farben[i][1];
-        long db = b - farben[i][2];
+        int rgb[3];
+        getPaletteColor((uint8_t)i, rgb);
+        long dr = r - rgb[0];
+        long dg = g - rgb[1];
+        long db = b - rgb[2];
         unsigned long dist = (unsigned long)(dr*dr + dg*dg + db*db);
         if (dist < bestDist) { bestDist = dist; bestIdx = i; }
       }

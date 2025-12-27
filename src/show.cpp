@@ -190,24 +190,29 @@ void setmatrixanzeige(){
   }
 
   
-  for(int i=matrixminmap[mb][1]; i<matrixminmap[mb][2]+1; i++){
-     matrixanzeige[matrixminmap[mb][0]][i]=1;
-  } // zeige Minuten (Zahl)
-  for(int i=matrixminmap[mb][4]; i<matrixminmap[mb][5]+1; i++){
-     matrixanzeige[matrixminmap[mb][3]][i]=1;
-  } // zeige Minuten (vor nach)
-  for(int i=matrixminmap[mb][7]; i<matrixminmap[mb][8]+1; i++){
-     matrixanzeige[matrixminmap[mb][6]][i]=1;
-  } // zeige Minuten (halb)
+    // Minute words: set matrixanzeige using prebuilt LED index lists
+    for (uint8_t k = 0; k < getWordLedCount(mb, false); ++k) {
+      int led = getWordLed(mb, false, k);
+      if (led >= 0) {
+        int rr = ledRow[led];
+        int cc = ledCol[led];
+        if (rr >= 0 && cc >= 0) matrixanzeige[rr][cc] = 1;
+      }
+    }
 
   if(mb>=nexthour){
     h++;
   } // nächste Stunde ab Halb
   h = h%12; // 12 wird zu 0
 
-  for(int i=matrixstundenmap[h][1]; i<matrixstundenmap[h][2]+1; i++){
-    matrixanzeige[matrixstundenmap[h][0]][i]=1;
-    // zeige Stunden
+  // Hours: use prebuilt LED lists
+  for (uint8_t k = 0; k < getWordLedCount(h, true); ++k) {
+    int led = getWordLed(h, true, k);
+    if (led >= 0) {
+      int rr = ledRow[led];
+      int cc = ledCol[led];
+      if (rr >= 0 && cc >= 0) matrixanzeige[rr][cc] = 1;
+    }
   }
 
   if (dbv==0 && uvv > 0 && h==1 && mb==0){

@@ -187,7 +187,9 @@ extern int mqtton;
 extern int mqttonset;
 
 extern const int anzahlfarben;
-extern int farben[14][3];
+extern const uint8_t farben[][3] PROGMEM;
+// Read palette color from PROGMEM into int array[3]
+void getPaletteColor(uint8_t idx, int out[3]);
 
 extern String htmlfarben[14];
 extern String htmlfarbschema[6];
@@ -224,6 +226,25 @@ extern int anzeige[11][11][3];
 extern int anzeigealt[11][11][3];
 extern int matrix[11][11];
 extern int matrixanzeige[11][11];
+
+// LED index mappings (built at startup)
+#define MAX_WORD_LEDS 15
+extern int16_t matrixmin_leds[12][MAX_WORD_LEDS];
+extern uint8_t matrixmin_count[12];
+extern int16_t matrixstunden_leds[12][MAX_WORD_LEDS];
+extern uint8_t matrixstunden_count[12];
+
+// inverse mapping: led index -> row/col in matrix
+extern int16_t ledRow[LED_COUNT];
+extern int16_t ledCol[LED_COUNT];
+
+// build led mapping after any change to the textual maps
+void buildLedMappings();
+// validate runtime led lists (checks bounds)
+bool validateLedLists();
+// helper getters
+uint8_t getWordLedCount(uint8_t minuteOrHourIndex, bool isHour);
+int16_t getWordLed(uint8_t minuteOrHourIndex, bool isHour, uint8_t idx);
 extern int geburtstage[5][3];
 
 // Whether Home Assistant discovery publish should run on next MQTT connect

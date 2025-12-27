@@ -4,6 +4,20 @@
 #include <EEPROM.h>
 
 
+// helper to write a color into the target matrix (m==1 -> vordergrund, else -> hintergrund)
+static inline void setMatrixCell(int m, int row, int col, int r, int g, int b) {
+  if (m == 1) {
+    vordergrund[row][col][0] = r;
+    vordergrund[row][col][1] = g;
+    vordergrund[row][col][2] = b;
+  } else {
+    hintergrund[row][col][0] = r;
+    hintergrund[row][col][1] = g;
+    hintergrund[row][col][2] = b;
+  }
+}
+
+
 void vordergrunderstellen(int farbe1[3], int farbe2[3]){
 switch (vordergrundschema) {
     case 1:
@@ -75,19 +89,11 @@ void neuefarbe(){
   anitime= htmlanitimeint[aniMode][anitimeint];
   anidepth = user_color.anidepth;
   }
-
-    vf1[0]=farben[v1][0];
-  vf1[1]=farben[v1][1];
-  vf1[2]=farben[v1][2];
-  vf2[0]=farben[v2][0];
-  vf2[1]=farben[v2][1];
-  vf2[2]=farben[v2][2];
-   hf1[0]=farben[h1][0];
-  hf1[1]=farben[h1][1];
-  hf1[2]=farben[h1][2];
-    hf2[0]=farben[h2][0];
-  hf2[1]=farben[h2][1];
-  hf2[2]=farben[h2][2];
+  // load palette colors from PROGMEM
+  getPaletteColor((uint8_t)v1, vf1);
+  getPaletteColor((uint8_t)v2, vf2);
+  getPaletteColor((uint8_t)h1, hf1);
+  getPaletteColor((uint8_t)h2, hf2);
     hintergrunderstellen(hf1, hf2);
     vordergrunderstellen(vf1, vf2);
     readTime();
@@ -116,195 +122,61 @@ void savecolor(){
 }
 
 void einfarbig(int m, int farbe[3] ){
-  if(m==1){
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-        vordergrund[row][col][0]=farbe[0];
-        vordergrund[row][col][1]=farbe[1];
-        vordergrund[row][col][2]=farbe[2];
-      }
-    }
-  }else{
-    for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-        hintergrund[row][col][0]=farbe[0];
-        hintergrund[row][col][1]=farbe[1];
-        hintergrund[row][col][2]=farbe[2];
-      }
+  for(int row=0; row<11; ++row){
+    for(int col=0; col<11; ++col){
+      setMatrixCell(m, row, col, farbe[0], farbe[1], farbe[2]);
     }
   }
 }
 
 void schachbrett(int m, int farbe1[3], int farbe2[3]){
-  if(m==1){
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-        if(row%2==0){
-          if(col%2==0){
-          vordergrund[row][col][0]=farbe1[0];
-          vordergrund[row][col][1]=farbe1[1];
-          vordergrund[row][col][2]=farbe1[2];
-          }else{
-          vordergrund[row][col][0]=farbe2[0];
-          vordergrund[row][col][1]=farbe2[1];
-          vordergrund[row][col][2]=farbe2[2];
-          }
-        }else{
-          if(col%2==1){
-          vordergrund[row][col][0]=farbe1[0];
-          vordergrund[row][col][1]=farbe1[1];
-          vordergrund[row][col][2]=farbe1[2];
-          }else{
-          vordergrund[row][col][0]=farbe2[0];
-          vordergrund[row][col][1]=farbe2[1];
-          vordergrund[row][col][2]=farbe2[2];
-          }
-        }
-      }
+  for(int row=0; row<11; ++row){
+    for(int col=0; col<11; ++col){
+      bool use1 = ((row % 2 == 0) && (col % 2 == 0)) || ((row % 2 == 1) && (col % 2 == 1));
+      int *c = use1 ? farbe1 : farbe2;
+      setMatrixCell(m, row, col, c[0], c[1], c[2]);
     }
-  }else{
-    {
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-        if(row%2==0){
-          if(col%2==0){
-          hintergrund[row][col][0]=farbe1[0];
-          hintergrund[row][col][1]=farbe1[1];
-          hintergrund[row][col][2]=farbe1[2];
-          }else{
-          hintergrund[row][col][0]=farbe2[0];
-          hintergrund[row][col][1]=farbe2[1];
-          hintergrund[row][col][2]=farbe2[2];
-          }
-        }else{
-          if(col%2==1){
-          hintergrund[row][col][0]=farbe1[0];
-          hintergrund[row][col][1]=farbe1[1];
-          hintergrund[row][col][2]=farbe1[2];
-          }else{
-          hintergrund[row][col][0]=farbe2[0];
-          hintergrund[row][col][1]=farbe2[1];
-          hintergrund[row][col][2]=farbe2[2];
-          }
-        }
-      }
-    }
-  }
   }
 }
 
 void spalten(int m, int farbe1[3], int farbe2[3]){
-  if(m==1){
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-         if(col%2==0){
-          vordergrund[row][col][0]=farbe1[0];
-          vordergrund[row][col][1]=farbe1[1];
-          vordergrund[row][col][2]=farbe1[2];
-          }else{
-          vordergrund[row][col][0]=farbe2[0];
-          vordergrund[row][col][1]=farbe2[1];
-          vordergrund[row][col][2]=farbe2[2];
-          }
-      }
-  }
-  }else{
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-         if(col%2==0){
-          hintergrund[row][col][0]=farbe1[0];
-          hintergrund[row][col][1]=farbe1[1];
-          hintergrund[row][col][2]=farbe1[2];
-          }else{
-          hintergrund[row][col][0]=farbe2[0];
-          hintergrund[row][col][1]=farbe2[1];
-          hintergrund[row][col][2]=farbe2[2];
-          }
-      }
-  }
+  for(int row=0; row<11; ++row){
+    for(int col=0; col<11; ++col){
+      int *c = (col % 2 == 0) ? farbe1 : farbe2;
+      setMatrixCell(m, row, col, c[0], c[1], c[2]);
+    }
   }
 
 }
 
 void zeilen(int m, int farbe1[3], int farbe2[3]){
-  if(m==1){
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-         if(row%2==0){
-          vordergrund[row][col][0]=farbe1[0];
-          vordergrund[row][col][1]=farbe1[1];
-          vordergrund[row][col][2]=farbe1[2];
-          }else{
-          vordergrund[row][col][0]=farbe2[0];
-          vordergrund[row][col][1]=farbe2[1];
-          vordergrund[row][col][2]=farbe2[2];
-          }
-      }
-  }
-  }else{
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-         if(row%2==0){
-          hintergrund[row][col][0]=farbe1[0];
-          hintergrund[row][col][1]=farbe1[1];
-          hintergrund[row][col][2]=farbe1[2];
-          }else{
-          hintergrund[row][col][0]=farbe2[0];
-          hintergrund[row][col][1]=farbe2[1];
-          hintergrund[row][col][2]=farbe2[2];
-          }
-      }
-  }
+  for(int row=0; row<11; ++row){
+    for(int col=0; col<11; ++col){
+      int *c = (row % 2 == 0) ? farbe1 : farbe2;
+      setMatrixCell(m, row, col, c[0], c[1], c[2]);
+    }
   }
 
 }
 
 void fade(int m, int farbe1[3], int farbe2[3]){
-  if(m==1){
-    for(int row=0;row<11;row++){
-      int r=farbe1[0]+((farbe2[0]-farbe1[0])*row/10);
-      int g=farbe1[1]+((farbe2[1]-farbe1[1])*row/10);
-      int b=farbe1[2]+((farbe2[2]-farbe1[2])*row/10);
-      for(int col=0;col<11;col++){
-        vordergrund[row][col][0]=r;
-        vordergrund[row][col][1]=g;
-        vordergrund[row][col][2]=b;
-
-      }
-  }
-  }else{
-    for(int row=0;row<11;row++){
-      int r=farbe1[0]+((farbe2[0]-farbe1[0])*row/10);
-      int g=farbe1[1]+((farbe2[1]-farbe1[1])*row/10);
-      int b=farbe1[2]+((farbe2[2]-farbe1[2])*row/10);
-      for(int col=0;col<11;col++){
-        hintergrund[row][col][0]=r;
-        hintergrund[row][col][1]=g;
-        hintergrund[row][col][2]=b;
-
-      }
-  }
+  for(int row=0; row<11; ++row){
+    int r = farbe1[0] + ((farbe2[0] - farbe1[0]) * row / 10);
+    int g = farbe1[1] + ((farbe2[1] - farbe1[1]) * row / 10);
+    int b = farbe1[2] + ((farbe2[2] - farbe1[2]) * row / 10);
+    for(int col=0; col<11; ++col){
+      setMatrixCell(m, row, col, r, g, b);
+    }
   }
 }
 
 void rainbow(int m ){
-  if(m==1){
-  for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-        int k = random(0, 12);
-        vordergrund[row][col][0]=farben[k][0];
-        vordergrund[row][col][1]=farben[k][1];
-        vordergrund[row][col][2]=farben[k][2];
-      }
-    }
-  }else{
-    for(int row=0;row<11;row++){
-      for(int col=0;col<11;col++){
-        int k = random(0, 12);
-        hintergrund[row][col][0]=farben[k][0];
-        hintergrund[row][col][1]=farben[k][1];
-        hintergrund[row][col][2]=farben[k][2];
-      }
+  for(int row=0; row<11; ++row){
+    for(int col=0; col<11; ++col){
+      int k = random(0, anzahlfarben);
+      int rgb[3];
+      getPaletteColor((uint8_t)k, rgb);
+      setMatrixCell(m, row, col, rgb[0], rgb[1], rgb[2]);
     }
   }
 }

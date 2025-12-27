@@ -1,4 +1,5 @@
 #include "globals.h"
+#include <pgmspace.h>
 
 //Tasten
 const int bt1Pin = 4; //version alte Platine pins 12, 14
@@ -164,7 +165,19 @@ int mqttonset=0;
 
 
 int const anzahlfarben=14;
-int farben[anzahlfarben][3]={{64,64,64},{127,0,0},{127,0,64},{127,0,127},{64,0,127},{0,0,255},{0,64,127},{0,127,127},{0,127,64},{0,127,0},{64,127,0},{127,127,0},{127,64,0},{0,0,0}};
+// palette in PROGMEM
+const uint8_t farben[][3] PROGMEM = {
+    {64,64,64},{127,0,0},{127,0,64},{127,0,127},{64,0,127},{0,0,255},{0,64,127},{0,127,127},{0,127,64},{0,127,0},{64,127,0},{127,127,0},{127,64,0},{0,0,0}
+};
+
+void getPaletteColor(uint8_t idx, int out[3]){
+    if(idx >= (uint8_t)anzahlfarben){
+        out[0]=0; out[1]=0; out[2]=0; return;
+    }
+    out[0] = (int)pgm_read_byte(&farben[idx][0]);
+    out[1] = (int)pgm_read_byte(&farben[idx][1]);
+    out[2] = (int)pgm_read_byte(&farben[idx][2]);
+}
 
 String htmlfarben[anzahlfarben]={"weiß","rot","rosa","magenta","violet","blau","azure","turkis","hellgrün","grün","gelbgrün","gelb","orange","aus"};
 String htmlfarbschema[6]={"eine Farbe","zwei Farben Schachbrett", "zwei Farben Reihen","zwei Farben Zeilen", "zwei Farben Verlauf", "zufällige Farben"};
@@ -191,76 +204,21 @@ int flypos[3][2]={
 };
 
 
-int matrixminmap[12][9]={
-  {0,0,0,0,0,0,0,0,0}, // 0
-  {0, 7, 10, 3, 7, 10, 0,0,0}, //Fünf nach 
-  {1, 0, 3, 3, 7, 10, 0,0,0}, //Zehn nach
-  {2, 4, 10, 3, 7, 10, 0,0,0}, //viertel nach
-  {1, 4, 10, 3, 7, 10, 0,0,0}, //zwanzig nach
-  {0, 7, 10, 3, 0, 2, 4, 0, 3}, // fünf vor halb
-  {4, 0, 3, 0,0,0,0,0,0}, //halb
-  {0, 7, 10, 3, 7, 10, 4, 0, 3}, //fünf nach halb
-  {1, 0, 3, 3, 7, 10, 4, 0, 3}, //zehn nach halb
-  {2, 0, 10, 0,0,0, 0,0,0}, //dreiviertel
-  {1, 0, 3, 3, 0, 2, 0,0,0}, //zehn vor
-  {0, 7, 10, 3, 0, 2, 0,0,0} //fünf vor
-
-};
 
 const int matrixminmodulomap[4]={2, 4, 6, 8};
 
 int ste=62;
 int iist=6;
 
-int matrixstundenmap[12][3]={
-  {8, 6, 10}, //12 Uhr
-  {5, 0, 3}, // 1 Uhr
-  {5, 7, 10}, // 2 Uhr
-  {6, 0, 3}, // 3 Uhr
-  {6, 7, 10}, // 4 Uhr
-  {4, 7, 10}, // 5 Uhr
-  {7, 0, 4}, // 6 Uhr
-  {8, 0, 5}, // 7 Uhr
-  {7, 7, 10}, // 8 Uhr
-  {9, 3, 6}, // 9 Uhr
-  {9, 0, 3}, // 10 Uhr
-  {4, 5, 7} // 11 Uhr
-};
+
 
 int nexthour=5;
 
-int baymatrixminmap[12][9]={
-  {0,0,0,0,0,0,0,0,0}, // 0
-  {1, 0, 3, 3, 7, 10, 0,0,0}, //Fünf nach 
-  {1, 6, 9, 3, 7, 10, 0,0,0}, //Zehn nach
-  {2, 4, 10, 3, 7, 10, 0,0,0}, //viertel nach
-  {1, 6, 9, 3, 0, 2, 4,0,4}, //zehn vor hoibe
-  {1, 0, 3, 3, 0, 2, 4, 0, 4}, // fünf vor halb
-  {4, 0, 4, 0,0,0,0,0,0}, //halb
-  {1, 0, 3, 3, 7, 10, 4, 0, 4}, //fünf nach halb
-  {1, 6, 9, 3, 7, 10, 4, 0, 4}, //zehn nach halb
-  {2, 0, 10, 0,0,0, 0,0,0}, //dreiviertel
-  {1, 6, 9, 3, 0, 2, 0,0,0}, //zehn vor
-  {1, 0, 3, 3, 0, 2, 0,0,0} //fünf vor
 
-};
 
 int bayiist=5;
  
-int baymatrixstundenmap[12][3]={
-  {8, 0, 5}, //12 Uhr
-  {8, 7, 10}, // 1 Uhr
-  {6, 7, 10}, // 2 Uhr
-  {4, 6, 9}, // 3 Uhr
-  {5, 0, 4}, // 4 Uhr
-  {5, 6, 10}, // 5 Uhr
-  {6, 0, 5}, // 6 Uhr
-  {7, 0, 4}, // 7 Uhr
-  {7, 6, 10}, // 8 Uhr
-  {9, 0, 4}, // 9 Uhr
-  {9, 6, 10}, // 10 Uhr
-  {8, 2, 5} // 11 Uhr
-};
+
 
 int baynexthour=4;
 
@@ -348,6 +306,104 @@ int matrixanzeige[11][11]={
   {0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0}
 };
+
+// inverse mapping (filled by buildLedMappings)
+int16_t ledRow[LED_COUNT];
+int16_t ledCol[LED_COUNT];
+
+// LED lists for minute/hour words (runtime)
+int16_t matrixmin_leds[12][MAX_WORD_LEDS];
+uint8_t matrixmin_count[12];
+int16_t matrixstunden_leds[12][MAX_WORD_LEDS];
+uint8_t matrixstunden_count[12];
+
+// Build LED-index mappings from the range-based maps (matrixminmap/matrixstundenmap)
+#include "ledmap.h"
+
+// initialize inverse map and copy static lists from flash into runtime arrays
+void buildLedMappings() {
+    // init inverse maps to -1
+    for (int i = 0; i < LED_COUNT; ++i) {
+        ledRow[i] = -1;
+        ledCol[i] = -1;
+    }
+    // build inverse map from matrix[row][col] -> (row,col)
+    for (int r = 0; r < 11; ++r) {
+        for (int c = 0; c < 11; ++c) {
+            int idx = matrix[r][c];
+            if (idx >= 0 && idx < LED_COUNT) {
+                ledRow[idx] = r;
+                ledCol[idx] = c;
+            }
+        }
+    }
+
+    // static lists live in ledmap.h (PROGMEM)
+
+    // copy selected static lists from PROGMEM into runtime arrays
+    for (int i = 0; i < 12; ++i) {
+        matrixmin_count[i] = 0;
+        for (int k = 0; k < MAX_WORD_LEDS; ++k) {
+            uint8_t raw;
+            if (dbv == 1) {
+                raw = (uint8_t)pgm_read_byte(&bay_min_lists[i][k]);
+            } else {
+                raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
+            }
+            // dvv override
+            if (i == 9 && dvv == 1 && k < MAX_WORD_LEDS) {
+                raw = (uint8_t)pgm_read_byte(&dvv9_list[k]);
+            }
+            int16_t v = (raw == 255) ? -1 : (int16_t)raw;
+            matrixmin_leds[i][k] = v;
+            if (v >= 0) matrixmin_count[i]++;
+        }
+    }
+
+    for (int i = 0; i < 12; ++i) {
+        matrixstunden_count[i] = 0;
+        for (int k = 0; k < MAX_WORD_LEDS; ++k) {
+            uint8_t raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+            if (dbv == 1) raw = (uint8_t)pgm_read_byte(&bay_hour_lists[i][k]);
+            int16_t v = (raw == 255) ? -1 : (int16_t)raw;
+            matrixstunden_leds[i][k] = v;
+            if (v >= 0) matrixstunden_count[i]++;
+        }
+    }
+    // validate lists
+    validateLedLists();
+}
+
+bool validateLedLists() {
+    bool ok = true;
+    for (int w = 0; w < 12; ++w) {
+        for (int k = 0; k < matrixmin_count[w]; ++k) {
+            int16_t v = matrixmin_leds[w][k];
+            if (v < 0 || v >= LED_COUNT) {
+                Serial.print("Invalid minute led index: "); Serial.println(v);
+                ok = false;
+            }
+        }
+    }
+    for (int w = 0; w < 12; ++w) {
+        for (int k = 0; k < matrixstunden_count[w]; ++k) {
+            int16_t v = matrixstunden_leds[w][k];
+            if (v < 0 || v >= LED_COUNT) {
+                Serial.print("Invalid hour led index: "); Serial.println(v);
+                ok = false;
+            }
+        }
+    }
+    return ok;
+}
+
+uint8_t getWordLedCount(uint8_t minuteOrHourIndex, bool isHour) {
+    return isHour ? matrixstunden_count[minuteOrHourIndex] : matrixmin_count[minuteOrHourIndex];
+}
+
+int16_t getWordLed(uint8_t minuteOrHourIndex, bool isHour, uint8_t idx) {
+    return isHour ? matrixstunden_leds[minuteOrHourIndex][idx] : matrixmin_leds[minuteOrHourIndex][idx];
+}
 
 int geburtstage[5][3];
 
