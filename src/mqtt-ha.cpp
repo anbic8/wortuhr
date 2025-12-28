@@ -32,19 +32,20 @@ static bool pubWithCheck(const char* topic, const char* payload, bool retain=tru
 bool publishOnOffConfig() {
     StaticJsonDocument<512> cfg;
   cfg["name"]          = "Wortuhr Power";
-  cfg["unique_id"]     = "wortuhr_power";
+  String uniqueId = DEVICE_ID + "_power";
+  cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicOnState;
   cfg["command_topic"] = topicOnCmd;
   cfg["payload_on"]    = "1";
   cfg["payload_off"]   = "0";
 
 JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Buffer mit Null-Terminator
   char buf[512];
@@ -55,7 +56,8 @@ JsonObject dev = cfg.createNestedObject("device");
   Serial.println(buf);
 
   // Publish und Ergebnis
-  bool ok = pubWithCheck("homeassistant/switch/wortuhr_power/config", buf, false);
+  String configTopic = "homeassistant/switch/" + DEVICE_ID + "_power/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -63,7 +65,8 @@ JsonObject dev = cfg.createNestedObject("device");
 bool publishEffectConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Übergangseffekt";
-  cfg["unique_id"]    = "wortuhr_efx";
+  String uniqueId = DEVICE_ID + "_efx";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicEfxState;
   cfg["command_topic"]= topicEfxCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -83,26 +86,29 @@ bool publishEffectConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_efx/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_efx/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Effect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAnimationConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationseffekt";
-  cfg["unique_id"]    = "wortuhr_ani";
+  
+  String uniqueId = DEVICE_ID + "_ani";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicAniState;
   cfg["command_topic"]= topicAniCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -119,19 +125,20 @@ bool publishAnimationConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_ani/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_ani/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -139,7 +146,9 @@ bool publishAnimationConfig() {
 bool publishV1LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Vordergrundfarbe 1";
-  cfg["unique_id"]     = "wortuhr_v1";
+  
+  String uniqueId = DEVICE_ID + "_v1";
+  cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicV1State;
   cfg["command_topic"] = topicV1Cmd;
 
@@ -153,16 +162,17 @@ bool publishV1LightConfig() {
 
   // Gerätedaten
   JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = pubWithCheck("homeassistant/light/wortuhr_v1/config", buf, false);
+  String configTopic = "homeassistant/light/" + DEVICE_ID + "_v1/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -170,7 +180,9 @@ bool publishV1LightConfig() {
 bool publishV2LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Vordergrundfarbe 2";
-  cfg["unique_id"]     = "wortuhr_v2";
+  
+  String uniqueId = DEVICE_ID + "_v2";
+  cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicV2State;
   cfg["command_topic"] = topicV2Cmd;
 
@@ -184,16 +196,17 @@ bool publishV2LightConfig() {
 
   // Gerätedaten
   JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = pubWithCheck("homeassistant/light/wortuhr_v2/config", buf, false);
+  String configTopic = "homeassistant/light/" + DEVICE_ID + "_v2/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -201,7 +214,9 @@ bool publishV2LightConfig() {
 bool publishH1LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Hintergrundfarbe 1";
-  cfg["unique_id"]     = "wortuhr_h1";
+  
+  String uniqueId = DEVICE_ID + "_h1";
+  cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicH1State;
   cfg["command_topic"] = topicH1Cmd;
 
@@ -215,23 +230,26 @@ bool publishH1LightConfig() {
 
   // Gerätedaten
   JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = pubWithCheck("homeassistant/light/wortuhr_h1/config", buf, false);
+  String configTopic = "homeassistant/light/" + DEVICE_ID + "_h1/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishH2LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Hintergrundfarbe 2";
-  cfg["unique_id"]     = "wortuhr_h2";
+  
+  String uniqueId = DEVICE_ID + "_h2";
+  cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicH2State;
   cfg["command_topic"] = topicH2Cmd;
 
@@ -245,23 +263,26 @@ bool publishH2LightConfig() {
 
   // Gerätedaten
   JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  bool ok = pubWithCheck("homeassistant/light/wortuhr_h2/config", buf, false);
+  String configTopic = "homeassistant/light/" + DEVICE_ID + "_h2/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishVsConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Vordergrundfarbschema";
-  cfg["unique_id"]    = "wortuhr_vs";
+  
+  String uniqueId = DEVICE_ID + "_vs";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicVsState;
   cfg["command_topic"]= topicVsCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -278,26 +299,29 @@ bool publishVsConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_vs/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_vs/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishHsConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Hintergrundfarbschema";
-  cfg["unique_id"]    = "wortuhr_hs";
+  
+  String uniqueId = DEVICE_ID + "_hs";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicHsState;
   cfg["command_topic"]= topicHsCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -314,26 +338,29 @@ bool publishHsConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_hs/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_hs/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishEfxTimeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Übergangsgeschwindigkeit";
-  cfg["unique_id"]    = "wortuhr_efxtime";
+  
+  String uniqueId = DEVICE_ID + "_efxtime";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicEfxTimeState;
   cfg["command_topic"]= topicEfxTimeCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -347,26 +374,29 @@ bool publishEfxTimeConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_efxtime/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_efxtime/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAniTimeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationsgeschwindigkeit";
-  cfg["unique_id"]    = "wortuhr_anitime";
+  
+  String uniqueId = DEVICE_ID + "_anitime";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicAniTimeState;
   cfg["command_topic"]= topicAniTimeCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -380,26 +410,29 @@ bool publishAniTimeConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_anitime/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_anitime/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAniDepthConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationsstärke";
-  cfg["unique_id"]    = "wortuhr_anidepth";
+  
+  String uniqueId = DEVICE_ID + "_anidepth";
+  cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicAniDepthState;
   cfg["command_topic"]= topicAniDepthCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
@@ -413,19 +446,20 @@ bool publishAniDepthConfig() {
   cfg["qos"]            = 1;
 
  JsonObject dev = cfg.createNestedObject("device");
-  dev["identifiers"][0] = DEVICE_ID;
-  dev["name"]           = DEVICE_NAME;
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
   dev["manufacturer"]   = DEVICE_VENDOR;
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
-  dev["configuration_url"] = CONFIG_URL;
+  dev["configuration_url"] = CONFIG_URL.c_str();
 
   // Serialize mit Null-Terminator
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  bool ok = pubWithCheck("homeassistant/select/wortuhr_anidepth/config", buf, false);
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_anidepth/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }

@@ -91,8 +91,8 @@ void pulsieren(){
   }
     
 
-   for(int row=0;row<11; row++){
-    for(int col=0;col<11; col++){
+   for(int row=0;row<MATRIX_SIZE; row++){
+    for(int col=0;col<MATRIX_SIZE; col++){
         int r = anzeige[row][col][0]*0.02*faktor;
         int g = anzeige[row][col][1]*0.02*faktor;
         int b = anzeige[row][col][2]*0.02*faktor;
@@ -184,6 +184,7 @@ flypos[i][1]=cneu;
 };
 
 void startup(){
+#if MATRIX_SIZE == 11
   for(int s=0;s<9;s++){
   for(int i=0;i<11;i++){
     strip.setPixelColor(t1[i], strip.Color(startcolors[8-s][0], startcolors[8-s][1], startcolors[8-s][2] ));
@@ -203,4 +204,16 @@ void startup(){
   strip.show();
   delay(500);
   }
+#else
+  // Simple startup animation for 8x8 matrix
+  for(int i=0;i<LED_COUNT;i++){
+    strip.setPixelColor(i, strip.Color(0, 0, 255));
+  }
+  strip.show();
+  delay(500);
+  for(int i=0;i<LED_COUNT;i++){
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+  }
+  strip.show();
+#endif
 }

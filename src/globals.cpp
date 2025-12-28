@@ -11,20 +11,27 @@ OneButton bt2(bt2Pin, true);
 OneButton bt3(bt3Pin, true);
 
 // Declare our NeoPixel strip object:
-Adafruit_NeoPixel strip(121, 2, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 //Wlan und MQTT
 
 ESP8266WebServer    server(80);
 
 // MQTT-Konfiguration
+#if VERSION_TYPE == 0
 String DEVICE_MODEL = "deutsche Wortuhr"; 
-// Power
-const char* topicOnState  = "wortuhr/on";
-const char* topicOnCmd    = "wortuhr/on/set";
-// Übergangseffekt
-const char* topicEfxState = "wortuhr/efx";
-const char* topicEfxCmd   = "wortuhr/efx/set";
+#elif VERSION_TYPE == 1
+String DEVICE_MODEL = "bayrische Wortuhr";
+#elif VERSION_TYPE == 2
+String DEVICE_MODEL = "Mini Wortuhr";
+#else
+String DEVICE_MODEL = "Wortuhr";
+#endif 
+// MQTT Topics - werden durch buildMqttTopics() initialisiert
+String topicOnState;
+String topicOnCmd;
+String topicEfxState;
+String topicEfxCmd;
 const char* effectOptions[10] = {
   "kein Effekt",
   "zufällig",
@@ -37,30 +44,30 @@ const char* effectOptions[10] = {
   "Diagonal",
   "Rain"
 };
-const char* topicAniState = "wortuhr/ani";
-const char* topicAniCmd   = "wortuhr/ani/set";
+String topicAniState;
+String topicAniCmd;
 const char* aniOptions[6] = {
   "keine Animation", "Blinken", "Vordergrundblinken", "Pulsieren", "Verlauf","Fliegen"
 };
 // --- Topics für Licht v1 ---
-const char* topicV1State = "wortuhr/v1";
-const char* topicV1Cmd   = "wortuhr/v1/set";
+String topicV1State;
+String topicV1Cmd;
 // --- Topics für Licht v2 ---
-const char* topicV2State = "wortuhr/v2";
-const char* topicV2Cmd   = "wortuhr/v2/set";
+String topicV2State;
+String topicV2Cmd;
 
 // --- Topics für Licht h1 ---
-const char* topicH1State = "wortuhr/h1";
-const char* topicH1Cmd   = "wortuhr/h1/set";
-// --- Topics für Licht v2 ---
-const char* topicH2State = "wortuhr/h2";
-const char* topicH2Cmd   = "wortuhr/h2/set";
+String topicH1State;
+String topicH1Cmd;
+// --- Topics für Licht h2 ---
+String topicH2State;
+String topicH2Cmd;
 // --- Topics für Lichtschema vs ---
-const char* topicVsState = "wortuhr/vs";
-const char* topicVsCmd   = "wortuhr/vs/set";
+String topicVsState;
+String topicVsCmd;
 // --- Topics für Lichtschema hs ---
-const char* topicHsState = "wortuhr/hs";
-const char* topicHsCmd   = "wortuhr/hs/set";
+String topicHsState;
+String topicHsCmd;
 
 const char* farbschemaOptions[6] = {
   "einfarbig",
@@ -71,19 +78,19 @@ const char* farbschemaOptions[6] = {
   "Zufällig"
 };
 // --- Topics für efx time  ---
-const char* topicEfxTimeState = "wortuhr/efxtime";
-const char* topicEfxTimeCmd   = "wortuhr/efxtime/set";
+String topicEfxTimeState;
+String topicEfxTimeCmd;
 const char* effecttimeOptions[3] = {
   "langsam",
   "mittel",
   "schnell"
 };
 // --- Topics für ani time  ---
-const char* topicAniTimeState = "wortuhr/anitime";
-const char* topicAniTimeCmd   = "wortuhr/anitime/set";
+String topicAniTimeState;
+String topicAniTimeCmd;
 // --- Topics für ani depth  ---
-const char* topicAniDepthState = "wortuhr/anidepth";
-const char* topicAniDepthCmd   = "wortuhr/anidepth/set";
+String topicAniDepthState;
+String topicAniDepthCmd;
 const char* effectdepthOptions[3] = {
   "schwach",
   "mittel",
@@ -94,7 +101,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 
-const char* dns_name = "wortuhr"; //name im netzwerk
+// dns_name is now initialized as String variable above
 
 // Replace with your network credentials
 const char *ssid     = "wortuhr";
@@ -167,7 +174,7 @@ int mqttonset=0;
 int const anzahlfarben=14;
 // palette in PROGMEM
 const uint8_t farben[][3] PROGMEM = {
-    {64,64,64},{127,0,0},{127,0,64},{127,0,127},{64,0,127},{0,0,255},{0,64,127},{0,127,127},{0,127,64},{0,127,0},{64,127,0},{127,127,0},{127,64,0},{0,0,0}
+    {255,255,255},{255,0,0},{255,0,128},{255,0,255},{128,0,255},{0,0,255},{0,128,255},{0,255,255},{0,255,128},{0,255,0},{128,255,0},{255,255,0},{255,128,0},{0,0,0}
 };
 
 void getPaletteColor(uint8_t idx, int out[3]){
@@ -210,7 +217,11 @@ const int matrixminmodulomap[4]={2, 4, 6, 8};
 int ste=62;
 int iist=6;
 
-
+// Device identification (initialized from mqtt_prefix)
+String DEVICE_ID = "wortuhr";
+String DEVICE_NAME = "Wortuhr";
+String dns_name = "wortuhr";
+String CONFIG_URL = "http://wortuhr.local";
 
 int nexthour=5;
 
@@ -223,6 +234,7 @@ int bayiist=5;
 int baynexthour=4;
 
 int vordergrundschema=0;
+#if MATRIX_SIZE == 11
 int vordergrund[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -236,8 +248,21 @@ int vordergrund[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
 };
+#elif MATRIX_SIZE == 8
+int vordergrund[8][8][3]={
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
+};
+#endif
 
 int hintergrundschema=0;
+#if MATRIX_SIZE == 11
 int hintergrund[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -251,7 +276,20 @@ int hintergrund[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
 };
+#elif MATRIX_SIZE == 8
+int hintergrund[8][8][3]={
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
+};
+#endif
 
+#if MATRIX_SIZE == 11
 int anzeige[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -265,6 +303,19 @@ int anzeige[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
 };
+#elif MATRIX_SIZE == 8
+int anzeige[8][8][3]={
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
+};
+#endif
+#if MATRIX_SIZE == 11
 int anzeigealt[11][11][3]={
    {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
@@ -278,7 +329,20 @@ int anzeigealt[11][11][3]={
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
   {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
 };
+#elif MATRIX_SIZE == 8
+int anzeigealt[8][8][3]={
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}},
+  {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}}
+};
+#endif
 
+#if MATRIX_SIZE == 11
 int matrix[11][11]={
   {110,111,112,113,114,115,116,117,118,119,120},
   {109,108,107,106,105,104,103,102,101,100,99},
@@ -292,7 +356,20 @@ int matrix[11][11]={
   {21,20,19,18,17,16,15,14,13,12,11},
   {0,1,2,3,4,5,6,7,8,9,10}
 };
+#elif MATRIX_SIZE == 8
+int matrix[8][8]={
+  {0,1,2,3,4,5,6,7},
+  {8,9,10,11,12,13,14,15},
+  {16,17,18,19,20,21,22,23},
+  {24,25,26,27,28,29,30,31},
+  {32,33,34,35,36,37,38,39},
+  {40,41,42,43,44,45,46,47},
+  {48,49,50,51,52,53,54,55},
+  {56,57,58,59,60,61,62,63}
+};
+#endif
 
+#if MATRIX_SIZE == 11
 int matrixanzeige[11][11]={
   {0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0},
@@ -306,6 +383,18 @@ int matrixanzeige[11][11]={
   {0,0,0,0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0,0,0,0}
 };
+#elif MATRIX_SIZE == 8
+int matrixanzeige[8][8]={
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0},
+  {0,0,0,0,0,0,0,0}
+};
+#endif
 
 // inverse mapping (filled by buildLedMappings)
 int16_t ledRow[LED_COUNT];
@@ -328,8 +417,8 @@ void buildLedMappings() {
         ledCol[i] = -1;
     }
     // build inverse map from matrix[row][col] -> (row,col)
-    for (int r = 0; r < 11; ++r) {
-        for (int c = 0; c < 11; ++c) {
+    for (int r = 0; r < MATRIX_SIZE; ++r) {
+        for (int c = 0; c < MATRIX_SIZE; ++c) {
             int idx = matrix[r][c];
             if (idx >= 0 && idx < LED_COUNT) {
                 ledRow[idx] = r;
@@ -345,15 +434,27 @@ void buildLedMappings() {
         matrixmin_count[i] = 0;
         for (int k = 0; k < MAX_WORD_LEDS; ++k) {
             uint8_t raw;
-            if (dbv == 1) {
-                raw = (uint8_t)pgm_read_byte(&bay_min_lists[i][k]);
-            } else {
+            #if VERSION_TYPE == 0
+                // Deutsche Version
                 raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
-            }
-            // dvv override
+            #elif VERSION_TYPE == 1
+                // Bayrische Version
+                raw = (uint8_t)pgm_read_byte(&bay_min_lists[i][k]);
+            #elif VERSION_TYPE == 2
+                // Mini Version
+                raw = (uint8_t)pgm_read_byte(&mini_min_lists[i][k]);
+            #else
+                // Fallback: Deutsche Version
+                raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
+            #endif
+            
+            // dvv override (nur für deutsche/bayrische Version)
+            #if VERSION_TYPE != 2
             if (i == 9 && dvv == 1 && k < MAX_WORD_LEDS) {
                 raw = (uint8_t)pgm_read_byte(&dvv9_list[k]);
             }
+            #endif
+            
             int16_t v = (raw == 255) ? -1 : (int16_t)raw;
             matrixmin_leds[i][k] = v;
             if (v >= 0) matrixmin_count[i]++;
@@ -363,8 +464,21 @@ void buildLedMappings() {
     for (int i = 0; i < 12; ++i) {
         matrixstunden_count[i] = 0;
         for (int k = 0; k < MAX_WORD_LEDS; ++k) {
-            uint8_t raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
-            if (dbv == 1) raw = (uint8_t)pgm_read_byte(&bay_hour_lists[i][k]);
+            uint8_t raw;
+            #if VERSION_TYPE == 0
+                // Deutsche Version
+                raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+            #elif VERSION_TYPE == 1
+                // Bayrische Version
+                raw = (uint8_t)pgm_read_byte(&bay_hour_lists[i][k]);
+            #elif VERSION_TYPE == 2
+                // Mini Version
+                raw = (uint8_t)pgm_read_byte(&mini_hour_lists[i][k]);
+            #else
+                // Fallback: Deutsche Version
+                raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+            #endif
+            
             int16_t v = (raw == 255) ? -1 : (int16_t)raw;
             matrixstunden_leds[i][k] = v;
             if (v >= 0) matrixstunden_count[i]++;
@@ -407,7 +521,8 @@ int16_t getWordLed(uint8_t minuteOrHourIndex, bool isHour, uint8_t idx) {
 
 int geburtstage[5][3];
 
-//Für Einschalt animation
+//Für Einschalt animation (nur für 11x11 Matrix)
+#if MATRIX_SIZE == 11
 int t1[11]={27,38,49,60,71,82,91,92,93,94,95};
 int t2[28]={15,16,17,26,39,48,61,70,83,84,85,90,107,106,105,104,103,102,101,96,79,80,81,72,59,50,37,28};
 int t3[36]={3,4,5,6,7,14,29,36,51,58,73,74,75,78,97,100,119,118,117,116,115,114,113,112,111,108,89,86,67,68,69,62,47,40,25,18};
@@ -415,6 +530,7 @@ int t4[26]={2,19,24,41,46,63,64,65,66,87,88,109,110,8,13,30,35,52,57,56,55,76,77
 int t5[12]={1,20,23,42,45,44,9,12,31,34,53,54};
 
 int startcolors[13][3]={{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,255},{0,64,127},{0,127,127},{0,127,64},{64,64,64},{0,0,0},{0,0,0},{0,0,0},{0,0,0}};
+#endif
 
 const char htmlhead[] PROGMEM = R"rawliteral(
   <!DOCTYPE html>
@@ -672,3 +788,68 @@ const char htmlrecht[] PROGMEM = R"rawliteral(
 
         </div></body></html>
 )rawliteral";
+
+// Build MQTT topics based on mqtt_prefix from settings
+void buildMqttTopics() {
+  String prefix = String(user_connect.mqtt_prefix);
+  
+  // Default to "wortuhr" if prefix is empty or invalid
+  if (prefix.length() == 0 || (uint8_t)user_connect.mqtt_prefix[0] == 0xFF) {
+    prefix = "wortuhr";
+  }
+  
+  // Update DEVICE_ID, DEVICE_NAME, dns_name and CONFIG_URL from mqtt_prefix
+  // Remove trailing slash for device ID
+  String cleanPrefix = prefix;
+  if (cleanPrefix.endsWith("/")) {
+    cleanPrefix = cleanPrefix.substring(0, cleanPrefix.length() - 1);
+  }
+  DEVICE_ID = cleanPrefix;
+  DEVICE_NAME = "Wortuhr " + cleanPrefix;
+  dns_name = cleanPrefix;
+  CONFIG_URL = "http://" + cleanPrefix + ".local";
+  
+  // Ensure prefix ends with "/"
+  if (!prefix.endsWith("/")) {
+    prefix += "/";
+  }
+  
+  // Build all topics with the prefix
+  topicOnState = prefix + "on";
+  topicOnCmd = prefix + "on/set";
+  
+  topicEfxState = prefix + "efx";
+  topicEfxCmd = prefix + "efx/set";
+  
+  topicAniState = prefix + "ani";
+  topicAniCmd = prefix + "ani/set";
+  
+  topicV1State = prefix + "v1";
+  topicV1Cmd = prefix + "v1/set";
+  
+  topicV2State = prefix + "v2";
+  topicV2Cmd = prefix + "v2/set";
+  
+  topicH1State = prefix + "h1";
+  topicH1Cmd = prefix + "h1/set";
+  
+  topicH2State = prefix + "h2";
+  topicH2Cmd = prefix + "h2/set";
+  
+  topicVsState = prefix + "vs";
+  topicVsCmd = prefix + "vs/set";
+  
+  topicHsState = prefix + "hs";
+  topicHsCmd = prefix + "hs/set";
+  
+  topicEfxTimeState = prefix + "efxtime";
+  topicEfxTimeCmd = prefix + "efxtime/set";
+  
+  topicAniTimeState = prefix + "anitime";
+  topicAniTimeCmd = prefix + "anitime/set";
+  
+  topicAniDepthState = prefix + "anidepth";
+  topicAniDepthCmd = prefix + "anidepth/set";
+  
+  Serial.println("MQTT Topics initialized with prefix: " + prefix);
+}

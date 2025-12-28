@@ -10,18 +10,18 @@ static unsigned long lastMqttAttempt = 0;
 static unsigned long mqttRetryMs = 15000;
 
 static void mqttOnConnected() {
-  client.subscribe(topicOnCmd);
-  client.subscribe(topicEfxCmd);
-  client.subscribe(topicAniCmd);
-  client.subscribe(topicV1Cmd);
-  client.subscribe(topicV2Cmd);
-  client.subscribe(topicH1Cmd);
-  client.subscribe(topicH2Cmd);
-  client.subscribe(topicVsCmd);
-  client.subscribe(topicHsCmd);
-  client.subscribe(topicEfxTimeCmd);
-  client.subscribe(topicAniTimeCmd);
-  client.subscribe(topicAniDepthCmd);
+  client.subscribe(topicOnCmd.c_str());
+  client.subscribe(topicEfxCmd.c_str());
+  client.subscribe(topicAniCmd.c_str());
+  client.subscribe(topicV1Cmd.c_str());
+  client.subscribe(topicV2Cmd.c_str());
+  client.subscribe(topicH1Cmd.c_str());
+  client.subscribe(topicH2Cmd.c_str());
+  client.subscribe(topicVsCmd.c_str());
+  client.subscribe(topicHsCmd.c_str());
+  client.subscribe(topicEfxTimeCmd.c_str());
+  client.subscribe(topicAniTimeCmd.c_str());
+  client.subscribe(topicAniDepthCmd.c_str());
   // small settle time after connect
   delay(200);
   client.loop();
@@ -58,7 +58,7 @@ void connectToMQTT() {
   Serial.println("Versuche MQTT-Verbindung...");
   // build a unique client id using device id + chip id to avoid collisions
   char clientId[48];
-  snprintf(clientId, sizeof(clientId), "%s_%lu", DEVICE_ID, ESP.getChipId());
+  snprintf(clientId, sizeof(clientId), "%s_%lu", DEVICE_ID.c_str(), ESP.getChipId());
   Serial.print("Using MQTT clientId: "); Serial.println(clientId);
 
   if (client.connect(clientId, user_connect.mqtt_user, user_connect.mqtt_password)) {
@@ -78,7 +78,7 @@ void connectToMQTT() {
 }
 
 void publishAll(){
-  client.publish(topicOnState, on ? "1" : "0", true);
+  client.publish(topicOnState.c_str(), on ? "1" : "0", true);
   publishEffectState();
   publishAniState();
   publishV1State();
@@ -97,13 +97,13 @@ void publishEffectState() {
   // safeguard: effectMode in [0..9]
   uint8_t idx = constrain(effectMode, 0, 9);
   const char* opt = effectOptions[idx];
-  client.publish(topicEfxState, opt, true);
+  client.publish(topicEfxState.c_str(), opt, true);
 }
 void publishAniState() {
   // safeguard: aniMode in [0..5]
   uint8_t idx = constrain(aniMode, 0, 5);
   const char* opt = aniOptions[idx];
-  client.publish(topicAniState, opt, true);
+  client.publish(topicAniState.c_str(), opt, true);
 }
 
 
@@ -128,7 +128,8 @@ void publishV1State() {
 
   char buf[256];
   serializeJson(s, buf, sizeof(buf));
-  client.publish(topicV1State, buf, true);
+  const char* topic = topicV1State.c_str();
+  client.publish(topic, buf, true);
 }
 void publishV2State() {
   StaticJsonDocument<256> s;
@@ -152,7 +153,8 @@ void publishV2State() {
 
   char buf[256];
   serializeJson(s, buf, sizeof(buf));
-  client.publish(topicV2State, buf, true);
+  const char* topic = topicV2State.c_str();
+  client.publish(topic, buf, true);
 }
 void publishH1State() {
   StaticJsonDocument<256> s;
@@ -172,7 +174,8 @@ void publishH1State() {
 
   char buf[256];
   serializeJson(s, buf, sizeof(buf));
-  client.publish(topicH1State, buf, true);
+  const char* topic = topicH1State.c_str();
+  client.publish(topic, buf, true);
 }
 void publishH2State() {
   StaticJsonDocument<256> s;
@@ -194,37 +197,37 @@ void publishH2State() {
 
   char buf[256];
   serializeJson(s, buf, sizeof(buf));
-  client.publish(topicH2State, buf, true);
+  client.publish(topicH2State.c_str(), buf, true);
 }
 void publishVsState() {
   // safeguard: effectMode in [0..9]
   uint8_t idx = constrain(vordergrundschema, 0, 5);
   const char* opt = farbschemaOptions[idx];
-  client.publish(topicVsState, opt, true);
+  client.publish(topicVsState.c_str(), opt, true);
 }
 void publishHsState() {
   // safeguard: effectMode in [0..9]
   uint8_t idx = constrain(hintergrundschema, 0, 5);
   const char* opt = farbschemaOptions[idx];
-  client.publish(topicHsState, opt, true);
+  client.publish(topicHsState.c_str(), opt, true);
 }
 void publishEfxTimeState() {
   // safeguard: effectMode in [0..9]
   uint8_t idx = constrain(efxtimeint, 0, 3);
   const char* opt = effecttimeOptions[idx];
-  client.publish(topicEfxTimeState, opt, true);
+  client.publish(topicEfxTimeState.c_str(), opt, true);
 }
 void publishAniTimeState() {
   // safeguard: effectMode in [0..9]
   uint8_t idx = constrain(anitimeint, 0, 3);
   const char* opt = effecttimeOptions[idx];
-  client.publish(topicAniTimeState, opt, true);
+  client.publish(topicAniTimeState.c_str(), opt, true);
 }
 void publishAniDepthState() {
   // safeguard: effectMode in [0..9]
   uint8_t idx = constrain(anidepth, 0, 3);
   const char* opt = effectdepthOptions[idx];
-  client.publish(topicAniDepthState, opt, true);
+  client.publish(topicAniDepthState.c_str(), opt, true);
 }
 
 // Force an immediate reconnect attempt: disconnect and reset timer

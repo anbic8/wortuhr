@@ -122,16 +122,16 @@ void savecolor(){
 }
 
 void einfarbig(int m, int farbe[3] ){
-  for(int row=0; row<11; ++row){
-    for(int col=0; col<11; ++col){
+  for(int row=0; row<MATRIX_SIZE; ++row){
+    for(int col=0; col<MATRIX_SIZE; ++col){
       setMatrixCell(m, row, col, farbe[0], farbe[1], farbe[2]);
     }
   }
 }
 
 void schachbrett(int m, int farbe1[3], int farbe2[3]){
-  for(int row=0; row<11; ++row){
-    for(int col=0; col<11; ++col){
+  for(int row=0; row<MATRIX_SIZE; ++row){
+    for(int col=0; col<MATRIX_SIZE; ++col){
       bool use1 = ((row % 2 == 0) && (col % 2 == 0)) || ((row % 2 == 1) && (col % 2 == 1));
       int *c = use1 ? farbe1 : farbe2;
       setMatrixCell(m, row, col, c[0], c[1], c[2]);
@@ -140,8 +140,8 @@ void schachbrett(int m, int farbe1[3], int farbe2[3]){
 }
 
 void spalten(int m, int farbe1[3], int farbe2[3]){
-  for(int row=0; row<11; ++row){
-    for(int col=0; col<11; ++col){
+  for(int row=0; row<MATRIX_SIZE; ++row){
+    for(int col=0; col<MATRIX_SIZE; ++col){
       int *c = (col % 2 == 0) ? farbe1 : farbe2;
       setMatrixCell(m, row, col, c[0], c[1], c[2]);
     }
@@ -150,8 +150,8 @@ void spalten(int m, int farbe1[3], int farbe2[3]){
 }
 
 void zeilen(int m, int farbe1[3], int farbe2[3]){
-  for(int row=0; row<11; ++row){
-    for(int col=0; col<11; ++col){
+  for(int row=0; row<MATRIX_SIZE; ++row){
+    for(int col=0; col<MATRIX_SIZE; ++col){
       int *c = (row % 2 == 0) ? farbe1 : farbe2;
       setMatrixCell(m, row, col, c[0], c[1], c[2]);
     }
@@ -160,19 +160,19 @@ void zeilen(int m, int farbe1[3], int farbe2[3]){
 }
 
 void fade(int m, int farbe1[3], int farbe2[3]){
-  for(int row=0; row<11; ++row){
-    int r = farbe1[0] + ((farbe2[0] - farbe1[0]) * row / 10);
-    int g = farbe1[1] + ((farbe2[1] - farbe1[1]) * row / 10);
-    int b = farbe1[2] + ((farbe2[2] - farbe1[2]) * row / 10);
-    for(int col=0; col<11; ++col){
+  for(int row=0; row<MATRIX_SIZE; ++row){
+    int r = farbe1[0] + ((farbe2[0] - farbe1[0]) * row / (MATRIX_SIZE-1));
+    int g = farbe1[1] + ((farbe2[1] - farbe1[1]) * row / (MATRIX_SIZE-1));
+    int b = farbe1[2] + ((farbe2[2] - farbe1[2]) * row / (MATRIX_SIZE-1));
+    for(int col=0; col<MATRIX_SIZE; ++col){
       setMatrixCell(m, row, col, r, g, b);
     }
   }
 }
 
 void rainbow(int m ){
-  for(int row=0; row<11; ++row){
-    for(int col=0; col<11; ++col){
+  for(int row=0; row<MATRIX_SIZE; ++row){
+    for(int col=0; col<MATRIX_SIZE; ++col){
       int k = random(0, anzahlfarben);
       int rgb[3];
       getPaletteColor((uint8_t)k, rgb);

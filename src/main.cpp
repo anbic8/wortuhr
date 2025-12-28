@@ -139,7 +139,7 @@ void setup() {
     Serial.print("AP IP: ");
     Serial.println(WiFi.softAPIP());
   }
-  if (MDNS.begin(dns_name)) {
+  if (MDNS.begin(dns_name.c_str())) {
     Serial.println("DNS gestartet, erreichbar unter: ");
     Serial.println("http://" + String(dns_name) + ".local/");
   }
@@ -194,6 +194,9 @@ Serial.println();
     if ((uint8_t)user_connect.mqtt_server[0] == 0xFF || user_connect.mqtt_server[0] == '\0') mqttServerValid = false;
     if (user_connect.mqtt_port <= 0 || user_connect.mqtt_port > 65535) mqttServerValid = false;
     if (mqttServerValid) {
+      // Build MQTT topics with configured prefix
+      buildMqttTopics();
+      
       client.setServer(user_connect.mqtt_server, user_connect.mqtt_port);
       client.setCallback(mqttCallback);
       client.setBufferSize(1024);

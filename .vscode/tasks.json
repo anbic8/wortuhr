@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "PlatformIO: Build (deutsche_11x11)",
+			"type": "shell",
+			"command": "platformio",
+			"args": [
+				"run",
+				"--environment",
+				"deutsche_11x11"
+			],
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build"
+		}
+	]
+}

@@ -114,8 +114,8 @@ void showClock(){
 
 
   if(on==0 && nacht==0){
-    for(int row=0; row<11; row++){
-     for(int col=0; col<11; col++) {
+    for(int row=0; row<MATRIX_SIZE; row++){
+     for(int col=0; col<MATRIX_SIZE; col++) {
         anzeige[row][col][0]=0;
         anzeige[row][col][1]=0;
         anzeige[row][col][2]= 0;
@@ -165,19 +165,22 @@ void showClock(){
 
 
 void setmatrixanzeige(){
-  for(int row=0;row<11;row++){
-    for(int col=0;col<11;col++){
+  for(int row=0;row<MATRIX_SIZE;row++){
+    for(int col=0;col<MATRIX_SIZE;col++){
       matrixanzeige[row][col]=0;
     }
   } // matrixanzeige leeren
 
+  #if MATRIX_SIZE == 11
     for (int i=0; i<2; i++){
       matrixanzeige[0][i]=1;
   }  //ES
    for (int i=3; i<iist; i++){
       matrixanzeige[0][i]=1;
   }  //ist oder is (bayrisch)
+  #endif
 
+  #if MATRIX_SIZE == 11
   if (dbv==0 && uvv==1){
     for (int i=8; i<11; i++){
         matrixanzeige[9][i]=1;
@@ -188,6 +191,7 @@ void setmatrixanzeige(){
         matrixanzeige[9][i]=1;
     }   //UHR
   }
+  #endif
 
   
     // Minute words: set matrixanzeige using prebuilt LED index lists
@@ -219,14 +223,16 @@ void setmatrixanzeige(){
    matrixanzeige[5][3]=0;
   }// aus Eins Uhr wird Ein Uhr
   
+  #if MATRIX_SIZE == 11
   Serial.println("DEBUG MODULO:");
   for (int i=0; i<m; i++){
-    matrixanzeige[10][matrixminmodulomap[i]] = 1;
+    matrixanzeige[MATRIX_SIZE-1][matrixminmodulomap[i]] = 1;
     Serial.print("Modulo ");
     Serial.print(i);
     Serial.print(" LED ");
     Serial.println(matrixminmodulomap[i]);
   }  //Modulominitues
+  #endif
 
 
   

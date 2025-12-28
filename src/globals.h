@@ -35,7 +35,20 @@ extern OneButton bt3;
 #define LED_PIN    2
 
 // How many NeoPixels are attached to the Arduino?
+// Can be overridden by build flags in platformio.ini
+#ifndef LED_COUNT
 #define LED_COUNT 121
+#endif
+
+// Matrix size (11x11 for standard, 8x8 for mini)
+#ifndef MATRIX_SIZE
+#define MATRIX_SIZE 11
+#endif
+
+// Version type (0=deutsch, 1=bayrisch, 2=mini)
+#ifndef VERSION_TYPE
+#define VERSION_TYPE 0
+#endif
 
 // NeoPixel strip object
 extern Adafruit_NeoPixel strip;
@@ -43,12 +56,13 @@ extern Adafruit_NeoPixel strip;
 // Webserver
 extern ESP8266WebServer server;
 
-// Device configuration constants
-#define DEVICE_ID       "wortuhr_02"
-#define DEVICE_NAME     "Wortuhr"
+// Device identification
+extern String DEVICE_ID;
+extern String DEVICE_NAME;
+extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.0.3"
-#define CONFIG_URL "http://wortuhr.local"
+#define FW_VERSION "4.0.9"
+
 
 // Size of firmware version string stored in EEPROM
 #define VERSION_STR_MAX 16
@@ -59,40 +73,40 @@ extern ESP8266WebServer server;
 
 // MQTT configuration
 extern String DEVICE_MODEL;
-extern const char* topicOnState;
-extern const char* topicOnCmd;
-extern const char* topicEfxState;
-extern const char* topicEfxCmd;
+extern String topicOnState;
+extern String topicOnCmd;
+extern String topicEfxState;
+extern String topicEfxCmd;
 extern const char* effectOptions[10];
-extern const char* topicAniState;
-extern const char* topicAniCmd;
+extern String topicAniState;
+extern String topicAniCmd;
 extern const char* aniOptions[6];
-extern const char* topicV1State;
-extern const char* topicV1Cmd;
-extern const char* topicV2State;
-extern const char* topicV2Cmd;
-extern const char* topicH1State;
-extern const char* topicH1Cmd;
-extern const char* topicH2State;
-extern const char* topicH2Cmd;
-extern const char* topicVsState;
-extern const char* topicVsCmd;
-extern const char* topicHsState;
-extern const char* topicHsCmd;
+extern String topicV1State;
+extern String topicV1Cmd;
+extern String topicV2State;
+extern String topicV2Cmd;
+extern String topicH1State;
+extern String topicH1Cmd;
+extern String topicH2State;
+extern String topicH2Cmd;
+extern String topicVsState;
+extern String topicVsCmd;
+extern String topicHsState;
+extern String topicHsCmd;
 extern const char* farbschemaOptions[6];
-extern const char* topicEfxTimeState;
-extern const char* topicEfxTimeCmd;
+extern String topicEfxTimeState;
+extern String topicEfxTimeCmd;
 extern const char* effecttimeOptions[3];
-extern const char* topicAniTimeState;
-extern const char* topicAniTimeCmd;
-extern const char* topicAniDepthState;
-extern const char* topicAniDepthCmd;
+extern String topicAniTimeState;
+extern String topicAniTimeCmd;
+extern String topicAniDepthState;
+extern String topicAniDepthCmd;
 extern const char* effectdepthOptions[3];
 
 extern WiFiClient espClient;
 extern PubSubClient client;
 
-extern const char* dns_name;
+extern String dns_name;
 extern const char *ssid;
 extern const char *password;
 extern bool mqttenable;
@@ -104,6 +118,7 @@ typedef struct {
   int mqtt_port;
   char mqtt_user[30];
   char mqtt_password[20];
+  char mqtt_prefix[20];
 } settings;
 
 extern settings user_connect;
@@ -191,6 +206,9 @@ extern const uint8_t farben[][3] PROGMEM;
 // Read palette color from PROGMEM into int array[3]
 void getPaletteColor(uint8_t idx, int out[3]);
 
+// Build MQTT topics with prefix
+void buildMqttTopics();
+
 extern String htmlfarben[14];
 extern String htmlfarbschema[6];
 extern String htmlefx[10];
@@ -219,13 +237,13 @@ extern int baymatrixstundenmap[12][3];
 extern int baynexthour;
 
 extern int vordergrundschema;
-extern int vordergrund[11][11][3];
+extern int vordergrund[MATRIX_SIZE][MATRIX_SIZE][3];
 extern int hintergrundschema;
-extern int hintergrund[11][11][3];
-extern int anzeige[11][11][3];
-extern int anzeigealt[11][11][3];
-extern int matrix[11][11];
-extern int matrixanzeige[11][11];
+extern int hintergrund[MATRIX_SIZE][MATRIX_SIZE][3];
+extern int anzeige[MATRIX_SIZE][MATRIX_SIZE][3];
+extern int anzeigealt[MATRIX_SIZE][MATRIX_SIZE][3];
+extern int matrix[MATRIX_SIZE][MATRIX_SIZE];
+extern int matrixanzeige[MATRIX_SIZE][MATRIX_SIZE];
 
 // LED index mappings (built at startup)
 #define MAX_WORD_LEDS 15
@@ -251,13 +269,15 @@ extern int geburtstage[5][3];
 extern bool discoveryNeeded;
 extern bool haDiscoveryEnabled;
 
-// Animation arrays
+// Animation arrays (only for 11x11 matrix)
+#if MATRIX_SIZE == 11
 extern int t1[11];
 extern int t2[28];
 extern int t3[36];
 extern int t4[26];
 extern int t5[12];
 extern int startcolors[13][3];
+#endif
 
 // HTML content
 extern const char htmlhead[] PROGMEM;

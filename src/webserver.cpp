@@ -48,6 +48,9 @@ void handleWifi() {
 
   strncpy(user_connect.mqtt_password, server.arg("mqtt_password").c_str(), sizeof(user_connect.mqtt_password));
   user_connect.mqtt_password[sizeof(user_connect.mqtt_password) - 1] = '\0';
+  
+  strncpy(user_connect.mqtt_prefix, server.arg("mqtt_prefix").c_str(), sizeof(user_connect.mqtt_prefix));
+  user_connect.mqtt_prefix[sizeof(user_connect.mqtt_prefix) - 1] = '\0';
 
   // Daten ins EEPROM schreiben
   EEPROM.put(0, user_connect);
@@ -63,6 +66,9 @@ void handleWifi() {
 
   // persist design + commit
   EEPROM.commit();
+  
+  // Rebuild MQTT topics with new prefix
+  buildMqttTopics();
 
   // persist HA flag (single byte after version slot)
   int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
@@ -102,7 +108,7 @@ void handleWifi() {
     }
     // Aus Flash lesen und in String schreiben
     htmlContent += FPSTR(htmlhead);
-  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='"+String(mqttenablenr)+"' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Discovery <input type='checkbox' name='ha_enable' value='"+String(haenablenr)+"' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
+  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='"+String(mqttenablenr)+"' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Discovery <input type='checkbox' name='ha_enable' value='"+String(haenablenr)+"' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'><br/><label>MQTT Prefix (z.B. 'wortuhr' oder 'wohnzimmer')</label><input type='text' class='form-control' name='mqtt_prefix' value='"+String(user_connect.mqtt_prefix)+"' placeholder='wortuhr'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
 
     server.send(200,   "text/html", htmlContent );
   }
@@ -116,7 +122,7 @@ void handledesignPath() {
     int ausp = server.arg("aush").toInt()*60+server.arg("ausm").toInt();
 
       design customDesign = {
-    server.arg("db").toInt(),
+    VERSION_TYPE,  // Fixed at compile time
     server.arg("dv").toInt(),
     server.arg("uv").toInt(),
     anp,
@@ -141,17 +147,19 @@ void handledesignPath() {
   } else {
 
     String body ="<main class='form-signin'><form action='/setting' method='post'>";
-    body += "<h1 class=''>Design Setup</h1><br/><div class='form-floating'><label for='db'>Version</label>";
+    body += "<h1 class=''>Design Setup</h1>";
+#if VERSION_TYPE == 0
+    body += "<p><strong>Version:</strong> Deutsch</p>";
+#elif VERSION_TYPE == 1
+    body += "<p><strong>Version:</strong> Bayrisch</p>";
+#elif VERSION_TYPE == 2
+    body += "<p><strong>Version:</strong> Mini (8x8)</p>";
+#endif
     String selected1="";
     String selected2="";
     String selected3="";
-    if(dbv==0){
-      selected1="selected";
-    }else{
-      selected2="selected";
-    };
-    body += "<select name='db' id='db'><option value='0' "+selected1+">deutsch</option><option value='1' "+selected2+">bayrisch</option></select> </div>";
-    body += "<div class='form-floating'><br/><label for='dv'>Anzeige xx:45 </label>";
+#if MATRIX_SIZE == 11
+    body += "<br/><div class='form-floating'><label for='dv'>Anzeige xx:45 </label>";
   if(dvv==0){
       selected1="selected";
       selected2=" ";
@@ -160,7 +168,9 @@ void handledesignPath() {
       selected1=" ";
     };
     body += "<select name='dv' id='dv'><option value='0' "+selected1+" >dreiviertel</option><option value='1' "+selected2+" >viertel vor</option></select></div>";
-    body += "<div class='form-floating'><label for='uv'>Anzeige des Wortes &bdquo; Uhr &rdquo;  (nur in der deutschen Version möglich) </label>";
+#endif
+#if MATRIX_SIZE == 11
+    body += "<div class='form-floating'><label for='uv'>Anzeige des Wortes &bdquo; Uhr &rdquo;</label>";
     if(uvv==0){
       selected1="selected";
       selected2=" ";
@@ -175,6 +185,7 @@ void handledesignPath() {
       selected3="selected";
     };
     body += "<select name='uv' id='uv'><option value='0' "+selected1+">nie</option><option value='1' "+selected2+">immer</option><option value='2' "+selected3+">zur vollen Stunde</option></select> </div><br>";
+#endif
     
     body += "<div class='form-floating'><label for='nacht'>Im Nachtmodus werden die LEDs</label>";
     
