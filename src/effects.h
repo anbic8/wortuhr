@@ -12,5 +12,7 @@ void scrollall();
 void slidein();
 void diagonal();
 void rain();
+void spiral();
+void snakeeater();
 
 void showmystrip();

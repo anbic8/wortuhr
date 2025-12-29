@@ -81,6 +81,8 @@ bool publishEffectConfig() {
   opts.add("Slide in");
   opts.add("Diagonal");
   opts.add("Rain");
+  opts.add("Spirale");
+  opts.add("Schlangenfresser");
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;

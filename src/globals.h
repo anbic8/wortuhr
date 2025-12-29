@@ -61,7 +61,7 @@ extern String DEVICE_ID;
 extern String DEVICE_NAME;
 extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.0.9"
+#define FW_VERSION "4.1.10"
 
 
 // Size of firmware version string stored in EEPROM
@@ -77,7 +77,7 @@ extern String topicOnState;
 extern String topicOnCmd;
 extern String topicEfxState;
 extern String topicEfxCmd;
-extern const char* effectOptions[10];
+extern const char* effectOptions[12];
 extern String topicAniState;
 extern String topicAniCmd;
 extern const char* aniOptions[6];
@@ -211,7 +211,7 @@ void buildMqttTopics();
 
 extern String htmlfarben[14];
 extern String htmlfarbschema[6];
-extern String htmlefx[10];
+extern String htmlefx[12];
 extern String htmlefxtime[3];
 extern int htmlefxtimeint[3];
 extern int efxtimeint;

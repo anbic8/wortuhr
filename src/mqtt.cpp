@@ -94,8 +94,8 @@ void publishAll(){
 
 
 void publishEffectState() {
-  // safeguard: effectMode in [0..9]
-  uint8_t idx = constrain(effectMode, 0, 9);
+  // safeguard: effectMode in [0..11]
+  uint8_t idx = constrain(effectMode, 0, 11);
   const char* opt = effectOptions[idx];
   client.publish(topicEfxState.c_str(), opt, true);
 }

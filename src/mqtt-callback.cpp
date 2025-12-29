@@ -35,6 +35,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     else if (opt == "Slide in")     effectMode = 7;
     else if (opt == "Diagonal")     effectMode = 8;
     else if (opt == "Rain")         effectMode = 9;
+    else if (opt == "Spirale")      effectMode = 10;
+    else if (opt == "Schlangenfresser") effectMode = 11;
     else {
       // unbekannte Option, ggf. Default setzen
       effectMode = 0;
@@ -45,6 +47,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     Serial.print("EFX_MODE: ");
     Serial.println(effectMode);
     
+    // Trigger sofortigen Update
+    mqttonset = 1;
   }
     else if (String(topic) == topicAniCmd) {
     String opt = msg;  // msg = empfangener Payload
