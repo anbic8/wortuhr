@@ -664,16 +664,24 @@ void handleCheckUpdate() {
     String latestVersion = http.getString();
     latestVersion.trim();
     
-    String currentVersion = String(FW_VERSION);
+    String currentVersion = FW_VERSION;
     currentVersion.trim();
+    
+    Serial.print("Aktuelle Version: ");
+    Serial.println(currentVersion);
+    Serial.print("Neueste Version: ");
+    Serial.println(latestVersion);
     
     response += "\"current\":\"" + currentVersion + "\",";
     response += "\"latest\":\"" + latestVersion + "\",";
     response += "\"update\":" + String(currentVersion != latestVersion ? "true" : "false");
   } else {
-    response += "\"error\":\"GitHub nicht erreichbar\",\"update\":false";
+    response += "\"error\":\"GitHub nicht erreichbar (Code: " + String(httpCode) + ")\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"";
   }
   response += "}";
+  
+  Serial.print("Response: ");
+  Serial.println(response);
   
   http.end();
   server.send(200, "application/json", response);
