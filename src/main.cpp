@@ -155,6 +155,7 @@ void setup() {
   server.on("/update", handleUpload);
   server.on("/upload", HTTP_POST, handleUpdate, handleUploading);
   server.on("/ha", handleHAConfig);
+  server.on("/ha/discover", handleHADiscover);
   server.begin();
   Serial.println("Webserver gestartet");
 

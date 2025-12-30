@@ -52,9 +52,6 @@ void handleWifi() {
   strncpy(user_connect.mqtt_prefix, server.arg("mqtt_prefix").c_str(), sizeof(user_connect.mqtt_prefix));
   user_connect.mqtt_prefix[sizeof(user_connect.mqtt_prefix) - 1] = '\0';
 
-  // Daten ins EEPROM schreiben
-  EEPROM.put(0, user_connect);
-
   // Checkbox prüfen (nur vorhanden, wenn angehakt)
   user_design.mqttenable = server.hasArg("mqttenable") ? true : false;
   
@@ -62,22 +59,25 @@ void handleWifi() {
   bool ha_flag = server.hasArg("ha_enable") ? (server.arg("ha_enable")=="1") : false;
   haDiscoveryEnabled = ha_flag;
 
-  EEPROM.put(sizeof(settings)+sizeof(MyColor), user_design);
-
-  // persist design + commit
-  EEPROM.commit();
-  
-  // Rebuild MQTT topics with new prefix
-  buildMqttTopics();
-
-  // persist HA flag (single byte after version slot)
+  // EEPROM-Operationen: begin() einmal, alle Daten schreiben, dann commit()
   int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
   int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1;
   int haFlagOffset = verOffset + VERSION_STR_MAX;
+  
   EEPROM.begin(eepromTotalSize);
+  
+  // Daten ins EEPROM schreiben
+  EEPROM.put(0, user_connect);
+  EEPROM.put(sizeof(settings)+sizeof(MyColor), user_design);
+  // persist HA flag (single byte after version slot)
   EEPROM.write(haFlagOffset, ha_flag ? 1 : 0);
+  
+  // Alles auf einmal committen
   EEPROM.commit();
   EEPROM.end();
+  
+  // Rebuild MQTT topics with new prefix
+  buildMqttTopics();
 
 
   String htmlContent;
@@ -94,21 +94,9 @@ void handleWifi() {
   } else {
 
     String htmlContent;
-      int mqttenablenr;
-    if (mqttenable == true){
-      mqttenablenr = 1;
-    }else {
-      mqttenablenr = 0;
-    }
-    int haenablenr;
-    if (haDiscoveryEnabled == true) {
-      haenablenr = 1;
-    } else {
-      haenablenr = 0;
-    }
     // Aus Flash lesen und in String schreiben
     htmlContent += FPSTR(htmlhead);
-  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='"+String(mqttenablenr)+"' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Discovery <input type='checkbox' name='ha_enable' value='"+String(haenablenr)+"' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'><br/><label>MQTT Prefix (z.B. 'wortuhr' oder 'wohnzimmer')</label><input type='text' class='form-control' name='mqtt_prefix' value='"+String(user_connect.mqtt_prefix)+"' placeholder='wortuhr'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
+  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='1' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Discovery <input type='checkbox' name='ha_enable' value='1' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'><br/><label>MQTT Prefix (z.B. 'wortuhr' oder 'wohnzimmer')</label><input type='text' class='form-control' name='mqtt_prefix' value='"+String(user_connect.mqtt_prefix)+"' placeholder='wortuhr'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
 
     server.send(200,   "text/html", htmlContent );
   }
@@ -158,7 +146,7 @@ void handledesignPath() {
     String selected1="";
     String selected2="";
     String selected3="";
-#if MATRIX_SIZE == 11
+#if VERSION_TYPE == 0
     body += "<br/><div class='form-floating'><label for='dv'>Anzeige xx:45 </label>";
   if(dvv==0){
       selected1="selected";
@@ -169,7 +157,7 @@ void handledesignPath() {
     };
     body += "<select name='dv' id='dv'><option value='0' "+selected1+" >dreiviertel</option><option value='1' "+selected2+" >viertel vor</option></select></div>";
 #endif
-#if MATRIX_SIZE == 11
+#if VERSION_TYPE == 0
     body += "<div class='form-floating'><label for='uv'>Anzeige des Wortes &bdquo; Uhr &rdquo;</label>";
     if(uvv==0){
       selected1="selected";
@@ -279,7 +267,7 @@ void handlecolorPath() {
 
    myauswahl3 = " ";
 
-    for(int i=0;i<10;i++){
+    for(int i=0;i<12;i++){
       if(i==effectMode){
         myauswahl3 ="selected";
       }else{
@@ -352,6 +340,14 @@ void handlecolorPath() {
 
     anidepthform = anidepthform + "</select> </div>";
 
+    // Helligkeitsregler (0-100% Anzeige, intern 0-255)
+    int dimm_percent = (dimm * 100) / 255;
+    String dimmform = "<br/><div class='form-floating'><label for='dimm'>Helligkeit:</label><br/>";
+    dimmform += "<input type='range' id='dimm' name='dimm' min='0' max='100' step='1' value='"+String(dimm_percent)+"' ";
+    dimmform += "oninput='this.nextElementSibling.value = this.value' style='width: 80%;'>";
+    dimmform += "<output style='margin-left: 10px; font-weight: bold;'>"+String(dimm_percent)+"%</output>";
+    dimmform += "</div><br/>";
+
   if (server.method() == HTTP_POST) {
 
     // Helper: convert #RRGGBB into nearest palette index
@@ -405,6 +401,17 @@ void handlecolorPath() {
       hf2_idx = server.arg("hf2").toInt();
     }
 
+    // Helligkeit verarbeiten (0-100% → 0-255)
+    int dimm_percent = server.arg("dimm").toInt();
+    if (dimm_percent < 0) dimm_percent = 0;
+    if (dimm_percent > 100) dimm_percent = 100;
+    int new_dimm = (dimm_percent * 255) / 100;
+    dimm = new_dimm;
+    
+    // Helligkeit in design-Struktur speichern
+    user_design.dimm = new_dimm;
+    EEPROM.put(sizeof(settings)+sizeof(MyColor), user_design);
+
     MyColor customVar = {
       vf1_idx,
       vf2_idx,
@@ -434,7 +441,7 @@ void handlecolorPath() {
   } else {
     
 
-    body = body+vf1form+vf2form+vsform+hf1form+hf2form+hsform+efxform+efxtimeform+aniform+anitimeform+anidepthform+"<button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>";
+    body = body+vf1form+vf2form+vsform+hf1form+hf2form+hsform+efxform+efxtimeform+aniform+anitimeform+anidepthform+dimmform+"<button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>";
     String htmlContent;
 
     // Aus Flash lesen und in String schreiben
@@ -468,7 +475,38 @@ void handleHAConfig() {
     html += "<label>Enable Home Assistant discovery</label> ";
     html += "<input type='checkbox' name='ha_enable' value='1' ";
     if (haDiscoveryEnabled) html += "checked";
-    html += "> <br/><button type='submit'>Save</button></form></main></body></html>";
+    html += "> <br/><button type='submit'>Save</button></form>";
+    html += "<br/><hr/><br/>";
+    html += "<h2>Discovery manuell senden</h2>";
+    html += "<p>Sendet die Discovery-Konfiguration erneut an Home Assistant.</p>";
+    html += "<form action='/ha/discover' method='post'>";
+    html += "<button type='submit'>Discovery jetzt senden</button>";
+    html += "</form></main></body></html>";
+    server.send(200, "text/html", html);
+  }
+}
+
+void handleHADiscover() {
+  // Trigger manual discovery
+  if (haDiscoveryEnabled && mqttenable) {
+    discoveryNeeded = true;
+    String html = FPSTR(htmlhead);
+    html += "<main class='form-signin'><h1>Home Assistant Discovery</h1>";
+    html += "<p>Discovery wird beim nächsten MQTT-Connect gesendet.</p>";
+    html += "<p>Dies kann einige Sekunden dauern...</p>";
+    html += "<br/><a href='/ha'>Zurück</a></main></body></html>";
+    server.send(200, "text/html", html);
+    // Force MQTT reconnect to trigger discovery
+    if (client.connected()) {
+      client.disconnect();
+    }
+  } else {
+    String html = FPSTR(htmlhead);
+    html += "<main class='form-signin'><h1>Home Assistant Discovery</h1>";
+    html += "<p>Discovery kann nicht gesendet werden:</p><ul>";
+    if (!haDiscoveryEnabled) html += "<li>Home Assistant Discovery ist deaktiviert</li>";
+    if (!mqttenable) html += "<li>MQTT ist nicht aktiviert</li>";
+    html += "</ul><br/><a href='/ha'>Zurück</a></main></body></html>";
     server.send(200, "text/html", html);
   }
 }
