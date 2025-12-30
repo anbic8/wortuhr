@@ -583,7 +583,9 @@ void handleUpload(){
   body += "document.getElementById('versionStatus').style.display='block';";
   body += "fetch('/checkUpdate').then(r=>r.json()).then(d=>{";
   body += "let st=document.getElementById('versionStatus');";
-  body += "if(d.update){st.innerHTML='<p style=\"color:green;font-weight:bold\">✓ Neue Version verfügbar: '+d.latest+'</p>';";
+  body += "if(d.error){st.innerHTML='<p style=\"color:red;font-weight:bold\">✗ Fehler: '+d.error+'</p>';";
+  body += "document.getElementById('updateBtn').style.display='none';}";
+  body += "else if(d.update){st.innerHTML='<p style=\"color:green;font-weight:bold\">✓ Neue Version verfügbar: '+d.latest+'</p>';";
   body += "document.getElementById('updateBtn').style.display='inline-block';}";
   body += "else{st.innerHTML='<p style=\"color:blue;font-weight:bold\">✓ Auf neuestem Stand ('+d.current+')</p>';";
   body += "document.getElementById('updateBtn').style.display='none';}";
@@ -652,29 +654,69 @@ void handleCheckUpdate() {
   // GitHub URLs - ANPASSEN!
   String versionUrl = "https://raw.githubusercontent.com/anbic8/wortuhr/main/version.txt";
   
+  Serial.println("=== Version Check Start ===");
+  Serial.print("URL: ");
+  Serial.println(versionUrl);
+  Serial.print("Free Heap: ");
+  Serial.println(ESP.getFreeHeap());
+  
   WiFiClientSecure client;
   client.setInsecure(); // Für HTTPS ohne Zertifikatsprüfung
+  client.setBufferSizes(512, 512); // Reduziere Buffer für weniger RAM-Verbrauch
   
   HTTPClient http;
-  http.begin(client, versionUrl);
+  http.setTimeout(15000); // 15 Sekunden Timeout
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  http.setUserAgent("ESP8266");
+  
+  Serial.println("Beginne HTTP Request...");
+  bool beginResult = http.begin(client, versionUrl);
+  Serial.print("HTTP.begin() Result: ");
+  Serial.println(beginResult ? "OK" : "FAILED");
+  
+  if (!beginResult) {
+    String response = "{\"error\":\"HTTP begin fehlgeschlagen\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"}";
+    server.send(200, "application/json", response);
+    return;
+  }
+  
+  Serial.println("Sende GET Request...");
   int httpCode = http.GET();
+  Serial.print("HTTP Code: ");
+  Serial.println(httpCode);
   
   String response = "{";
   if (httpCode == 200) {
     String latestVersion = http.getString();
     latestVersion.trim();
+    // Entferne alle Whitespace-Zeichen und Zeilenumbrüche
+    latestVersion.replace("\r", "");
+    latestVersion.replace("\n", "");
+    latestVersion.replace(" ", "");
     
     String currentVersion = FW_VERSION;
     currentVersion.trim();
     
-    Serial.print("Aktuelle Version: ");
-    Serial.println(currentVersion);
-    Serial.print("Neueste Version: ");
-    Serial.println(latestVersion);
+    Serial.print("Aktuelle Version: '");
+    Serial.print(currentVersion);
+    Serial.println("'");
+    Serial.print("Neueste Version: '");
+    Serial.print(latestVersion);
+    Serial.println("'");
+    Serial.print("Vergleich (current != latest): ");
+    Serial.println(currentVersion != latestVersion ? "true" : "false");
+    Serial.print("String-Längen - Current: ");
+    Serial.print(currentVersion.length());
+    Serial.print(", Latest: ");
+    Serial.println(latestVersion.length());
+    
+    bool needsUpdate = (currentVersion != latestVersion);
     
     response += "\"current\":\"" + currentVersion + "\",";
     response += "\"latest\":\"" + latestVersion + "\",";
-    response += "\"update\":" + String(currentVersion != latestVersion ? "true" : "false");
+    response += "\"update\":" + String(needsUpdate ? "true" : "false");
+  } else if (httpCode == -1) {
+    response += "\"error\":\"Verbindungsfehler - DNS oder Netzwerkproblem\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"";
   } else {
     response += "\"error\":\"GitHub nicht erreichbar (Code: " + String(httpCode) + ")\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"";
   }
@@ -682,6 +724,7 @@ void handleCheckUpdate() {
   
   Serial.print("Response: ");
   Serial.println(response);
+  Serial.println("=== Version Check Ende ===");
   
   http.end();
   server.send(200, "application/json", response);
