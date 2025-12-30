@@ -209,7 +209,41 @@ void handledesignPath() {
 }
 void handlecolorPath() {
 
-  String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Color Setup</h1><br/>";
+  String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Color Setup</h1>";
+  
+  // Kompakte Vorschau mit minimalem JavaScript
+  body += "<div style='margin:20px 0;text-align:center;background:rgba(0,0,0,0.1);padding:20px;border-radius:10px'>";
+  body += "<h3>Vorschau</h3>";
+  body += "<div id='p' style='display:inline-grid;grid-template-columns:repeat(11,20px);gap:2px;background:#000;padding:5px;border-radius:5px'></div></div>";
+  
+  body += "<script>let v1={r:" + String(vf1[0]) + ",g:" + String(vf1[1]) + ",b:" + String(vf1[2]) + "},";
+  body += "v2={r:" + String(vf2[0]) + ",g:" + String(vf2[1]) + ",b:" + String(vf2[2]) + "},";
+  body += "h1={r:" + String(hf1[0]) + ",g:" + String(hf1[1]) + ",b:" + String(hf1[2]) + "},";
+  body += "h2={r:" + String(hf2[0]) + ",g:" + String(hf2[1]) + ",b:" + String(hf2[2]) + "},";
+  body += "vs=" + String(vordergrundschema) + ",hs=" + String(hintergrundschema) + ",br=" + String(dimm) + ";";
+  
+  #if VERSION_TYPE == 0 && MATRIX_SIZE == 11
+  body += "let w=[[1,1,0,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,0,0,0,0]];";
+  #elif VERSION_TYPE == 1 && MATRIX_SIZE == 11
+  body += "let w=[[1,1,0,1,1,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,0,0,0,0]];";
+  #else
+  body += "let w=Array(11).fill(0).map(()=>Array(11).fill(0));";
+  #endif
+  
+  body += "function gc(c1,c2,s,r,c){if(s==0)return c1;if(s==1)return(r+c)%2?c1:c2;if(s==2)return c%2?c1:c2;if(s==3)return r%2?c1:c2;";
+  body += "if(s==4){let t=r/10;return{r:Math.round(c1.r*(1-t)+c2.r*t),g:Math.round(c1.g*(1-t)+c2.g*t),b:Math.round(c1.b*(1-t)+c2.b*t)};}";
+  body += "let x=[{r:255,g:255,b:255},{r:255,g:0,b:0},{r:255,g:0,b:128},{r:255,g:0,b:255},{r:128,g:0,b:255},{r:0,g:0,b:255},{r:0,g:128,b:255},{r:0,g:255,b:255},{r:0,g:255,b:128},{r:0,g:255,b:0},{r:128,g:255,b:0},{r:255,g:255,b:0},{r:255,g:128,b:0}];return x[(r*11+c)%13];}";
+  body += "function u(){let p=document.getElementById('p'),cs=p.children;if(cs.length==0){for(let i=0;i<121;i++){let d=document.createElement('div');d.style='width:20px;height:20px;border-radius:2px';p.appendChild(d);}}";
+  body += "for(let r=0;r<11;r++)for(let c=0;c<11;c++){let i=r*11+c,a=w[r][c],cl=gc(a?v1:h1,a?v2:h2,a?vs:hs,r,c);";
+  body += "cs[i].style.background='rgb('+Math.round(cl.r*br/255)+','+Math.round(cl.g*br/255)+','+Math.round(cl.b*br/255)+')';}}";
+  body += "document.addEventListener('DOMContentLoaded',()=>{u();";
+  body += "['vf1_color','vf2_color','hf1_color','hf2_color'].forEach(id=>{let e=document.getElementById(id);if(e)e.oninput=()=>{let h=e.value,r=parseInt(h.substring(1,3),16),g=parseInt(h.substring(3,5),16),b=parseInt(h.substring(5,7),16);";
+  body += "if(id=='vf1_color'){v1.r=r;v1.g=g;v1.b=b;}else if(id=='vf2_color'){v2.r=r;v2.g=g;v2.b=b;}else if(id=='hf1_color'){h1.r=r;h1.g=g;h1.b=b;}else{h2.r=r;h2.g=g;h2.b=b;}u();};});";
+  body += "let ve=document.getElementById('vs');if(ve)ve.onchange=()=>{vs=parseInt(ve.value);u();};";
+  body += "let he=document.getElementById('hs');if(he)he.onchange=()=>{hs=parseInt(he.value);u();};";
+  body += "let de=document.getElementById('dimm');if(de)de.oninput=()=>{br=Math.round(parseInt(de.value)*255/100);u();};});</script>";
+  
+  body += "<br/>";
     // Color pickers: show current palette color as default
     char buf[8];
     int tmpc[3];
@@ -430,24 +464,34 @@ void handlecolorPath() {
     EEPROM.commit();
     readTime();
     neuefarbe();
-    body = body+"<div><p>Deine Farbeinstellung wurde gespeichert!</p></div>"+"<p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>";
-    String htmlContent;
-
-    // Aus Flash lesen und in String schreiben
-    htmlContent += FPSTR(htmlhead);
-    htmlContent += body;
-    server.send(200,   "text/html", htmlContent  );
+    
+    server.sendHeader("Location", "/color");
+    server.send(303);
     
   } else {
+    // GET Request - Formular anzeigen
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/html", "");
     
-
-    body = body+vf1form+vf2form+vsform+hf1form+hf2form+hsform+efxform+efxtimeform+aniform+anitimeform+anidepthform+dimmform+"<button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>";
-    String htmlContent;
-
-    // Aus Flash lesen und in String schreiben
-    htmlContent += FPSTR(htmlhead);
-    htmlContent += body;
-    server.send(200,   "text/html", htmlContent);
+    // Header senden
+    server.sendContent(FPSTR(htmlhead));
+    server.sendContent(body);
+    
+    // Formulare senden
+    server.sendContent(vf1form);
+    server.sendContent(vf2form);
+    server.sendContent(vsform);
+    server.sendContent(hf1form);
+    server.sendContent(hf2form);
+    server.sendContent(hsform);
+    server.sendContent(efxform);
+    server.sendContent(efxtimeform);
+    server.sendContent(aniform);
+    server.sendContent(anitimeform);
+    server.sendContent(anidepthform);
+    server.sendContent(dimmform);
+    server.sendContent("<button type='submit'>Speichern</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>");
+    server.sendContent("");
   }
 }
 
@@ -512,14 +556,49 @@ void handleHADiscover() {
 }
 
 void handleUpload(){
-      String body = "<form method='POST' action='/upload' enctype='multipart/form-data'><input type='file' name='firmware' accept='.bin'><input type='submit' value='Update Firmware'></form><p>  aktuelle Version deiner Wortuhr "+String(FW_VERSION)+" </p></div></body></html>";
-    String htmlContent;
-
-    // Aus Flash lesen und in String schreiben
-    htmlContent += FPSTR(htmlhead);
-    htmlContent += body;
-    server.send(200,   "text/html", htmlContent);
-
+  String body = "<main class='form-signin'><h1>Firmware Update</h1>";
+  body += "<p>Aktuelle Version: <strong>" + String(FW_VERSION) + "</strong></p>";
+  
+  // GitHub Update Section
+  body += "<div style='margin:20px 0;padding:15px;background:#f5f5f5;border-radius:5px'>";
+  body += "<h3>GitHub Update</h3>";
+  body += "<p>Prüfe auf neue Version von GitHub</p>";
+  body += "<button onclick='checkVersion()' style='padding:10px 20px;margin:5px'>Version prüfen</button>";
+  body += "<div id='versionStatus' style='margin:10px 0;padding:10px;display:none'></div>";
+  body += "<button id='updateBtn' onclick='doUpdate()' style='padding:10px 20px;margin:5px;display:none'>Jetzt updaten</button>";
+  body += "</div>";
+  
+  // Manual Upload Section
+  body += "<div style='margin:20px 0;padding:15px;background:#f5f5f5;border-radius:5px'>";
+  body += "<h3>Manuelle Firmware</h3>";
+  body += "<p>Lade eine .bin Datei direkt hoch</p>";
+  body += "<form method='POST' action='/upload' enctype='multipart/form-data'>";
+  body += "<input type='file' name='firmware' accept='.bin' style='margin:10px 0'>";
+  body += "<br><input type='submit' value='Firmware hochladen' style='padding:10px 20px'>";
+  body += "</form></div>";
+  
+  body += "<script>";
+  body += "function checkVersion(){";
+  body += "document.getElementById('versionStatus').innerHTML='<p>Prüfe...</p>';";
+  body += "document.getElementById('versionStatus').style.display='block';";
+  body += "fetch('/checkUpdate').then(r=>r.json()).then(d=>{";
+  body += "let st=document.getElementById('versionStatus');";
+  body += "if(d.update){st.innerHTML='<p style=\"color:green;font-weight:bold\">✓ Neue Version verfügbar: '+d.latest+'</p>';";
+  body += "document.getElementById('updateBtn').style.display='inline-block';}";
+  body += "else{st.innerHTML='<p style=\"color:blue;font-weight:bold\">✓ Auf neuestem Stand ('+d.current+')</p>';";
+  body += "document.getElementById('updateBtn').style.display='none';}";
+  body += "}).catch(e=>{document.getElementById('versionStatus').innerHTML='<p style=\"color:red\">Fehler: '+e+'</p>';});}";
+  body += "function doUpdate(){if(confirm('Update jetzt starten? Die Uhr wird neu gestartet.')){";
+  body += "document.getElementById('versionStatus').innerHTML='<p>Update läuft... Bitte warten!</p>';";
+  body += "document.getElementById('updateBtn').disabled=true;";
+  body += "fetch('/doUpdate').then(r=>r.text()).then(d=>{";
+  body += "document.getElementById('versionStatus').innerHTML='<p style=\"color:green\">'+d+'</p>';";
+  body += "setTimeout(()=>{location.href='/';},5000);";
+  body += "}).catch(e=>{document.getElementById('versionStatus').innerHTML='<p style=\"color:red\">Fehler: '+e+'</p>';});}}";
+  body += "</script></main></body></html>";
+  
+  String htmlContent = String(FPSTR(htmlhead)) + body;
+  server.send(200, "text/html", htmlContent);
 }
 
 void handleUpdate() {
@@ -567,4 +646,119 @@ void handleUploading() {
   } else {
     Serial.printf("Update abgebrochen\n");
   }
+}
+
+void handleCheckUpdate() {
+  // GitHub URLs - ANPASSEN!
+  String versionUrl = "https://raw.githubusercontent.com/anbic8/wortuhr/main/version.txt";
+  
+  WiFiClientSecure client;
+  client.setInsecure(); // Für HTTPS ohne Zertifikatsprüfung
+  
+  HTTPClient http;
+  http.begin(client, versionUrl);
+  int httpCode = http.GET();
+  
+  String response = "{";
+  if (httpCode == 200) {
+    String latestVersion = http.getString();
+    latestVersion.trim();
+    
+    String currentVersion = String(FW_VERSION);
+    currentVersion.trim();
+    
+    response += "\"current\":\"" + currentVersion + "\",";
+    response += "\"latest\":\"" + latestVersion + "\",";
+    response += "\"update\":" + String(currentVersion != latestVersion ? "true" : "false");
+  } else {
+    response += "\"error\":\"GitHub nicht erreichbar\",\"update\":false";
+  }
+  response += "}";
+  
+  http.end();
+  server.send(200, "application/json", response);
+}
+
+void handleDoUpdate() {
+  // Zuerst neueste Version von GitHub abrufen
+  String versionUrl = "https://raw.githubusercontent.com/anbic8/wortuhr/main/version.txt";
+  
+  WiFiClientSecure client;
+  client.setInsecure();
+  
+  HTTPClient http;
+  http.begin(client, versionUrl);
+  int httpCode = http.GET();
+  
+  String latestVersion = "";
+  if (httpCode == 200) {
+    latestVersion = http.getString();
+    latestVersion.trim();
+  } else {
+    server.send(500, "text/plain", "Kann Version nicht abrufen");
+    http.end();
+    return;
+  }
+  http.end();
+  
+  // GitHub Download URL mit neuester Version
+  String firmwareUrl;
+  
+  #if VERSION_TYPE == 0
+    firmwareUrl = "https://github.com/anbic8/wortuhr/releases/download/v" + latestVersion + "/firmware_deutsche_11x11.bin";
+  #elif VERSION_TYPE == 1
+    firmwareUrl = "https://github.com/anbic8/wortuhr/releases/download/v" + latestVersion + "/firmware_bayrisch_11x11.bin";
+  #else
+    firmwareUrl = "https://github.com/anbic8/wortuhr/releases/download/v" + latestVersion + "/firmware_mini_8x8.bin";
+  #endif
+  
+  http.begin(client, firmwareUrl);
+  httpCode = http.GET();
+  
+  if (httpCode != 200) {
+    server.send(500, "text/plain", "Download fehlgeschlagen: " + String(httpCode));
+    http.end();
+    return;
+  }
+  
+  int contentLength = http.getSize();
+  if (contentLength <= 0) {
+    server.send(500, "text/plain", "Ungültige Firmware-Größe");
+    http.end();
+    return;
+  }
+  
+  bool canBegin = Update.begin(contentLength);
+  if (!canBegin) {
+    server.send(500, "text/plain", "Nicht genug Speicher für Update");
+    http.end();
+    return;
+  }
+  
+  // Antwort an Browser senden, bevor Update startet
+  server.send(200, "text/plain", "Update wird installiert... Die Uhr startet in wenigen Sekunden neu.");
+  
+  WiFiClient* stream = http.getStreamPtr();
+  size_t written = Update.writeStream(*stream);
+  
+  if (written == contentLength) {
+    Serial.println("Firmware erfolgreich geschrieben");
+  } else {
+    Serial.println("Fehler beim Schreiben: " + String(written) + " / " + String(contentLength));
+  }
+  
+  if (Update.end()) {
+    Serial.println("Update erfolgreich!");
+    if (Update.isFinished()) {
+      http.end();
+      delay(1000);
+      ESP.restart();
+    } else {
+      Serial.println("Update nicht abgeschlossen");
+    }
+  } else {
+    Serial.println("Update Fehler: " + String(Update.getError()));
+  }
+  
+  http.end();
 }

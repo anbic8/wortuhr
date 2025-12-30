@@ -1,5 +1,7 @@
 #include <ESP8266WebServer.h>
 #include <Updater.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include "globals.h"
 #include <EEPROM.h>
 #include "show.h"
@@ -19,3 +21,5 @@ void handledesignPath();
 void handleUpload();
 void handleUpdate();
 void handleUploading();
+void handleCheckUpdate();
+void handleDoUpdate();

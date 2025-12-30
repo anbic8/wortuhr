@@ -154,6 +154,8 @@ void setup() {
   server.on("/datenschutz", handledatenschutz);
   server.on("/update", handleUpload);
   server.on("/upload", HTTP_POST, handleUpdate, handleUploading);
+  server.on("/checkUpdate", handleCheckUpdate);
+  server.on("/doUpdate", handleDoUpdate);
   server.on("/ha", handleHAConfig);
   server.on("/ha/discover", handleHADiscover);
   server.begin();
