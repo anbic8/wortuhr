@@ -559,45 +559,40 @@ void handleUpload(){
   String body = "<main class='form-signin'><h1>Firmware Update</h1>";
   body += "<p>Aktuelle Version: <strong>" + String(FW_VERSION) + "</strong></p>";
   
-  // GitHub Update Section
-  body += "<div style='margin:20px 0;padding:15px;background:#f5f5f5;border-radius:5px'>";
-  body += "<h3>GitHub Update</h3>";
-  body += "<p>Prüfe auf neue Version von GitHub</p>";
-  body += "<button onclick='checkVersion()' style='padding:10px 20px;margin:5px'>Version prüfen</button>";
-  body += "<div id='versionStatus' style='margin:10px 0;padding:10px;display:none'></div>";
-  body += "<button id='updateBtn' onclick='doUpdate()' style='padding:10px 20px;margin:5px;display:none'>Jetzt updaten</button>";
-  body += "</div>";
+  // GitHub Releases Section
+  body += "<div style='margin:20px 0;padding:15px;background:rgba(255,255,255,0.1);border-radius:5px;border-left:4px solid #4caf50;color:#fff'>";
+  body += "<h3 style='color:#4caf50'><i class='fab fa-github'></i> Neue Versionen auf GitHub</h3>";
+  body += "<p style='color:#fff'>Lade die neueste Firmware von GitHub herunter:</p>";
+  body += "<ol style='line-height:1.8;color:#fff'>";
+  body += "<li>Gehe zu <a href='https://github.com/anbic8/wortuhr/releases' target='_blank' style='color:#66bb6a;font-weight:bold'>GitHub Releases</a></li>";
+  body += "<li>Lade die passende .bin Datei herunter:<ul>";
+  
+  #if VERSION_TYPE == 0
+  body += "<li><strong>firmware_deutsche_11x11.bin</strong> (deine Version)</li>";
+  #elif VERSION_TYPE == 1
+  body += "<li><strong>firmware_bayrisch_11x11.bin</strong> (deine Version)</li>";
+  #elif VERSION_TYPE == 2
+  body += "<li><strong>firmware_mini_8x8.bin</strong> (deine Version)</li>";
+  #endif
+  
+  body += "</ul></li>";
+  body += "<li>Lade die Datei unten hoch</li>";
+  body += "</ol></div>";
   
   // Manual Upload Section
-  body += "<div style='margin:20px 0;padding:15px;background:#f5f5f5;border-radius:5px'>";
-  body += "<h3>Manuelle Firmware</h3>";
-  body += "<p>Lade eine .bin Datei direkt hoch</p>";
+  body += "<div style='margin:20px 0;padding:15px;background:rgba(255,255,255,0.1);border-radius:5px;color:#fff'>";
+  body += "<h3 style='color:#fff'><i class='fas fa-upload'></i> Firmware hochladen</h3>";
+  body += "<p style='color:#fff'>Wähle die heruntergeladene .bin Datei aus:</p>";
   body += "<form method='POST' action='/upload' enctype='multipart/form-data'>";
-  body += "<input type='file' name='firmware' accept='.bin' style='margin:10px 0'>";
-  body += "<br><input type='submit' value='Firmware hochladen' style='padding:10px 20px'>";
+  body += "<input type='file' name='firmware' accept='.bin' style='margin:10px 0;padding:10px;border:2px solid #555;border-radius:5px;background:#2c3e50;color:#fff'>";
+  body += "<br><input type='submit' value='Firmware hochladen' style='padding:12px 30px;background:#4caf50;color:white;border:none;border-radius:5px;cursor:pointer;font-size:16px'>";
   body += "</form></div>";
   
-  body += "<script>";
-  body += "function checkVersion(){";
-  body += "document.getElementById('versionStatus').innerHTML='<p>Prüfe...</p>';";
-  body += "document.getElementById('versionStatus').style.display='block';";
-  body += "fetch('/checkUpdate').then(r=>r.json()).then(d=>{";
-  body += "let st=document.getElementById('versionStatus');";
-  body += "if(d.error){st.innerHTML='<p style=\"color:red;font-weight:bold\">✗ Fehler: '+d.error+'</p>';";
-  body += "document.getElementById('updateBtn').style.display='none';}";
-  body += "else if(d.update){st.innerHTML='<p style=\"color:green;font-weight:bold\">✓ Neue Version verfügbar: '+d.latest+'</p>';";
-  body += "document.getElementById('updateBtn').style.display='inline-block';}";
-  body += "else{st.innerHTML='<p style=\"color:blue;font-weight:bold\">✓ Auf neuestem Stand ('+d.current+')</p>';";
-  body += "document.getElementById('updateBtn').style.display='none';}";
-  body += "}).catch(e=>{document.getElementById('versionStatus').innerHTML='<p style=\"color:red\">Fehler: '+e+'</p>';});}";
-  body += "function doUpdate(){if(confirm('Update jetzt starten? Die Uhr wird neu gestartet.')){";
-  body += "document.getElementById('versionStatus').innerHTML='<p>Update läuft... Bitte warten!</p>';";
-  body += "document.getElementById('updateBtn').disabled=true;";
-  body += "fetch('/doUpdate').then(r=>r.text()).then(d=>{";
-  body += "document.getElementById('versionStatus').innerHTML='<p style=\"color:green\">'+d+'</p>';";
-  body += "setTimeout(()=>{location.href='/';},5000);";
-  body += "}).catch(e=>{document.getElementById('versionStatus').innerHTML='<p style=\"color:red\">Fehler: '+e+'</p>';});}}";
-  body += "</script></main></body></html>";
+  body += "<div style='margin:20px 0;padding:10px;background:rgba(255,193,7,0.2);border-radius:5px;border-left:4px solid #ffc107;color:#fff'>";
+  body += "<p style='margin:0;color:#ffc107'><strong>⚠️ Hinweis:</strong> Die Uhr wird während des Updates neu gestartet. Trenne die Stromversorgung nicht!</p>";
+  body += "</div>";
+  
+  body += "</main></body></html>";
   
   String htmlContent = String(FPSTR(htmlhead)) + body;
   server.send(200, "text/html", htmlContent);
@@ -648,168 +643,4 @@ void handleUploading() {
   } else {
     Serial.printf("Update abgebrochen\n");
   }
-}
-
-void handleCheckUpdate() {
-  // GitHub URLs - ANPASSEN!
-  String versionUrl = "https://raw.githubusercontent.com/anbic8/wortuhr/main/version.txt";
-  
-  Serial.println("=== Version Check Start ===");
-  Serial.print("URL: ");
-  Serial.println(versionUrl);
-  Serial.print("Free Heap: ");
-  Serial.println(ESP.getFreeHeap());
-  
-  WiFiClientSecure client;
-  client.setInsecure(); // Für HTTPS ohne Zertifikatsprüfung
-  client.setBufferSizes(512, 512); // Reduziere Buffer für weniger RAM-Verbrauch
-  
-  HTTPClient http;
-  http.setTimeout(15000); // 15 Sekunden Timeout
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-  http.setUserAgent("ESP8266");
-  
-  Serial.println("Beginne HTTP Request...");
-  bool beginResult = http.begin(client, versionUrl);
-  Serial.print("HTTP.begin() Result: ");
-  Serial.println(beginResult ? "OK" : "FAILED");
-  
-  if (!beginResult) {
-    String response = "{\"error\":\"HTTP begin fehlgeschlagen\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"}";
-    server.send(200, "application/json", response);
-    return;
-  }
-  
-  Serial.println("Sende GET Request...");
-  int httpCode = http.GET();
-  Serial.print("HTTP Code: ");
-  Serial.println(httpCode);
-  
-  String response = "{";
-  if (httpCode == 200) {
-    String latestVersion = http.getString();
-    latestVersion.trim();
-    // Entferne alle Whitespace-Zeichen und Zeilenumbrüche
-    latestVersion.replace("\r", "");
-    latestVersion.replace("\n", "");
-    latestVersion.replace(" ", "");
-    
-    String currentVersion = FW_VERSION;
-    currentVersion.trim();
-    
-    Serial.print("Aktuelle Version: '");
-    Serial.print(currentVersion);
-    Serial.println("'");
-    Serial.print("Neueste Version: '");
-    Serial.print(latestVersion);
-    Serial.println("'");
-    Serial.print("Vergleich (current != latest): ");
-    Serial.println(currentVersion != latestVersion ? "true" : "false");
-    Serial.print("String-Längen - Current: ");
-    Serial.print(currentVersion.length());
-    Serial.print(", Latest: ");
-    Serial.println(latestVersion.length());
-    
-    bool needsUpdate = (currentVersion != latestVersion);
-    
-    response += "\"current\":\"" + currentVersion + "\",";
-    response += "\"latest\":\"" + latestVersion + "\",";
-    response += "\"update\":" + String(needsUpdate ? "true" : "false");
-  } else if (httpCode == -1) {
-    response += "\"error\":\"Verbindungsfehler - DNS oder Netzwerkproblem\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"";
-  } else {
-    response += "\"error\":\"GitHub nicht erreichbar (Code: " + String(httpCode) + ")\",\"update\":false,\"current\":\"" + String(FW_VERSION) + "\"";
-  }
-  response += "}";
-  
-  Serial.print("Response: ");
-  Serial.println(response);
-  Serial.println("=== Version Check Ende ===");
-  
-  http.end();
-  server.send(200, "application/json", response);
-}
-
-void handleDoUpdate() {
-  // Zuerst neueste Version von GitHub abrufen
-  String versionUrl = "https://raw.githubusercontent.com/anbic8/wortuhr/main/version.txt";
-  
-  WiFiClientSecure client;
-  client.setInsecure();
-  
-  HTTPClient http;
-  http.begin(client, versionUrl);
-  int httpCode = http.GET();
-  
-  String latestVersion = "";
-  if (httpCode == 200) {
-    latestVersion = http.getString();
-    latestVersion.trim();
-  } else {
-    server.send(500, "text/plain", "Kann Version nicht abrufen");
-    http.end();
-    return;
-  }
-  http.end();
-  
-  // GitHub Download URL mit neuester Version
-  String firmwareUrl;
-  
-  #if VERSION_TYPE == 0
-    firmwareUrl = "https://github.com/anbic8/wortuhr/releases/download/v" + latestVersion + "/firmware_deutsche_11x11.bin";
-  #elif VERSION_TYPE == 1
-    firmwareUrl = "https://github.com/anbic8/wortuhr/releases/download/v" + latestVersion + "/firmware_bayrisch_11x11.bin";
-  #else
-    firmwareUrl = "https://github.com/anbic8/wortuhr/releases/download/v" + latestVersion + "/firmware_mini_8x8.bin";
-  #endif
-  
-  http.begin(client, firmwareUrl);
-  httpCode = http.GET();
-  
-  if (httpCode != 200) {
-    server.send(500, "text/plain", "Download fehlgeschlagen: " + String(httpCode));
-    http.end();
-    return;
-  }
-  
-  int contentLength = http.getSize();
-  if (contentLength <= 0) {
-    server.send(500, "text/plain", "Ungültige Firmware-Größe");
-    http.end();
-    return;
-  }
-  
-  bool canBegin = Update.begin(contentLength);
-  if (!canBegin) {
-    server.send(500, "text/plain", "Nicht genug Speicher für Update");
-    http.end();
-    return;
-  }
-  
-  // Antwort an Browser senden, bevor Update startet
-  server.send(200, "text/plain", "Update wird installiert... Die Uhr startet in wenigen Sekunden neu.");
-  
-  WiFiClient* stream = http.getStreamPtr();
-  size_t written = Update.writeStream(*stream);
-  
-  if (written == contentLength) {
-    Serial.println("Firmware erfolgreich geschrieben");
-  } else {
-    Serial.println("Fehler beim Schreiben: " + String(written) + " / " + String(contentLength));
-  }
-  
-  if (Update.end()) {
-    Serial.println("Update erfolgreich!");
-    if (Update.isFinished()) {
-      http.end();
-      delay(1000);
-      ESP.restart();
-    } else {
-      Serial.println("Update nicht abgeschlossen");
-    }
-  } else {
-    Serial.println("Update Fehler: " + String(Update.getError()));
-  }
-  
-  http.end();
 }
