@@ -2,8 +2,6 @@
 #define MQTT_MAX_PACKET_SIZE 1024
 
 #include <ESP8266WiFi.h> //Aufbau des Wlans
-#include <NTPClient.h> 
-#include <WiFiUdp.h>
 #include <Adafruit_NeoPixel.h>
 #include "OneButton.h"
 #include <Arduino.h>
@@ -11,9 +9,14 @@
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
-// Kommentiere aus für RCT
-//#include <Wire.h>
-//#define DS1307_ADDRESS 0x68 // I²C Address
+// RCT or NTP mode - controlled by USE_RCT build flag
+#ifdef USE_RCT
+  #include <Wire.h>
+  #define DS1307_ADDRESS 0x68 // I²C Address
+#else
+  #include <NTPClient.h> 
+  #include <WiFiUdp.h>
+#endif
 
 
 #include <time.h>   
@@ -37,6 +40,9 @@
 #include "mqtt-ha.h"
 #include "birthday.h"
 #include "effects.h"
+#ifdef USE_RCT
+  #include "rct.h"
+#endif
 
  
 void clearEEPROM() {
@@ -150,7 +156,9 @@ void setup() {
   server.on("/info", handleInfo);
   server.on("/wifi", handleWifi);
   server.on("/birthday", handlebirthday);
-  //server.on("/settime", handlesettime);
+  #ifdef USE_RCT
+    server.on("/settime", handlesettime);
+  #endif
   server.on("/datenschutz", handledatenschutz);
   server.on("/update", handleUpload);
   server.on("/upload", HTTP_POST, handleUpdate, handleUploading);
@@ -159,7 +167,9 @@ void setup() {
   server.begin();
   Serial.println("Webserver gestartet");
 
-configTime(MY_TZ, MY_NTP_SERVER); 
+#ifndef USE_RCT
+  configTime(MY_TZ, MY_NTP_SERVER);
+#endif 
 
   strip.begin();
   //Button1
@@ -259,6 +269,11 @@ Serial.println();
  
   // rebuild LED index mappings (after possible bay/viertel substitutions)
   buildLedMappings();
+  
+  #ifdef USE_RCT
+    Wire.begin(5, 13); // Initialize I2C for RTC
+  #endif
+  
   startup();
   neuefarbe();
 
@@ -275,7 +290,6 @@ if(mode==1){
   if(milliaktuell>threshold){
     
     readTime();
-    //readTimeRCT();
     letzterstand=milliaktuell;
     threshold = letzterstand+warten-(seconds*1000)+1000;
     

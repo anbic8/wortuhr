@@ -14,5 +14,6 @@ void diagonal();
 void rain();
 void spiral();
 void snakeeater();
+void diamond();
 
 void showmystrip();

@@ -13,7 +13,9 @@ void handleWifi();
 void handlebirthday();
 void handleHAConfig();
 void handleHADiscover();
-// void handlesettime();
+#ifdef USE_RCT
+  void handlesettime();
+#endif
 void handlecolorPath();
 void handledesignPath();
 void handleUpload();

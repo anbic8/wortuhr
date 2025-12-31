@@ -86,7 +86,7 @@ void handleWifi() {
     htmlContent += FPSTR(htmlhead);
 
     
-  htmlContent = htmlContent +"<h1>Wifi Setup</h1> <br/> <p>Deine Netzwerkeinstellungen wurden gespeichert!<br />Die Uhr wird jetzt neu gestartet. </p></main></body></html>";
+  htmlContent = htmlContent +"<h1>WLAN Einstellungen</h1> <br/> <p>Deine Netzwerkeinstellungen wurden gespeichert!<br />Die Uhr wird jetzt neu gestartet. </p></main></body></html>";
 
      server.send(200,   "text/html", htmlContent );
     delay(2000);
@@ -96,7 +96,7 @@ void handleWifi() {
     String htmlContent;
     // Aus Flash lesen und in String schreiben
     htmlContent += FPSTR(htmlhead);
-  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>Wifi Setup</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Password</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>Mqtt aktivieren <input type='checkbox' name='mqttenable' value='1' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Discovery <input type='checkbox' name='ha_enable' value='1' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT user</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>Mqtt Password</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'><br/><label>MQTT Prefix (z.B. 'wortuhr' oder 'wohnzimmer')</label><input type='text' class='form-control' name='mqtt_prefix' value='"+String(user_connect.mqtt_prefix)+"' placeholder='wortuhr'></div><br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
+  htmlContent =htmlContent + "<main class='form-signin'> <form action='/wifi' method='post'> <h1 class=''>WLAN Einstellungen</h1><br/><div class='form-floating'><label>SSID</label><input type='text' class='form-control' name='ssid' value='"+user_connect.ssid+"'> <br/><label>Passwort</label><input type='password' class='form-control' name='password' value='"+user_connect.password+"'><br/>MQTT aktivieren <input type='checkbox' name='mqttenable' value='1' "+(mqttenable?"checked":"")+" ><br/>Home Assistant Erkennung <input type='checkbox' name='ha_enable' value='1' "+(haDiscoveryEnabled?"checked":"")+" ><br><label>MQTT Server</label><input type='text' class='form-control' name='mqtt_server' value='"+user_connect.mqtt_server+"'><br><label>MQTT Port</label><input type='text' class='form-control' name='mqtt_port' value='"+user_connect.mqtt_port+"'><br><label>MQTT Benutzer</label><input type='text' class='form-control' name='mqtt_user' value='"+user_connect.mqtt_user+"'><br/><label>MQTT Passwort</label><input type='password' class='form-control' name='mqtt_password' value='"+user_connect.mqtt_password+"'><br/><label>MQTT Präfix (z.B. 'wortuhr' oder 'wohnzimmer')</label><input type='text' class='form-control' name='mqtt_prefix' value='"+String(user_connect.mqtt_prefix)+"' placeholder='wortuhr'></div><br/><button type='submit'>Speichern</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
 
     server.send(200,   "text/html", htmlContent );
   }
@@ -123,19 +123,27 @@ void handledesignPath() {
 
   EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
   EEPROM.commit();
-    String htmlContent;
-
-    // Aus Flash lesen und in String schreiben
-    htmlContent += FPSTR(htmlhead);
-    htmlContent = htmlContent + "<main class='form-signin'> <h1>Design Setup</h1> <br/> <p>Deine Einstellungen wurden gespeichert!<br />Die Uhr wird jetzt neu gestartet. </p></main></body></html>";
-    server.send(200,   "text/html",  htmlContent );
-   delay(2000);
-  ESP.restart();
+  
+  // Einstellungen direkt übernehmen ohne Neustart
+  dvv = customDesign.dv;
+  uvv = customDesign.uv;
+  an = customDesign.an;
+  aus = customDesign.aus;
+  nacht = customDesign.nacht;
+  
+  // LED-Mappings neu aufbauen falls dvv geändert wurde
+  buildLedMappings();
+  
+  String htmlContent;
+  // Aus Flash lesen und in String schreiben
+  htmlContent += FPSTR(htmlhead);
+  htmlContent = htmlContent + "<main class='form-signin'> <h1>Einstellungen</h1> <br/> <p>Deine Einstellungen wurden gespeichert und übernommen!</p></main></body></html>";
+  server.send(200, "text/html", htmlContent);
    
   } else {
 
     String body ="<main class='form-signin'><form action='/setting' method='post'>";
-    body += "<h1 class=''>Design Setup</h1>";
+    body += "<h1 class=''>Einstellungen</h1>";
 #if VERSION_TYPE == 0
     body += "<p><strong>Version:</strong> Deutsch</p>";
 #elif VERSION_TYPE == 1
@@ -197,7 +205,7 @@ void handledesignPath() {
     body += "<div class='form-floating'><label for='anh'>Nachtmodus ausschalten:</label>";
     body += "<input type='number' id='anh' name='anh' min='0' max='23' step='1' value='"+String(anh)+"'> :<input type='number' id='anm' name='anm' min='0' max='59' step='1' value='"+String(anm)+"'>Uhr<br/> ";
     
-    body += "<br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
+    body += "<br/><button type='submit'>Speichern</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
     String htmlContent;
 
     // Aus Flash lesen und in String schreiben
@@ -209,32 +217,34 @@ void handledesignPath() {
 }
 void handlecolorPath() {
 
-  String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Color Setup</h1>";
+  String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Farbeinstellungen</h1>";
   
   // Kompakte Vorschau mit minimalem JavaScript
   body += "<div style='margin:20px 0;text-align:center;background:rgba(0,0,0,0.1);padding:20px;border-radius:10px'>";
   body += "<h3>Vorschau</h3>";
-  body += "<div id='p' style='display:inline-grid;grid-template-columns:repeat(11,20px);gap:2px;background:#000;padding:5px;border-radius:5px'></div></div>";
+  body += "<div id='p' style='display:inline-grid;grid-template-columns:repeat(" + String(MATRIX_SIZE) + ",20px);gap:2px;background:#000;padding:5px;border-radius:5px'></div></div>";
   
   body += "<script>let v1={r:" + String(vf1[0]) + ",g:" + String(vf1[1]) + ",b:" + String(vf1[2]) + "},";
   body += "v2={r:" + String(vf2[0]) + ",g:" + String(vf2[1]) + ",b:" + String(vf2[2]) + "},";
   body += "h1={r:" + String(hf1[0]) + ",g:" + String(hf1[1]) + ",b:" + String(hf1[2]) + "},";
   body += "h2={r:" + String(hf2[0]) + ",g:" + String(hf2[1]) + ",b:" + String(hf2[2]) + "},";
-  body += "vs=" + String(vordergrundschema) + ",hs=" + String(hintergrundschema) + ",br=" + String(dimm) + ";";
+  body += "vs=" + String(vordergrundschema) + ",hs=" + String(hintergrundschema) + ",br=" + String(dimm) + ",ms=" + String(MATRIX_SIZE) + ";";
   
   #if VERSION_TYPE == 0 && MATRIX_SIZE == 11
   body += "let w=[[1,1,0,1,1,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,0,0,0,0]];";
   #elif VERSION_TYPE == 1 && MATRIX_SIZE == 11
   body += "let w=[[1,1,0,1,1,1,1,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,0,0,0,0]];";
+  #elif VERSION_TYPE == 2 && MATRIX_SIZE == 8
+  body += "let w=[[1,1,1,1,1,1,1,1],[0,0,0,0,0,0,0,0],[1,1,1,1,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,1,1,1,1]];";
   #else
-  body += "let w=Array(11).fill(0).map(()=>Array(11).fill(0));";
+  body += "let w=Array(" + String(MATRIX_SIZE) + ").fill(0).map(()=>Array(" + String(MATRIX_SIZE) + ").fill(0));";
   #endif
   
   body += "function gc(c1,c2,s,r,c){if(s==0)return c1;if(s==1)return(r+c)%2?c1:c2;if(s==2)return c%2?c1:c2;if(s==3)return r%2?c1:c2;";
-  body += "if(s==4){let t=r/10;return{r:Math.round(c1.r*(1-t)+c2.r*t),g:Math.round(c1.g*(1-t)+c2.g*t),b:Math.round(c1.b*(1-t)+c2.b*t)};}";
-  body += "let x=[{r:255,g:255,b:255},{r:255,g:0,b:0},{r:255,g:0,b:128},{r:255,g:0,b:255},{r:128,g:0,b:255},{r:0,g:0,b:255},{r:0,g:128,b:255},{r:0,g:255,b:255},{r:0,g:255,b:128},{r:0,g:255,b:0},{r:128,g:255,b:0},{r:255,g:255,b:0},{r:255,g:128,b:0}];return x[(r*11+c)%13];}";
-  body += "function u(){let p=document.getElementById('p'),cs=p.children;if(cs.length==0){for(let i=0;i<121;i++){let d=document.createElement('div');d.style='width:20px;height:20px;border-radius:2px';p.appendChild(d);}}";
-  body += "for(let r=0;r<11;r++)for(let c=0;c<11;c++){let i=r*11+c,a=w[r][c],cl=gc(a?v1:h1,a?v2:h2,a?vs:hs,r,c);";
+  body += "if(s==4){let t=r/(ms-1);return{r:Math.round(c1.r*(1-t)+c2.r*t),g:Math.round(c1.g*(1-t)+c2.g*t),b:Math.round(c1.b*(1-t)+c2.b*t)};}";
+  body += "let x=[{r:255,g:255,b:255},{r:255,g:0,b:0},{r:255,g:0,b:128},{r:255,g:0,b:255},{r:128,g:0,b:255},{r:0,g:0,b:255},{r:0,g:128,b:255},{r:0,g:255,b:255},{r:0,g:255,b:128},{r:0,g:255,b:0},{r:128,g:255,b:0},{r:255,g:255,b:0},{r:255,g:128,b:0}];return x[(r*ms+c)%13];}";
+  body += "function u(){let p=document.getElementById('p'),cs=p.children;if(cs.length==0){for(let i=0;i<ms*ms;i++){let d=document.createElement('div');d.style='width:20px;height:20px;border-radius:2px';p.appendChild(d);}}";
+  body += "for(let r=0;r<ms;r++)for(let c=0;c<ms;c++){let i=r*ms+c,a=w[r][c],cl=gc(a?v1:h1,a?v2:h2,a?vs:hs,r,c);";
   body += "cs[i].style.background='rgb('+Math.round(cl.r*br/255)+','+Math.round(cl.g*br/255)+','+Math.round(cl.b*br/255)+')';}}";
   body += "document.addEventListener('DOMContentLoaded',()=>{u();";
   body += "['vf1_color','vf2_color','hf1_color','hf2_color'].forEach(id=>{let e=document.getElementById(id);if(e)e.oninput=()=>{let h=e.value,r=parseInt(h.substring(1,3),16),g=parseInt(h.substring(3,5),16),b=parseInt(h.substring(5,7),16);";
@@ -301,7 +311,7 @@ void handlecolorPath() {
 
    myauswahl3 = " ";
 
-    for(int i=0;i<12;i++){
+    for(int i=0;i<13;i++){
       if(i==effectMode){
         myauswahl3 ="selected";
       }else{
@@ -516,15 +526,15 @@ void handleHAConfig() {
   } else {
     String html = FPSTR(htmlhead);
     html += "<main class='form-signin'><form action='/ha' method='post'><h1>Home Assistant</h1>";
-    html += "<label>Enable Home Assistant discovery</label> ";
+    html += "<label>Home Assistant Erkennung aktivieren</label> ";
     html += "<input type='checkbox' name='ha_enable' value='1' ";
     if (haDiscoveryEnabled) html += "checked";
-    html += "> <br/><button type='submit'>Save</button></form>";
+    html += "> <br/><button type='submit'>Speichern</button></form>";
     html += "<br/><hr/><br/>";
-    html += "<h2>Discovery manuell senden</h2>";
-    html += "<p>Sendet die Discovery-Konfiguration erneut an Home Assistant.</p>";
+    html += "<h2>Erkennung manuell senden</h2>";
+    html += "<p>Sendet die Erkennungs-Konfiguration erneut an Home Assistant.</p>";
     html += "<form action='/ha/discover' method='post'>";
-    html += "<button type='submit'>Discovery jetzt senden</button>";
+    html += "<button type='submit'>Erkennung jetzt senden</button>";
     html += "</form></main></body></html>";
     server.send(200, "text/html", html);
   }
@@ -535,8 +545,8 @@ void handleHADiscover() {
   if (haDiscoveryEnabled && mqttenable) {
     discoveryNeeded = true;
     String html = FPSTR(htmlhead);
-    html += "<main class='form-signin'><h1>Home Assistant Discovery</h1>";
-    html += "<p>Discovery wird beim nächsten MQTT-Connect gesendet.</p>";
+    html += "<main class='form-signin'><h1>Home Assistant Erkennung</h1>";
+    html += "<p>Erkennung wird beim nächsten MQTT-Verbindungsaufbau gesendet.</p>";
     html += "<p>Dies kann einige Sekunden dauern...</p>";
     html += "<br/><a href='/ha'>Zurück</a></main></body></html>";
     server.send(200, "text/html", html);
@@ -546,9 +556,9 @@ void handleHADiscover() {
     }
   } else {
     String html = FPSTR(htmlhead);
-    html += "<main class='form-signin'><h1>Home Assistant Discovery</h1>";
-    html += "<p>Discovery kann nicht gesendet werden:</p><ul>";
-    if (!haDiscoveryEnabled) html += "<li>Home Assistant Discovery ist deaktiviert</li>";
+    html += "<main class='form-signin'><h1>Home Assistant Erkennung</h1>";
+    html += "<p>Erkennung kann nicht gesendet werden:</p><ul>";
+    if (!haDiscoveryEnabled) html += "<li>Home Assistant Erkennung ist deaktiviert</li>";
     if (!mqttenable) html += "<li>MQTT ist nicht aktiviert</li>";
     html += "</ul><br/><a href='/ha'>Zurück</a></main></body></html>";
     server.send(200, "text/html", html);
@@ -556,7 +566,7 @@ void handleHADiscover() {
 }
 
 void handleUpload(){
-  String body = "<main class='form-signin'><h1>Firmware Update</h1>";
+  String body = "<main class='form-signin'><h1>Firmware Aktualisierung</h1>";
   body += "<p>Aktuelle Version: <strong>" + String(FW_VERSION) + "</strong></p>";
   
   // GitHub Releases Section

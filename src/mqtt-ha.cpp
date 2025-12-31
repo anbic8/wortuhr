@@ -83,6 +83,7 @@ bool publishEffectConfig() {
   opts.add("Rain");
   opts.add("Spirale");
   opts.add("Schlangenfresser");
+  opts.add("Raute");
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;

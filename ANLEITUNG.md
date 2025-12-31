@@ -234,13 +234,11 @@ Die Uhr kann bis zu **5 Geburtstage** speichern und anzeigen.
 ### Geburtstags-Anzeige
 
 **Am Geburtstag selbst:**
-- Die Uhr zeigt eine besondere Animation
-- Das Alter wird angezeigt (berechnet aus dem Jahr)
+- Die Uhr zeigt ein buntes Farbschema mit zufälligen Farben
 
 
 **Deaktivieren:**
 - Klicke auf Löschen und speichern
-- Oder Jahr auf 0 (zeigt dann kein Alter an)
 
 ---
 

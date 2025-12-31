@@ -1,4 +1,9 @@
-/*
+#include "rct.h"
+#include "globals.h"
+
+#ifdef USE_RCT
+#include <Wire.h>
+
 void readTimeRCT()
 {
     Wire.beginTransmission(DS1307_ADDRESS);
@@ -20,8 +25,6 @@ void readTimeRCT()
    mb = int(minutes/5);
   h = hours;
   m = minutes%5;
-
-
 }
 
 void setDate(int s, int m, int h, int d, int month, int y )
@@ -39,7 +42,6 @@ void setDate(int s, int m, int h, int d, int month, int y )
 }
 
 void handlesettime() {
-
   if (server.method() == HTTP_POST) {
     int s = server.arg("seconds").toInt();
     int m = server.arg("minutes").toInt();
@@ -50,28 +52,21 @@ void handlesettime() {
 
     setDate(s, m, h, d, month, y);
     
-  String htmlContent;
-
-    // Aus Flash lesen und in String schreiben
+    String htmlContent;
     htmlContent += FPSTR(htmlhead);
-
-  String body ="<h1>Uhrzeit einstellen</h1> <br/> <p>Deine Uhrzeit wurden gespeichert!<br /> </p></main></body></html>";
-
+    String body ="<h1>Uhrzeit einstellen</h1> <br/> <p>Deine Uhrzeit wurden gespeichert!<br /> </p></main></body></html>";
     htmlContent += body;
-    server.send(200,   "text/html", htmlContent );
+    server.send(200, "text/html", htmlContent);
   } else {
-
-  String body ="<main class='form-signin'> <form action='/' method='post'> <h1 class=''>Wifi Setup</h1><br/>";
-  body += "<div class='form-floating'><label>Uhrzeit hh:mm:ss</label><br>";
-  body += "<input type='number' id='hours' name='hours' min='0' max='23' step='1'>:<input type='number' id='minutes' name='minutes' min='0' max='59' step='1'>:<input type='number' id='seconds' name='seconds' min='0' max='59' step='1'></div><br/>";
-  body += "<div class='form-floating'><label>datum einstellen dd.mm.yyyy</label><br>";
-  body += "<input type='number' id='day' name='day' min='0' max='31' step='1'>:<input type='number' id='month' name='mont' min='0' max='12' step='1'>.<input type='number' id='year' name='year' min='2025' max='3000' step='1'></div><br/>";
-  body += "<br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
-
-    server.send(200,   "text/html", htmlhead + body );
+    String body ="<main class='form-signin'> <form action='/settime' method='post'> <h1 class=''>Zeit einstellen</h1><br/>";
+    body += "<div class='form-floating'><label>Uhrzeit hh:mm:ss</label><br>";
+    body += "<input type='number' id='hours' name='hours' min='0' max='23' step='1'>:<input type='number' id='minutes' name='minutes' min='0' max='59' step='1'>:<input type='number' id='seconds' name='seconds' min='0' max='59' step='1'></div><br/>";
+    body += "<div class='form-floating'><label>Datum einstellen dd.mm.yyyy</label><br>";
+    body += "<input type='number' id='day' name='day' min='1' max='31' step='1'>.<input type='number' id='month' name='month' min='1' max='12' step='1'>.<input type='number' id='year' name='year' min='2025' max='3000' step='1'></div><br/>";
+    body += "<br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
+    server.send(200, "text/html", htmlhead + body);
   }
 }
-
 
 int decToBcd(int value)
 {
@@ -82,4 +77,5 @@ int bcdToDec(int value)
 {
     return ((value/16*10) + (value%16));
 }
-*/
+
+#endif // USE_RCT

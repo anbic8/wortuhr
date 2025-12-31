@@ -47,7 +47,7 @@ Um die Uhr zu steuern, sende MQTT-Nachrichten an folgende Topics:
 | Topic | Beschreibung | Mögliche Werte |
 |-------|--------------|----------------|
 | `wortuhr/on/set` | Uhr ein/ausschalten | `1` oder `0` |
-| `wortuhr/efx/set` | Effekt setzen | `kein Effekt`, `zufällig`, `Fade`, `Running`, `Schlange`, `Zeilen`, `Scrollen`, `Slide in`, `Diagonal`, `Rain`, `Spirale`, `Schlangenfresser` |
+| `wortuhr/efx/set` | Effekt setzen | `kein Effekt`, `zufällig`, `Fade`, `Running`, `Schlange`, `Zeilen`, `Scrollen`, `Slide in`, `Diagonal`, `Rain`, `Spirale`, `Schlangenfresser`, `Raute` |
 | `wortuhr/ani/set` | Animation setzen | `keine Animation`, `Blinken`, `Vordergrundblinken`, `Pulsieren`, `Verlauf`, `Fliegen` |
 | `wortuhr/v1/set` | Vordergrundfarbe 1 (JSON) | Siehe Beispiel unten |
 | `wortuhr/v2/set` | Vordergrundfarbe 2 (JSON) | Siehe Beispiel unten |

@@ -3,10 +3,16 @@
 #include "color.h"
 #include <EEPROM.h>
 #include "effects.h"
+#ifdef USE_RCT
+  #include "rct.h"
+#endif
 
 void readTime(){
-  readTimeNet();
-  //readTimeRCT();
+  #ifdef USE_RCT
+    readTimeRCT();
+  #else
+    readTimeNet();
+  #endif
   checkon();
 }
 
@@ -153,6 +159,9 @@ void showClock(){
       break;
     case 11:
         snakeeater();
+      break;
+    case 12:
+        diamond();
       break;
     default:
       noeffect();

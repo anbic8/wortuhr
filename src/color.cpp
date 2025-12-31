@@ -97,8 +97,6 @@ void neuefarbe(){
     hintergrunderstellen(hf1, hf2);
     vordergrunderstellen(vf1, vf2);
     readTime();
-
-    //readTimeRCT();
   showClock();
   //sendJsonMessage();
 }

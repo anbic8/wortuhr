@@ -2,37 +2,46 @@
 #include "globals.h"
 #include "show.h"
 #include "effects.h"
-
+#ifdef USE_RCT
+  #include "rct.h"
+#endif
 
 
 void bt1click(){
   if(mode==1){
-    //Dimmfaktordurchspielen
-    dimm=dimm+50;
-    if(dimm>255){
-      dimm=50;
-    }
-    strip.setBrightness(dimm);
-    strip.show();
-    /* //RTC-Modus
-    if(settimemode==0){
-      dimm=dimm+50;
-    if(dimm>255){
-      dimm=0;
-    }
-    }
-    if(settimemode==1){
-      stunden=stunden-1;
-      showwhilesetting();
-    }
-    if(settimemode==2){
-      minutes = minutes - 1;
-      if(minutes==-1){
-        minutes==59;
+    #ifdef USE_RCT
+      // RTC-Modus: Zeit manuell einstellen
+      if(settimemode==0){
+        dimm=dimm+50;
+        if(dimm>255){
+          dimm=50;
+        }
+        strip.setBrightness(dimm);
+        strip.show();
       }
-      showwhilesetting();
-    }
-    */
+      if(settimemode==1){
+        stunden=stunden-1;
+        if(stunden<0){
+          stunden=23;
+        }
+        showwhilesetting();
+      }
+      if(settimemode==2){
+        minutes = minutes - 1;
+        if(minutes<0){
+          minutes=59;
+        }
+        showwhilesetting();
+      }
+    #else
+      // NTP-Modus: Nur Helligkeit anpassen
+      dimm=dimm+50;
+      if(dimm>255){
+        dimm=50;
+      }
+      strip.setBrightness(dimm);
+      strip.show();
+    #endif
 
     
   }else{
@@ -61,45 +70,53 @@ showClock();
 }
 void bt2click(){
   if(mode==1){
+    #ifdef USE_RCT
+      // RTC-Modus: Zeit einstellen
+      if(settimemode==0){
+        // Sommer/ Winterzeit hin und her
+        if(sommerzeit==0){
+          stunden = stunden +1;
+          sommerzeit=1;
+        }else{
+          stunden = stunden-1;
+          sommerzeit=0;
+        }
+        setDate(seconds, minutes, stunden, day, month, year);
 
-    /* //RTC-Modus
-    if(settimemode==0){
-      // Sommer/ Winterzeit hin und her
-      if(sommerzeit==0){
-        stunden = stunden +1;
-        sommerzeit=1;
-          
-  }else{
-      stunden = stunden-1;
-      sommerzeit=0;
-  }
-  void setDate(seconds, minutes, stunden, day, month, year );
+        design customDesign = {
+          dbv,
+          dvv,
+          uvv,
+          an,
+          aus,
+          nacht,
+          sommerzeit,
+          dimm
+        };
 
-      design customDesign = {
-    server.arg("db").toInt(),
-    server.arg("dv").toInt(),
-    server.arg("uv").toInt(),
-    anp,
-    ausp,
-    server.arg("nacht").toInt(),
-    sommerzeit,
-    dimm
-  };
-
-  EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
-  EEPROM.commit();
-  }
-
-    }
-    if(settimemode==1){
-      stunden = stunden + 1;
-      showwhilesetting();
-    }
-    if(settimemode==2){
-      minutes = minutes+1;
-      showwhilesetting();
-    }
-    */
+        EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
+        EEPROM.commit();
+      }
+      if(settimemode==1){
+        stunden = stunden + 1;
+        if(stunden>23){
+          stunden=0;
+        }
+        showwhilesetting();
+      }
+      if(settimemode==2){
+        minutes = minutes+1;
+        if(minutes>59){
+          minutes=0;
+        }
+        showwhilesetting();
+      }
+    #else
+      // NTP-Modus: Demo - Minuten ändern
+      minutes=minutes+5;
+      minutes=minutes%60;
+      showClock();
+    #endif
      
   }else{
     minutes=minutes+5;
@@ -114,15 +131,16 @@ void bt2double(){
 }
 void bt2longs(){
   if(mode==1){
-    /*RTC Mode
-    if(settimemode<3){
-    settimemode++;
-    }
-    if(settimemode==3){
-      settimemode=0;
-      void setDate(seconds, minutes, stunden, day, month, year );
+    #ifdef USE_RCT
+      // RTC Mode: Zyklus durch Einstellungsmodi
+      if(settimemode<3){
+        settimemode++;
       }
-    */
+      if(settimemode==3){
+        settimemode=0;
+        setDate(seconds, minutes, stunden, day, month, year);
+      }
+    #endif
   }
 }
 

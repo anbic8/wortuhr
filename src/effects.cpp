@@ -351,10 +351,6 @@ void spiral(){
 }
 
 void snakeeater(){
-  // Aktuelle Anzeige vorbereiten (mit Hintergrund)
-  vordergrunderstellen(vf1, vf2);
-  hintergrunderstellen(hf1, hf2);
-  
   // Schlangenlänge
   const int snakeLen = 5;
   int snake[snakeLen][2];
@@ -369,34 +365,28 @@ void snakeeater(){
     snake[i][1] = centerCol;
   }
   
-  // Speichere alte matrixanzeige (welche Buchstaben waren an)
-  int oldMatrix[MATRIX_SIZE][MATRIX_SIZE];
-  for(int row = 0; row < MATRIX_SIZE; row++) {
-    for(int col = 0; col < MATRIX_SIZE; col++) {
-      oldMatrix[row][col] = matrixanzeige[row][col];
-    }
-  }
+  // WICHTIG: matrixanzeige hat bereits die NEUE Zeit!
+  // Die alte Zeit muss aus anzeigealt rekonstruiert werden
+  // Wir prüfen, welche Pixel in anzeigealt aktiv waren (Farbe != 0,0,0 oder != Hintergrund)
   
-  // Zeige alte Zeit mit Hintergrund
+  // Zeige alte Zeit (aus anzeigealt - die ist noch vom letzten showmystrip())
   for(int row = 0; row < MATRIX_SIZE; row++) {
     for(int col = 0; col < MATRIX_SIZE; col++) {
-      if(oldMatrix[row][col] == 1) {
-        strip.setPixelColor(matrix[row][col], strip.Color(vordergrund[row][col][0], vordergrund[row][col][1], vordergrund[row][col][2]));
-      } else {
-        strip.setPixelColor(matrix[row][col], strip.Color(hintergrund[row][col][0], hintergrund[row][col][1], hintergrund[row][col][2]));
-      }
+      strip.setPixelColor(matrix[row][col], strip.Color(anzeigealt[row][col][0], anzeigealt[row][col][1], anzeigealt[row][col][2]));
     }
   }
   strip.show();
   delay(efxtime);
   
-  // Sammle alle Buchstaben-Positionen der alten Zeit (nur Vordergrund, max 50)
+  // Sammle alle Vordergrund-Positionen der alten Zeit aus anzeigealt
+  // Wir erkennen Vordergrund daran, dass die Farbe nicht komplett schwarz ist
   int targets[50][2];
   int targetCount = 0;
   
   for(int row = 0; row < MATRIX_SIZE && targetCount < 50; row++) {
     for(int col = 0; col < MATRIX_SIZE && targetCount < 50; col++) {
-      if(oldMatrix[row][col] == 1) {
+      // Prüfe ob Pixel in anzeigealt eine Farbe hat (nicht schwarz)
+      if(anzeigealt[row][col][0] > 10 || anzeigealt[row][col][1] > 10 || anzeigealt[row][col][2] > 10) {
         targets[targetCount][0] = row;
         targets[targetCount][1] = col;
         targetCount++;
@@ -455,7 +445,7 @@ void snakeeater(){
         // Anzeige updaten
         for(int r = 0; r < MATRIX_SIZE; r++) {
           for(int c = 0; c < MATRIX_SIZE; c++) {
-            // Prüfe ob Buchstabe schon gefressen
+            // Prüfe ob Pixel schon gefressen
             bool eaten = false;
             for(int v = 0; v < targetCount; v++) {
               if(visited[v] && targets[v][0] == r && targets[v][1] == c) {
@@ -464,12 +454,11 @@ void snakeeater(){
               }
             }
             
-            // Wenn Buchstabe gefressen oder war nie Buchstabe: zeige Hintergrund
-            if(eaten || oldMatrix[r][c] == 0) {
-              strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
+            // Wenn Pixel gefressen: zeige schwarz, sonst alte Farbe aus anzeigealt
+            if(eaten) {
+              strip.setPixelColor(matrix[r][c], strip.Color(0, 0, 0));
             } else {
-              // Noch nicht gefressen: zeige Vordergrund
-              strip.setPixelColor(matrix[r][c], strip.Color(vordergrund[r][c][0], vordergrund[r][c][1], vordergrund[r][c][2]));
+              strip.setPixelColor(matrix[r][c], strip.Color(anzeigealt[r][c][0], anzeigealt[r][c][1], anzeigealt[r][c][2]));
             }
           }
         }
@@ -488,20 +477,21 @@ void snakeeater(){
     }
   }
   
-  // Alle Buchstaben sind gefressen - zeige nur Hintergrund
+  // Alle alten Pixel sind gefressen - zeige komplett schwarz
   for(int r = 0; r < MATRIX_SIZE; r++) {
     for(int c = 0; c < MATRIX_SIZE; c++) {
-      strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
+      strip.setPixelColor(matrix[r][c], strip.Color(0, 0, 0));
     }
   }
   strip.show();
   delay(efxtime);
   
-  // Neue Anzeige vorbereiten
+  // JETZT erst die neue Zeit vorbereiten (Farben berechnen)
   vordergrunderstellen(vf1, vf2);
   hintergrunderstellen(hf1, hf2);
+  setanzeige(); // anzeige[][] mit neuen Farben basierend auf matrixanzeige (die schon die neue Zeit hat)
   
-  // Phase 2: Neue Buchstaben platzieren (nur Vordergrund der neuen Zeit, max 50)
+  // Phase 2: Neue Buchstaben platzieren (aus matrixanzeige, max 50)
   targetCount = 0;
   for(int row = 0; row < MATRIX_SIZE && targetCount < 50; row++) {
     for(int col = 0; col < MATRIX_SIZE && targetCount < 50; col++) {
@@ -569,11 +559,11 @@ void snakeeater(){
             }
             
             if(placed) {
-              // Buchstabe platziert: zeige Vordergrund
-              strip.setPixelColor(matrix[r][c], strip.Color(vordergrund[r][c][0], vordergrund[r][c][1], vordergrund[r][c][2]));
+              // Buchstabe platziert: zeige berechnete Farbe aus anzeige[][]
+              strip.setPixelColor(matrix[r][c], strip.Color(anzeige[r][c][0], anzeige[r][c][1], anzeige[r][c][2]));
             } else {
-              // Noch nicht platziert: zeige Hintergrund
-              strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
+              // Noch nicht platziert: zeige schwarz
+              strip.setPixelColor(matrix[r][c], strip.Color(0, 0, 0));
             }
           }
         }
@@ -593,5 +583,63 @@ void snakeeater(){
   }
   
   // Finale Anzeige
+  showmystrip();
+}
+
+void diamond(){
+  // Alte Anzeige ist noch in anzeigealt gespeichert
+  // Neue Anzeige vorbereiten
+  setanzeige();
+  
+  int centerRow = MATRIX_SIZE / 2;
+  int centerCol = MATRIX_SIZE / 2;
+  
+  // Berechne maximale Rauten-Distanz (von Ecke zur Mitte)
+  int maxDist = centerRow + centerCol;
+  
+  // Phase 1: Von außen nach innen - alte Zeit zur Mitte zusammenziehen
+  // Starte von der maximalen Distanz (Ecken) und gehe zur Mitte (0)
+  for(int dist = maxDist; dist >= 0; dist--) {
+    for(int row = 0; row < MATRIX_SIZE; row++) {
+      for(int col = 0; col < MATRIX_SIZE; col++) {
+        // Berechne Manhattan-Distanz von diesem Pixel zur Mitte (Rauten-Distanz)
+        int pixelDist = abs(row - centerRow) + abs(col - centerCol);
+        
+        if(pixelDist >= dist) {
+          // Pixel an dieser oder größerer Distanz: ausschalten
+          strip.setPixelColor(matrix[row][col], strip.Color(0, 0, 0));
+        } else {
+          // Pixel näher zur Mitte: zeige alte Farbe (noch nicht ausgeschaltet)
+          strip.setPixelColor(matrix[row][col], strip.Color(anzeigealt[row][col][0], anzeigealt[row][col][1], anzeigealt[row][col][2]));
+        }
+      }
+    }
+    strip.show();
+    delay(efxtime);
+  }
+  
+  // Kurze Pause in der Mitte (alles schwarz)
+  delay(efxtime);
+  
+  // Phase 2: Von innen nach außen - neue Zeit von der Mitte aus aufbauen
+  for(int dist = 0; dist <= maxDist; dist++) {
+    for(int row = 0; row < MATRIX_SIZE; row++) {
+      for(int col = 0; col < MATRIX_SIZE; col++) {
+        int pixelDist = abs(row - centerRow) + abs(col - centerCol);
+        
+        if(pixelDist <= dist) {
+          // Pixel in dieser oder näherer Distanz: zeige neue Farbe
+          strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
+        } else {
+          // Pixel weiter außen: noch schwarz
+          strip.setPixelColor(matrix[row][col], strip.Color(0, 0, 0));
+        }
+      }
+    }
+    strip.show();
+    delay(efxtime);
+  }
+  
+  // Finale Anzeige speichern
   showmystrip();
 }
