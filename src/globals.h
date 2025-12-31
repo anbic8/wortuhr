@@ -227,14 +227,12 @@ extern int flypos[3][2];
 extern int matrixminmap[12][9];
 extern const int matrixminmodulomap[4];
 extern int ste;
-extern int iist;
+extern int iist;  // Set by VERSION_TYPE at compile time
 extern int matrixstundenmap[12][3];
-extern int nexthour;
+extern int nexthour;  // Set by VERSION_TYPE at compile time
 
 extern int baymatrixminmap[12][9];
-extern int bayiist;
 extern int baymatrixstundenmap[12][3];
-extern int baynexthour;
 
 extern int vordergrundschema;
 extern int vordergrund[MATRIX_SIZE][MATRIX_SIZE][3];

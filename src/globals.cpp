@@ -218,7 +218,13 @@ int flypos[3][2]={
 const int matrixminmodulomap[4]={2, 4, 6, 8};
 
 int ste=62;
-int iist=6;
+
+// ES IST/IS length - set by build version
+#if VERSION_TYPE == 1
+  int iist = 5;  // Bayrisch: ES IS
+#else
+  int iist = 6;  // Deutsch: ES IST
+#endif
 
 // Device identification (initialized from mqtt_prefix)
 String DEVICE_ID = "wortuhr";
@@ -226,15 +232,12 @@ String DEVICE_NAME = "Wortuhr";
 String dns_name = "wortuhr";
 String CONFIG_URL = "http://wortuhr.local";
 
-int nexthour=5;
-
-
-
-int bayiist=5;
- 
-
-
-int baynexthour=4;
+// Next hour threshold - set by build version
+#if VERSION_TYPE == 1
+  int nexthour = 4;  // Bayrisch: ab 20 min (10 vor halb)
+#else
+  int nexthour = 5;  // Deutsch: ab 25 min (halb)
+#endif
 
 int vordergrundschema=0;
 #if MATRIX_SIZE == 11
@@ -438,8 +441,12 @@ void buildLedMappings() {
         for (int k = 0; k < MAX_WORD_LEDS; ++k) {
             uint8_t raw;
             #if VERSION_TYPE == 0
-                // Deutsche Version
-                raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
+                // Deutsche Version - aber Runtime-Umschaltung auf Bayrisch möglich
+                if (dbv == 1) {
+                    raw = (uint8_t)pgm_read_byte(&bay_min_lists[i][k]);
+                } else {
+                    raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
+                }
             #elif VERSION_TYPE == 1
                 // Bayrische Version
                 raw = (uint8_t)pgm_read_byte(&bay_min_lists[i][k]);
@@ -448,7 +455,11 @@ void buildLedMappings() {
                 raw = (uint8_t)pgm_read_byte(&mini_min_lists[i][k]);
             #else
                 // Fallback: Deutsche Version
-                raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
+                if (dbv == 1) {
+                    raw = (uint8_t)pgm_read_byte(&bay_min_lists[i][k]);
+                } else {
+                    raw = (uint8_t)pgm_read_byte(&std_min_lists[i][k]);
+                }
             #endif
             
             // dvv override (nur für deutsche/bayrische Version)
@@ -469,8 +480,12 @@ void buildLedMappings() {
         for (int k = 0; k < MAX_WORD_LEDS; ++k) {
             uint8_t raw;
             #if VERSION_TYPE == 0
-                // Deutsche Version
-                raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+                // Deutsche Version - aber Runtime-Umschaltung auf Bayrisch möglich
+                if (dbv == 1) {
+                    raw = (uint8_t)pgm_read_byte(&bay_hour_lists[i][k]);
+                } else {
+                    raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+                }
             #elif VERSION_TYPE == 1
                 // Bayrische Version
                 raw = (uint8_t)pgm_read_byte(&bay_hour_lists[i][k]);
@@ -479,7 +494,11 @@ void buildLedMappings() {
                 raw = (uint8_t)pgm_read_byte(&mini_hour_lists[i][k]);
             #else
                 // Fallback: Deutsche Version
-                raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+                if (dbv == 1) {
+                    raw = (uint8_t)pgm_read_byte(&bay_hour_lists[i][k]);
+                } else {
+                    raw = (uint8_t)pgm_read_byte(&std_hour_lists[i][k]);
+                }
             #endif
             
             int16_t v = (raw == 255) ? -1 : (int16_t)raw;

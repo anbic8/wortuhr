@@ -248,24 +248,21 @@ Serial.println();
   Serial.print("user_design.db = ");
   Serial.println(user_design.db);
   
-  if(user_design.db == 1){
-      DEVICE_MODEL = "bayrische Wortuhr";
-//Bayrische Version
-
-  Serial.println("Bayrisches Setting wird geladen");
-  // Use bayrisch lists at runtime (buildLedMappings will pick bay lists when dbv==1)
-  iist = bayiist;
-  nexthour = baynexthour;
+  // Device model set by build version
+  #if VERSION_TYPE == 1
+    DEVICE_MODEL = "bayrische Wortuhr";
+    Serial.println("Bayrische Build-Version");
+  #else
+    DEVICE_MODEL = "deutsche Wortuhr";
+    Serial.println("Deutsche Build-Version");
+  #endif
   
-  };
-    //Umschalten auf viertel vor
-    if(dvv==1){
-      // dvv (viertel vor) handled by buildLedMappings using alternate static list
-    }
+  // iist and nexthour are now set at compile time via VERSION_TYPE
+  // dvv (viertel vor) handled by buildLedMappings using alternate static list
  
  
 
-  //Wire.begin(5, 13);
+ 
  
   // rebuild LED index mappings (after possible bay/viertel substitutions)
   buildLedMappings();
