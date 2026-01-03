@@ -738,77 +738,283 @@ const char htmlhead[] PROGMEM = R"rawliteral(
 
 
 const char htmlinfo[] PROGMEM = R"rawliteral(
-<h1>Info zur Wortuhr</h1>
-        <p>Diese handgefertigte Wortuhr zeigt die Zeit auf eine einzigartige Weise: in Worten. Die Steuerung und Anpassung erfolgen bequem über dieses Webinterface. Ob Farben, Anzeigeeinstellungen oder Helligkeit – die Uhr kann individuell angepasst werden, um perfekt zu deinem Stil und deinen Bedürfnissen zu passen.</p>
-        <h2>Technische Details</h2>
-        <ul>
-            <li><strong>LEDs:</strong> Die Uhr basiert auf einem WS2812s LED-Strip, der präzise und farbenfrohe Lichtpunkte liefert.</li>
-            <li><strong>Steuerung:</strong> Die LEDs und Funktionen werden von einem ESP8266 gesteuert.</li>
-            <li><strong>Anpassung:</strong> Über das Webinterface lassen sich Farben, Anzeigeoptionen und Helligkeit einstellen.</li>
-        </ul>
-        <h2>Bedienung</h2>
-        <h3>Farben</h3>
-        <p>Im Menüpunkt <strong>Farben</strong> kannst du:</p>
-        <ul>
-            <li>Die Vordergrund- und Hintergrundfarben der Anzeige individuell festlegen.</li>
-            <li>Zwischen verschiedenen Übergängen wählen, wie die Wörter eingeblendet werden.</li>
-            <li>Animationen aktivieren, um die Anzeige lebendiger zu gestalten.</li>
-        </ul>
-        <h3>Einstellungen</h3>
-        <p>Im Menüpunkt <strong>Einstellungen</strong> kannst du:</p>
-        <ul>
-            <li>Entscheiden, ob bei z. B. xx:45 viertel vor oder dreiviertel angezeigt wird.</li>
-            <li>Zeiten festlegen, zu denen die Uhr gedimmt oder ausgeschaltet sein soll.</li>
-            <li>Wählen, ob das Wort Uhr immer, zur vollen Stunde oder nie leuchten soll.</li>
-        </ul>
-        <h2>Pflege und Hinweise</h2>
-        <ul>
-            <li>Reinigung: Verwende ein weiches, trockenes Tuch, um die Oberfläche zu reinigen.</li>
-            <li>Stromversorgung: Die Uhr benötigt ein USB-Netzteil mit mindestens 2 Ampere.</li>
-        </ul>
-        <p>Bei Fragen oder Problemen erreichst du mich unter <a href='mailto:bichlmaier.andreas0+wortuhr@gmail.de'>bichlmaier.andreas0@gmail.de</a>.</p>
+<main style="max-width: 800px; margin: 0 auto;">
+    <h1><i class="fas fa-clock"></i> Willkommen bei deiner Wortuhr!</h1>
+    
+    <div style="background: rgba(76, 175, 80, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
+        <p style="margin: 0; font-size: 1.1em;">
+            <i class="fas fa-heart"></i> Schön, dass du da bist! Diese handgefertigte Wortuhr zeigt dir die Zeit auf eine ganz besondere Art – 
+            in Worten statt in Ziffern. Lass uns gemeinsam schauen, wie du deine Uhr ganz nach deinen Wünschen einrichten kannst.
+        </p>
+    </div>
 
-        <p><h1><i class="fa-solid fa-scale-balanced"></i><a href="/datenschutz">Datenschutz und Gewährleistung </a></h1></p>
-        
-        </div></body></html>
+    <h2><i class="fas fa-rocket"></i> Erste Schritte – Los geht's!</h2>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <ol style="line-height: 1.8;">
+            <li><strong><a href="/wifi" style="color: #66bb6a;"><i class="fas fa-wifi"></i> Verbindung einrichten</a></strong><br>
+                Zuerst verbindest du deine Uhr mit deinem WLAN. Gib einfach deine Netzwerkdaten ein – fertig! 
+                Optional kannst du auch MQTT für Smarthome-Integration aktivieren (z.B. für Home Assistant).</li>
+            
+            <li><strong><a href="/color" style="color: #66bb6a;"><i class="fas fa-palette"></i> Farben wählen</a></strong><br>
+                Jetzt wird's bunt! Wähle deine Lieblingsfarben für Vorder- und Hintergrund. Du kannst zwischen verschiedenen 
+                Farbschemata wählen – von einfarbig bis Regenbogen-Verlauf. Die Helligkeit regelst du mit dem Schieberegler.</li>
+            
+            <li><strong><a href="/setting" style="color: #66bb6a;"><i class="fas fa-cog"></i> Einstellungen anpassen</a></strong><br>
+                Hier legst du fest, wie die Zeit angezeigt wird: Möchtest du "viertel vor" oder "dreiviertel"? 
+                Soll das Wort "Uhr" immer leuchten? Und wann soll die Uhr nachts in den Nachtmodus gehen?</li>
+            
+            <li><strong><a href="/birthday" style="color: #66bb6a;"><i class="fa-solid fa-cake-candles"></i> Geburtstage eintragen</a></strong> (optional)<br>
+                Trage wichtige Geburtstage ein – deine Uhr erinnert dich daran mit einer speziellen Anzeige!</li>
+        </ol>
+    </div>
+
+    <h2><i class="fas fa-book-open"></i> Detaillierte Bedienungsanleitung</h2>
+    
+    <h3><i class="fas fa-palette"></i> Farben und Effekte</h3>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <p>Im <a href="/color" style="color: #66bb6a;">Farben-Menü</a> hast du die volle kreative Kontrolle:</p>
+        <ul style="line-height: 1.6;">
+            <li><strong>Vordergrundfarben:</strong> Die Farbe der leuchtenden Buchstaben (die die Zeit anzeigen)</li>
+            <li><strong>Hintergrundfarben:</strong> Die Farbe der nicht aktiven Buchstaben</li>
+            <li><strong>Farbschemata:</strong> Wähle zwischen einfarbig, Schachbrett, Spalten, Zeilen, Verlauf oder Regenbogen</li>
+            <li><strong>Helligkeit:</strong> Passe die Leuchtintensität an (von gedimmt bis hell)</li>
+            <li><strong>Effekte & Animationen:</strong> Aktiviere sanfte Übergänge oder dynamische Animationen</li>
+        </ul>
+        <p><em>Tipp: Die Live-Vorschau zeigt dir sofort, wie deine Einstellungen aussehen werden!</em></p>
+    </div>
+
+    <h3><i class="fas fa-cog"></i> Einstellungen und Anzeigeoptionen</h3>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <p>In den <a href="/setting" style="color: #66bb6a;">Einstellungen</a> bestimmst du das Verhalten deiner Uhr:</p>
+        <ul style="line-height: 1.6;">
+            <li><strong>Zeitanzeige bei xx:45:</strong> "dreiviertel" (z.B. dreiviertel vier) oder "viertel vor" (z.B. viertel vor vier)</li>
+            <li><strong>Wort "Uhr":</strong> Wann soll es leuchten? Immer, zur vollen Stunde oder nie</li>
+            <li><strong>Nachtmodus:</strong> Lege eine Zeit fest, wann die Uhr automatisch dimmt oder ausgeht (z.B. 23:00 bis 6:00)</li>
+            <li><strong>Nachtmodus-Verhalten:</strong> LEDs komplett ausschalten oder nur stark dimmen</li>
+        </ul>
+    </div>
+
+    <h3><i class="fas fa-wifi"></i> WLAN und MQTT</h3>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <p>Über <a href="/wifi" style="color: #66bb6a;">Verbindung</a> richtest du die Netzwerkanbindung ein:</p>
+        <ul style="line-height: 1.6;">
+            <li><strong>WLAN-Zugangsdaten:</strong> Deine Uhr benötigt Internet für die Zeitsynchronisation</li>
+            <li><strong>MQTT (optional):</strong> Für Smarthome-Fans! Steuere deine Uhr über Home Assistant, ioBroker oder andere Systeme</li>
+            <li><strong>MQTT-Präfix:</strong> Gib deiner Uhr einen eindeutigen Namen, falls du mehrere hast (z.B. "wohnzimmer" oder "schlafzimmer")</li>
+            <li><strong>Home Assistant:</strong> Aktiviere die automatische Erkennung für nahtlose Integration</li>
+        </ul>
+        <p><em>Hinweis: Nach dem Speichern startet die Uhr neu – das ist ganz normal!</em></p>
+    </div>
+
+    <h3><i class="fa-solid fa-upload"></i> Firmware-Update</h3>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <p>Über das <a href="/update" style="color: #66bb6a;">Update-Menü</a> kannst du neue Funktionen und Verbesserungen installieren:</p>
+        <ul style="line-height: 1.6;">
+            <li>Lade die neueste Firmware-Datei (.bin) herunter</li>
+            <li>Wähle die Datei im Update-Menü aus und starte das Update</li>
+            <li>Warte, bis der Upload abgeschlossen ist – die Uhr startet automatisch neu</li>
+        </ul>
+        <p><em>Wichtig: Trenne während des Updates nicht die Stromversorgung!</em></p>
+    </div>
+
+    <h2><i class="fas fa-tools"></i> Technische Details</h2>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <ul style="line-height: 1.6;">
+            <li><strong>LEDs:</strong> Adressierbarer WS2812s LED-Strip für brillante Farbdarstellung</li>
+            <li><strong>Prozessor:</strong> ESP8266 Mikrocontroller mit WLAN</li>
+            <li><strong>Zeitsynchronisation:</strong> Automatisch über NTP-Server (Internet erforderlich)</li>
+            <li><strong>Stromversorgung:</strong> USB-Netzteil mit mindestens 2A (5V) empfohlen</li>
+            <li><strong>Webinterface:</strong> Erreichbar unter <strong>wortuhr.local</strong> (oder deinem gewählten MQTT-Präfix)</li>
+        </ul>
+    </div>
+
+    <h2><i class="fas fa-heart"></i> Pflege und Wartung</h2>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <ul style="line-height: 1.6;">
+            <li><strong>Reinigung:</strong> Verwende nur ein weiches, trockenes oder leicht angefeuchtetes Tuch</li>
+            <li><strong>Standort:</strong> Vermeide direkte Sonneneinstrahlung und Feuchtigkeit</li>
+            <li><strong>Stromversorgung:</strong> Nutze ein qualitativ hochwertiges USB-Netzteil (5V, mind. 2A)</li>
+            <li><strong>Transport:</strong> Behandle die Uhr vorsichtig – sie ist ein handgefertigtes Unikat</li>
+        </ul>
+    </div>
+
+    <h2><i class="fas fa-question-circle"></i> Hilfe und Support</h2>
+    <div style="background: rgba(33, 150, 243, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+        <p style="margin: 0;">
+            Falls du Fragen hast oder Unterstützung benötigst, bin ich gerne für dich da! 
+            Schreib mir einfach eine E-Mail an 
+            <a href="mailto:bichlmaier.andreas0+wortuhr@gmail.de" style="color: #64b5f6;">bichlmaier.andreas0@gmail.de</a>
+        </p>
+    </div>
+
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+        <h3><i class="fa-solid fa-scale-balanced"></i> Rechtliche Hinweise</h3>
+        <p>
+            <a href="/datenschutz" style="color: #66bb6a; font-size: 1.1em;">
+                <i class="fas fa-shield-alt"></i> Datenschutz und Gewährleistung anzeigen
+            </a>
+        </p>
+        <p style="font-size: 0.9em; color: rgba(255,255,255,0.7); margin-top: 10px;">
+            Diese Uhr wird von mir mit viel Liebe zum Detail handgefertigt. Alle wichtigen rechtlichen 
+            Informationen zu Datenschutz, Gewährleistung und verwendeten Open-Source-Komponenten findest du im verlinkten Bereich.
+        </p>
+    </div>
+
+    <div style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <p style="color: rgba(255,255,255,0.5);">
+            <i class="fas fa-code"></i> Mit <i class="fas fa-heart" style="color: #e74c3c;"></i> handgefertigt von Andy B
+        </p>
+    </div>
+</main>
+</body></html>
 
         )rawliteral";
 
 const char htmlrecht[] PROGMEM = R"rawliteral(
-  <h1>Rechtliche Hinweise</h1>
-        <h2>Datenschutzhinweise</h2>
-        <p>Dieses Webinterface ist ausschließlich lokal zugänglich. Es speichert keine personenbezogenen Daten und gibt keine Daten an Dritte weiter.</p>
-        <ul>
-            <li><strong>Netzwerk- und Geräteeinstellungen:</strong> Diese werden ausschließlich lokal auf dem ESP8266 gespeichert und nicht extern übertragen.</li>
-            <li><strong>Zeitdaten:</strong> Die Uhrzeit wird automatisch von einem NTP-Server synchronisiert. Dabei wird die IP-Adresse des Geräts für die Kommunikation verwendet. Es erfolgt keine Speicherung oder Weitergabe dieser Daten.</li>
-        </ul>
-        <h2>Produkthaftung und Gewährleistung</h2>
-        <p>Diese Wortuhr wird als handgefertigtes Einzelstück von mir privat verkauft. Daher gelten folgende Bedingungen:</p>
-        <ul>
-            <li>Verkauf von Privat gemäß § 13 BGB. Keine Gewährleistung oder Garantie.</li>
-            <li>Die Nutzung erfolgt auf eigene Verantwortung. Der Käufer ist für die sichere Verwendung, insbesondere der Stromversorgung, selbst verantwortlich.</li>
-            <li>Es wird empfohlen, ein USB-Netzteil mit mindestens 2 Ampere zu verwenden. Schäden durch unsachgemäße Nutzung oder Modifikationen am Gerät sind ausgeschlossen.</li>
-        </ul>
-        <p>Für Rückfragen oder Unterstützung stehe ich unter <a href='mailto:bichlmaier.andreas0+wortuhr@gmail.de'>bichlmaier.andreas0+wortuhr@gmail.de</a> zur Verfügung.</p>
-        <h2>Open-Source-Bibliotheken</h2>
-        <p>Diese Wortuhr verwendet folgende Open-Source-Komponenten:</p>
-        <ul>
-            <li><strong>ESP8266WiFi:</strong> Ermöglicht die WLAN-Konnektivität.</li>
-            <li><strong>NTPClient:</strong> Synchronisiert die Uhrzeit mit einem NTP-Server.</li>
-            <li><strong>WiFiUdp:</strong> Bietet UDP-Funktionalität für die Kommunikation mit dem NTP-Server.</li>
-            <li><strong>Adafruit_NeoPixel:</strong> Steuert den WS2812s LED-Strip.</li>
-            <li><strong>OneButton:</strong> Verarbeitet Eingaben von Tastern.</li>
-            <li><strong>Arduino:</strong> Bietet grundlegende Funktionen für den ESP8266.</li>
-            <li><strong>Wire:</strong> Ermöglicht die Kommunikation mit dem I²C-RTC-Modul (DS1307).</li>
-            <li><strong>time.h:</strong> Stellt Zeitfunktionen bereit.</li>
-            <li><strong>ESP8266WebServer:</strong> Bietet die Basis für das Webinterface.</li>
-            <li><strong>ESP8266mDNS:</strong> Ermöglicht den Zugriff auf die Uhr per Hostnamen.</li>
-            <li><strong>EEPROM:</strong> Speichert Konfigurationsdaten dauerhaft.</li>
-            <li><strong>PubSubClient:</strong> MQTT-Bibliothek für eventuelle Erweiterungen.</li>
-            <li><strong>ArduinoJson:</strong> Verarbeitet JSON-Daten für Einstellungen und Konfigurationen.</li>
-        </ul>
+<main style="max-width: 800px; margin: 0 auto;">
+    <h1><i class="fa-solid fa-scale-balanced"></i> Rechtliche Hinweise</h1>
+    
+    <div style="background: rgba(33, 150, 243, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #2196f3;">
+        <p style="margin: 0; font-size: 1.05em;">
+            <i class="fas fa-info-circle"></i> Transparenz ist mir wichtig! Hier findest du alle Informationen zu Datenschutz, 
+            Gewährleistung und den verwendeten Open-Source-Komponenten deiner Wortuhr.
+        </p>
+    </div>
 
-        </div></body></html>
+    <h2><i class="fas fa-shield-alt"></i> Datenschutzhinweise</h2>
+    <div style="background: rgba(76, 175, 80, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
+        <p><strong>Kurz und klar: Deine Daten bleiben bei dir!</strong></p>
+        <p>Dieses Webinterface läuft ausschließlich lokal in deinem Heimnetzwerk. Es werden keine personenbezogenen Daten gespeichert, 
+        verarbeitet oder an Dritte weitergegeben. Die Uhr kommuniziert nicht mit externen Servern (außer für die Zeitsynchronisation).</p>
+    </div>
+
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <h3><i class="fas fa-database"></i> Welche Daten werden wo gespeichert?</h3>
+        <ul style="line-height: 1.8;">
+            <li><strong>WLAN-Zugangsdaten & Einstellungen:</strong><br>
+                Werden ausschließlich lokal auf dem ESP8266-Chip deiner Uhr gespeichert. Kein externer Zugriff, keine Cloud.</li>
+            
+            <li><strong>Zeitsynchronisation (NTP):</strong><br>
+                Die Uhr synchronisiert die aktuelle Uhrzeit über das Internet von einem öffentlichen NTP-Server (z.B. pool.ntp.org). 
+                Dabei wird technisch bedingt die IP-Adresse deiner Uhr übermittelt, aber es erfolgt keine Speicherung oder 
+                Weitergabe deiner Daten. Dies ist vergleichbar mit jedem normalen Internetzugriff.</li>
+            
+            <li><strong>MQTT (optional):</strong><br>
+                Wenn du MQTT aktivierst, kommuniziert die Uhr mit deinem lokalen MQTT-Broker (z.B. Mosquitto). 
+                Auch hier bleiben alle Daten in deinem Netzwerk – es sei denn, du hast bewusst einen externen Cloud-Broker konfiguriert.</li>
+        </ul>
+    </div>
+
+    <h2><i class="fas fa-handshake"></i> Produkthaftung und Gewährleistung</h2>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p>Diese Wortuhr ist ein handgefertigtes Einzelstück, das ich mit viel Liebe zum Detail für dich erstellt habe. 
+        Da es sich um einen <strong>Privatverkauf nach § 13 BGB</strong> handelt, gelten folgende rechtliche Rahmenbedingungen:</p>
+        
+        <h3><i class="fas fa-gavel"></i> Gewährleistungsausschluss</h3>
+        <ul style="line-height: 1.8;">
+            <li>Als Privatverkäufer kann ich leider keine gesetzliche Gewährleistung oder Garantie anbieten.</li>
+            <li>Die Beschreibung der Uhr und ihrer Funktionen erfolgt nach bestem Wissen und Gewissen.</li>
+            <li>Trotzdem bin ich natürlich bei Fragen oder Problemen gerne für dich da und helfe, wo ich kann!</li>
+        </ul>
+        
+        <h3><i class="fas fa-exclamation-triangle"></i> Nutzung und Sicherheit</h3>
+        <ul style="line-height: 1.8;">
+            <li><strong>Eigenverantwortung:</strong> Die Nutzung der Uhr erfolgt auf eigene Verantwortung. 
+                Bitte gehe sorgsam mit der Elektronik um und beachte die Hinweise zur Stromversorgung.</li>
+            
+            <li><strong>Stromversorgung:</strong> Verwende unbedingt ein hochwertiges USB-Netzteil mit mindestens 2 Ampere (5V). 
+                Minderwertige oder ungeeignete Netzteile können zu Fehlfunktionen führen.</li>
+            
+            <li><strong>Keine Modifikationen:</strong> Öffne die Uhr nicht und nimm keine eigenmächtigen Veränderungen an der 
+                Hardware vor. Bei Schäden durch unsachgemäße Nutzung oder Modifikationen kann ich leider keine Haftung übernehmen.</li>
+            
+            <li><strong>Aufstellort:</strong> Vermeide direkte Sonneneinstrahlung, Feuchtigkeit und extreme Temperaturen.</li>
+        </ul>
+    </div>
+
+    <h2><i class="fas fa-code-branch"></i> Open-Source & Verwendete Bibliotheken</h2>
+    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <p>Diese Wortuhr steht auf den Schultern von Giganten! Folgende großartige Open-Source-Bibliotheken machen 
+        das Projekt erst möglich. Ein herzliches Dankeschön an alle Entwickler:</p>
+        
+        <div style="margin-top: 15px;">
+            <h3 style="font-size: 1.1em; margin-bottom: 10px;"><i class="fas fa-microchip"></i> Hardware & Netzwerk</h3>
+            <ul style="line-height: 1.6;">
+                <li><strong>ESP8266WiFi:</strong> WLAN-Konnektivität für den ESP8266</li>
+                <li><strong>ESP8266WebServer:</strong> Webserver für das Interface, das du gerade nutzt</li>
+                <li><strong>ESP8266mDNS:</strong> Ermöglicht den Zugriff per "wortuhr.local" statt IP-Adresse</li>
+                <li><strong>EEPROM:</strong> Dauerhafte Speicherung deiner Einstellungen</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <h3 style="font-size: 1.1em; margin-bottom: 10px;"><i class="fas fa-clock"></i> Zeit & Synchronisation</h3>
+            <ul style="line-height: 1.6;">
+                <li><strong>NTPClient:</strong> Zeitsynchronisation über NTP-Server</li>
+                <li><strong>WiFiUdp:</strong> UDP-Kommunikation für NTP</li>
+                <li><strong>Wire:</strong> I²C-Kommunikation mit dem optionalen RTC-Modul (DS1307)</li>
+                <li><strong>time.h:</strong> Zeitfunktionen und -berechnungen</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <h3 style="font-size: 1.1em; margin-bottom: 10px;"><i class="fas fa-lightbulb"></i> LEDs & Steuerung</h3>
+            <ul style="line-height: 1.6;">
+                <li><strong>Adafruit_NeoPixel:</strong> Ansteuerung des WS2812s LED-Strips für brillante Farben</li>
+                <li><strong>OneButton:</strong> Intelligente Verarbeitung von Tasteneingaben</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <h3 style="font-size: 1.1em; margin-bottom: 10px;"><i class="fas fa-network-wired"></i> Smarthome-Integration</h3>
+            <ul style="line-height: 1.6;">
+                <li><strong>PubSubClient:</strong> MQTT-Unterstützung für Home Assistant & Co.</li>
+                <li><strong>ArduinoJson:</strong> JSON-Verarbeitung für strukturierte Datenübertragung</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <h3 style="font-size: 1.1em; margin-bottom: 10px;"><i class="fas fa-cogs"></i> Basis-Framework</h3>
+            <ul style="line-height: 1.6;">
+                <li><strong>Arduino:</strong> Grundlegende Funktionen und Framework für den ESP8266</li>
+            </ul>
+        </div>
+        
+        <p style="margin-top: 20px; padding: 15px; background: rgba(76, 175, 80, 0.2); border-radius: 5px; border-left: 3px solid #4caf50;">
+            <i class="fas fa-heart"></i> <strong>Open-Source-Gedanke:</strong> Alle diese Bibliotheken werden von der 
+            Community kostenlos bereitgestellt und weiterentwickelt. Wenn dir das Projekt gefällt, denk doch mal darüber nach, 
+            die Entwickler mit einer kleinen Spende zu unterstützen!
+        </p>
+    </div>
+
+    <h2><i class="fas fa-envelope"></i> Kontakt & Unterstützung</h2>
+    <div style="background: rgba(33, 150, 243, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #2196f3;">
+        <p style="line-height: 1.8;">
+            Hast du Fragen, Anregungen oder benötigst Hilfe? Ich bin gerne für dich da!<br>
+            Schreib mir einfach eine E-Mail an 
+            <a href="mailto:bichlmaier.andreas0+wortuhr@gmail.de" style="color: #64b5f6; font-weight: bold;">
+                bichlmaier.andreas0@gmail.de
+            </a>
+        </p>
+        <p style="margin: 15px 0 0 0; color: rgba(255,255,255,0.8);">
+            <i class="fas fa-clock"></i> <em>Ich antworte in der Regel innerhalb von 24-48 Stunden.</em>
+        </p>
+    </div>
+
+    <div style="text-align: center; padding: 20px;">
+        <a href="/info" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #4caf50, #2e7d32); 
+           color: white; border-radius: 5px; text-decoration: none; font-weight: bold;">
+            <i class="fas fa-arrow-left"></i> Zurück zur Startseite
+        </a>
+    </div>
+
+    <div style="text-align: center; padding: 20px; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <p style="color: rgba(255,255,255,0.5);">
+            <i class="fas fa-code"></i> Mit <i class="fas fa-heart" style="color: #e74c3c;"></i> handgefertigt von Andy B
+        </p>
+    </div>
+</main>
+</body></html>
 )rawliteral";
 
 // Build MQTT topics based on mqtt_prefix from settings
