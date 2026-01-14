@@ -133,6 +133,7 @@ unsigned long letzterani=0;
 unsigned long milliaktuell=0;
 unsigned long warten=60000; //warten für die Uhr 10s.
 unsigned long threshold=0, zeitneu2=0;
+unsigned long lastNtpSync=0; // Last NTP sync timestamp
 int on = 1;  // Nachtmodus 0 für Nachtmodus 1 für Uhrzeit normal
 int gebstat=0; 
 

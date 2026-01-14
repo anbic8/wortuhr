@@ -169,6 +169,19 @@ void setup() {
 
 #ifndef USE_RCT
   configTime(MY_TZ, MY_NTP_SERVER);
+  // Wait for NTP time sync at startup
+  Serial.print("Warte auf NTP-Zeitsynchronisation...");
+  time_t ntpTimeout = millis();
+  while (time(nullptr) < 100000 && (millis() - ntpTimeout < 10000)) {
+    delay(100);
+    Serial.print(".");
+  }
+  if (time(nullptr) > 100000) {
+    Serial.println(" erfolgreich!");
+    lastNtpSync = millis(); // Mark initial sync time
+  } else {
+    Serial.println(" Timeout! Verwende lokale Zeit.");
+  }
 #endif 
 
   strip.begin();

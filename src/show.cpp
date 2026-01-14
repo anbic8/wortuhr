@@ -17,7 +17,21 @@ void readTime(){
 }
 
 void readTimeNet(){
-  time(&now);                       // read the current time
+  // NTP sync only once per hour (3600000ms) or on first call
+  unsigned long currentMillis = millis();
+  bool needsSync = (lastNtpSync == 0) || (currentMillis - lastNtpSync >= 3600000UL);
+  
+  if (needsSync) {
+    time(&now);                       // read the current time from NTP
+    lastNtpSync = currentMillis;
+    Serial.println("NTP sync durchgeführt");
+  } else {
+    // Calculate time locally based on millis() since last sync
+    unsigned long elapsedSeconds = (currentMillis - lastNtpSync) / 1000;
+    now += elapsedSeconds;
+    lastNtpSync = currentMillis; // Update to prevent drift accumulation
+  }
+  
   localtime_r(&now, &tm);           // update the structure tm with the current time
   stunden = tm.tm_hour;
   minutes = tm.tm_min;

@@ -61,7 +61,7 @@ extern String DEVICE_ID;
 extern String DEVICE_NAME;
 extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.2.7"
+#define FW_VERSION "4.2.8"
 
 
 // Size of firmware version string stored in EEPROM
@@ -138,6 +138,7 @@ extern unsigned long letzterani;
 extern unsigned long milliaktuell;
 extern unsigned long warten;
 extern unsigned long threshold, zeitneu2;
+extern unsigned long lastNtpSync; // Last NTP sync timestamp (millis)
 extern int on;
 extern int gebstat;
 
