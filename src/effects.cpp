@@ -694,6 +694,15 @@ void firework() {
     
     // 3 Schritte für Partikel-Animation
     for(int step = 1; step <= 3; step++) {
+      // Berechne Fade-Farbe für diesen Schritt (von Weiß zu Zielfarbe)
+      // step 1: 2/3 Weiß, 1/3 Zielfarbe
+      // step 2: 1/3 Weiß, 2/3 Zielfarbe
+      // step 3: 0 Weiß, 3/3 Zielfarbe
+      int whiteAmount = (4 - step);  // 3, 2, 1
+      int fadeR = (255 * whiteAmount + targetR * (3 - whiteAmount)) / 3;
+      int fadeG = (255 * whiteAmount + targetG * (3 - whiteAmount)) / 3;
+      int fadeB = (255 * whiteAmount + targetB * (3 - whiteAmount)) / 3;
+      
       // Zeichne zuerst alle bereits explodierten Pixel
       for(int px = 0; px < p; px++) {
         int prevRow = foregroundPixels[px][0];
@@ -704,7 +713,11 @@ void firework() {
                      vordergrund[prevRow][prevCol][2]));
       }
       
-      // Berechne Helligkeit für diesen Schritt (wird schwächer)
+      // Zeichne das aktuelle Pixel mit Fade-Farbe (wird immer heller in Zielfarbe)
+      strip.setPixelColor(matrix[row][col], 
+        strip.Color(fadeR, fadeG, fadeB));
+      
+      // Berechne Helligkeit für die Funken (wird schwächer)
       int brightness = 255 - (step * 85); // 170, 85, 0
       int r = (targetR * brightness) / 255;
       int g = (targetG * brightness) / 255;
@@ -750,14 +763,12 @@ void firework() {
       }
     }
     
-    // Nach Explosion: Pixel bleibt in Vordergrundfarbe
-    strip.setPixelColor(matrix[row][col], 
-      strip.Color(targetR, targetG, targetB));
-    strip.show();
-    delay(efxtime / 2); // Kurze Pause vor nächster Explosion
     yield(); // Watchdog feed
   }
   
   // Finale Anzeige
   showmystrip();
 }
+
+
+

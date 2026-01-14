@@ -17,37 +17,36 @@ void readTime(){
 }
 
 void readTimeNet(){
-  // NTP sync only once per hour (3600000ms) or on first call
-  unsigned long currentMillis = millis();
-  bool needsSync = (lastNtpSync == 0) || (currentMillis - lastNtpSync >= 3600000UL);
-  
-  if (needsSync) {
-    time(&now);                       // read the current time from NTP
-    lastNtpSync = currentMillis;
-    Serial.println("NTP sync durchgeführt");
-  } else {
-    // Calculate time locally based on millis() since last sync
-    unsigned long elapsedSeconds = (currentMillis - lastNtpSync) / 1000;
-    now += elapsedSeconds;
-    lastNtpSync = currentMillis; // Update to prevent drift accumulation
-  }
-  
-  localtime_r(&now, &tm);           // update the structure tm with the current time
+  // Get current time from NTP
+  time(&now);                        // read the current time from NTP
+  localtime_r(&now, &tm);            // update the structure tm with the current time
   stunden = tm.tm_hour;
   minutes = tm.tm_min;
   seconds = tm.tm_sec;
   month = tm.tm_mon+1;
   day = tm.tm_mday;
   year = tm.tm_year + 1900;
- 
-
-  hours = stunden%12;
- zeit = stunden*60+minutes; 
-
   
- mb = int(minutes/5);
+  hours = stunden%12;
+  zeit = stunden*60+minutes;
+  
+  mb = int(minutes/5);
   h = hours;
   m = minutes%5;
+  
+  // Debug output every 10 seconds
+  static unsigned long lastDebugOutput = 0;
+  if (millis() - lastDebugOutput > 10000) {
+    lastDebugOutput = millis();
+    Serial.print("Zeit von NTP: ");
+    Serial.print(stunden);
+    Serial.print(":");
+    if (minutes < 10) Serial.print("0");
+    Serial.print(minutes);
+    Serial.print(":");
+    if (seconds < 10) Serial.print("0");
+    Serial.println(seconds);
+  }
 
 }
 

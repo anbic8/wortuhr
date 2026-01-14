@@ -169,10 +169,10 @@ void setup() {
 
 #ifndef USE_RCT
   configTime(MY_TZ, MY_NTP_SERVER);
-  // Wait for NTP time sync at startup
+  // Wait for NTP time sync at startup (increased timeout to 30 seconds)
   Serial.print("Warte auf NTP-Zeitsynchronisation...");
   time_t ntpTimeout = millis();
-  while (time(nullptr) < 100000 && (millis() - ntpTimeout < 10000)) {
+  while (time(nullptr) < 100000 && (millis() - ntpTimeout < 30000)) {
     delay(100);
     Serial.print(".");
   }
@@ -335,6 +335,27 @@ if(mode==1){
       Serial.println(" bytes");
     }
   }
+  
+  #ifndef USE_RCT
+  // Synchronize NTP time every hour
+  static unsigned long lastNtpResync = 0;
+  if (WiFi.status() == WL_CONNECTED && (millis() - lastNtpResync > 3600000)) { // 1 hour = 3600000 ms
+    lastNtpResync = millis();
+    Serial.println("NTP-Zeitsynchronisierung starten...");
+    configTime(MY_TZ, MY_NTP_SERVER);
+    delay(100);
+    time_t ntpTimeout = millis();
+    while (time(nullptr) < 100000 && (millis() - ntpTimeout < 15000)) {
+      delay(100);
+    }
+    if (time(nullptr) > 100000) {
+      Serial.println("NTP-Sync erfolgreich!");
+      lastNtpSync = millis();
+    } else {
+      Serial.println("NTP-Sync fehlgeschlagen, verwende lokale Zeit");
+    }
+  }
+  #endif
   
   //mqtt
   if (WiFi.status() == WL_CONNECTED && mqttenable== true){
