@@ -122,8 +122,8 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(user_connect.ssid, user_connect.password);
-  // Prefer no WiFi sleep to improve stability
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  // Use modem sleep mode for better stability and power management
+  WiFi.setSleepMode(WIFI_MODEM_SLEEP);
   
   byte tries = 0;
   while (WiFi.status() != WL_CONNECTED) {
@@ -305,9 +305,23 @@ if(mode==1){
   bt1.tick();
   bt2.tick();
   
+  // Watchdog feed to prevent resets
+  ESP.wdtFeed();
+  
   server.handleClient();
   MDNS.update();
   
+  // Heap monitoring - log warning if memory is low
+  static unsigned long lastHeapCheck = 0;
+  if (millis() - lastHeapCheck > 30000) { // Check every 30 seconds
+    lastHeapCheck = millis();
+    uint32_t freeHeap = ESP.getFreeHeap();
+    if (freeHeap < 8192) {
+      Serial.print("WARNING: Low heap memory: ");
+      Serial.print(freeHeap);
+      Serial.println(" bytes");
+    }
+  }
   
   //mqtt
   if (WiFi.status() == WL_CONNECTED && mqttenable== true){

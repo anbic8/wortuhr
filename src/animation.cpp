@@ -98,6 +98,7 @@ void pulsieren(){
         int b = anzeige[row][col][2]*0.02*faktor;
         strip.setPixelColor(matrix[row][col], strip.Color(r , g, b));
     }
+    yield(); // Prevent watchdog reset
   }
   strip.show();
 }
@@ -175,7 +176,7 @@ void fly(){
     strip.setPixelColor(matrix[rneu][cneu], strip.Color(125,125,125)); //fliege gesetzt
 flypos[i][1]=cneu;
   flypos[i][0]=rneu;
-
+  yield(); // Prevent watchdog reset
   }
     strip.show();
 
@@ -203,6 +204,7 @@ void startup(){
   } //t1
   strip.show();
   delay(500);
+  yield(); // Prevent watchdog reset during startup animation
   }
 #else
   // Simple startup animation for 8x8 matrix

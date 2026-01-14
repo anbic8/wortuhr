@@ -2,7 +2,7 @@
 
 Eine ESP8266-basierte Wortuhr mit NeoPixel-LEDs, die die Uhrzeit als Text anzeigt. Verfügbar in drei Varianten: Deutsche 11x11, Bayrische 11x11 und Mini 8x8 Version.
 
-## ✨ Features
+## ✨ Features (Auswahl)
 
 - **Zeitanzeige als Wörter** - Die Uhrzeit wird ausgeschrieben angezeigt
 - **Drei Varianten:**

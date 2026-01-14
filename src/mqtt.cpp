@@ -27,7 +27,7 @@ static void mqttOnConnected() {
   client.loop();
   // Only run discovery publishes when needed (e.g., after firmware update)
   if (discoveryNeeded) {
-    const int pauseMs = 500; // pause between publishes (increased to reduce broker/TCP pressure)
+    const int pauseMs = 100; // pause between publishes (reduced to minimize blocking)
     bool ok = true;
     ok = publishOnOffConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishEffectConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();

@@ -207,6 +207,7 @@ void handledesignPath() {
     
     body += "<br/><button type='submit'>Speichern</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
     String htmlContent;
+    htmlContent.reserve(2048); // Pre-allocate to reduce fragmentation
 
     // Aus Flash lesen und in String schreiben
     htmlContent += FPSTR(htmlhead);
@@ -217,7 +218,9 @@ void handledesignPath() {
 }
 void handlecolorPath() {
 
-  String body ="<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Farbeinstellungen</h1>";
+  String body;
+  body.reserve(8192); // Pre-allocate large buffer for HTML
+  body = "<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Farbeinstellungen</h1>";
   
   // Kompakte Vorschau mit minimalem JavaScript
   body += "<div style='margin:20px 0;text-align:center;background:rgba(0,0,0,0.1);padding:20px;border-radius:10px'>";
