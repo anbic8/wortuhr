@@ -15,5 +15,6 @@ void rain();
 void spiral();
 void snakeeater();
 void diamond();
+void firework();
 
 void showmystrip();

@@ -643,3 +643,121 @@ void diamond(){
   // Finale Anzeige speichern
   showmystrip();
 }
+
+void firework() {
+  setanzeige(); // Neue Anzeige vorbereiten
+  
+  // Sammle alle Vordergrund-Pixel (die die neue Zeit zeigen)
+  int foregroundPixels[LED_COUNT][2]; // [index][row, col]
+  int pixelCount = 0;
+  
+  for(int row = 0; row < MATRIX_SIZE; row++) {
+    for(int col = 0; col < MATRIX_SIZE; col++) {
+      if(matrixanzeige[row][col] == 1) {
+        foregroundPixels[pixelCount][0] = row;
+        foregroundPixels[pixelCount][1] = col;
+        pixelCount++;
+      }
+    }
+  }
+  
+  // Erstelle zufällige Reihenfolge
+  for(int i = pixelCount - 1; i > 0; i--) {
+    int j = random(0, i + 1);
+    // Swap
+    int tempRow = foregroundPixels[i][0];
+    int tempCol = foregroundPixels[i][1];
+    foregroundPixels[i][0] = foregroundPixels[j][0];
+    foregroundPixels[i][1] = foregroundPixels[j][1];
+    foregroundPixels[j][0] = tempRow;
+    foregroundPixels[j][1] = tempCol;
+  }
+  
+  // Starte mit komplett schwarzem Display
+  for(int i = 0; i < LED_COUNT; i++) {
+    strip.setPixelColor(i, strip.Color(0, 0, 0));
+  }
+  strip.show();
+  
+  // Für jedes Pixel in zufälliger Reihenfolge
+  for(int p = 0; p < pixelCount; p++) {
+    int row = foregroundPixels[p][0];
+    int col = foregroundPixels[p][1];
+    
+    // Hole die Zielfarbe für dieses Pixel
+    int targetR = vordergrund[row][col][0];
+    int targetG = vordergrund[row][col][1];
+    int targetB = vordergrund[row][col][2];
+    
+    // 4 diagonale Richtungen: oben-links, oben-rechts, unten-links, unten-rechts
+    int directions[4][2] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+    
+    // 3 Schritte für Partikel-Animation
+    for(int step = 1; step <= 3; step++) {
+      // Zeichne zuerst alle bereits explodierten Pixel
+      for(int px = 0; px < p; px++) {
+        int prevRow = foregroundPixels[px][0];
+        int prevCol = foregroundPixels[px][1];
+        strip.setPixelColor(matrix[prevRow][prevCol], 
+          strip.Color(vordergrund[prevRow][prevCol][0], 
+                     vordergrund[prevRow][prevCol][1], 
+                     vordergrund[prevRow][prevCol][2]));
+      }
+      
+      // Berechne Helligkeit für diesen Schritt (wird schwächer)
+      int brightness = 255 - (step * 85); // 170, 85, 0
+      int r = (targetR * brightness) / 255;
+      int g = (targetG * brightness) / 255;
+      int b = (targetB * brightness) / 255;
+      
+      // Zeichne die 4 Partikel an ihren aktuellen Positionen
+      for(int d = 0; d < 4; d++) {
+        int particleRow = row + (directions[d][0] * step);
+        int particleCol = col + (directions[d][1] * step);
+        
+        // Prüfe ob Partikel noch im Spielfeld
+        if(particleRow >= 0 && particleRow < MATRIX_SIZE && 
+           particleCol >= 0 && particleCol < MATRIX_SIZE) {
+          strip.setPixelColor(matrix[particleRow][particleCol], 
+            strip.Color(r, g, b));
+        }
+      }
+      
+      strip.show();
+      delay(efxtime);
+      
+      // Lösche die Partikel wieder (außer bereits explodierte Pixel)
+      for(int d = 0; d < 4; d++) {
+        int particleRow = row + (directions[d][0] * step);
+        int particleCol = col + (directions[d][1] * step);
+        
+        if(particleRow >= 0 && particleRow < MATRIX_SIZE && 
+           particleCol >= 0 && particleCol < MATRIX_SIZE) {
+          // Prüfe ob dieses Pixel bereits explodiert ist
+          bool isExploded = false;
+          for(int px = 0; px < p; px++) {
+            if(foregroundPixels[px][0] == particleRow && 
+               foregroundPixels[px][1] == particleCol) {
+              isExploded = true;
+              break;
+            }
+          }
+          if(!isExploded) {
+            strip.setPixelColor(matrix[particleRow][particleCol], 
+              strip.Color(0, 0, 0));
+          }
+        }
+      }
+    }
+    
+    // Nach Explosion: Pixel bleibt in Vordergrundfarbe
+    strip.setPixelColor(matrix[row][col], 
+      strip.Color(targetR, targetG, targetB));
+    strip.show();
+    delay(efxtime / 2); // Kurze Pause vor nächster Explosion
+    yield(); // Watchdog feed
+  }
+  
+  // Finale Anzeige
+  showmystrip();
+}

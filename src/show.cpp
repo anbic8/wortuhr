@@ -127,7 +127,7 @@ void showClock(){
 
   int welchereffekt = 0;
   if(effectMode==1){
-    welchereffekt= random(2,12);
+    welchereffekt= random(2,14);
   }else{
     welchereffekt=effectMode;
   }
@@ -176,6 +176,9 @@ void showClock(){
       break;
     case 12:
         diamond();
+      break;
+    case 13:
+        firework();
       break;
     default:
       noeffect();

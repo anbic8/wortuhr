@@ -32,7 +32,7 @@ String topicOnState;
 String topicOnCmd;
 String topicEfxState;
 String topicEfxCmd;
-const char* effectOptions[13] = {
+const char* effectOptions[14] = {
   "kein Effekt",
   "zufällig",
   "Fade",
@@ -45,7 +45,8 @@ const char* effectOptions[13] = {
   "Rain",
   "Spirale",
   "Schlangenfresser",
-  "Raute"
+  "Raute",
+  "Feuerwerk"
 };
 String topicAniState;
 String topicAniCmd;
@@ -192,7 +193,7 @@ void getPaletteColor(uint8_t idx, int out[3]){
 
 String htmlfarben[anzahlfarben]={"weiß","rot","rosa","magenta","violet","blau","azure","turkis","hellgrün","grün","gelbgrün","gelb","orange","aus"};
 String htmlfarbschema[6]={"eine Farbe","zwei Farben Schachbrett", "zwei Farben Reihen","zwei Farben Zeilen", "zwei Farben Verlauf", "zufällige Farben"};
-String htmlefx[13]={"kein Effekt","zufällig", "Fade", "Running", "Schlange", "Zeilen", "Scrollen", "Slide in", "Diagonal", "Rain", "Spirale", "Schlangenfresser", "Raute"};
+String htmlefx[14]={"kein Effekt","zufällig", "Fade", "Running", "Schlange", "Zeilen", "Scrollen", "Slide in", "Diagonal", "Rain", "Spirale", "Schlangenfresser", "Raute", "Feuerwerk"};
 String htmlefxtime[3]={"langsam", "mittel", "schnell"};
 int htmlefxtimeint[3]={150,100,50};
 int efxtimeint=0;

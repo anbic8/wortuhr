@@ -314,7 +314,7 @@ void handlecolorPath() {
 
    myauswahl3 = " ";
 
-    for(int i=0;i<13;i++){
+    for(int i=0;i<14;i++){
       if(i==effectMode){
         myauswahl3 ="selected";
       }else{

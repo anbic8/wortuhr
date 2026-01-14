@@ -77,7 +77,7 @@ extern String topicOnState;
 extern String topicOnCmd;
 extern String topicEfxState;
 extern String topicEfxCmd;
-extern const char* effectOptions[13];
+extern const char* effectOptions[14];
 extern String topicAniState;
 extern String topicAniCmd;
 extern const char* aniOptions[6];
@@ -212,7 +212,7 @@ void buildMqttTopics();
 
 extern String htmlfarben[14];
 extern String htmlfarbschema[6];
-extern String htmlefx[13];
+extern String htmlefx[14];
 extern String htmlefxtime[3];
 extern int htmlefxtimeint[3];
 extern int efxtimeint;

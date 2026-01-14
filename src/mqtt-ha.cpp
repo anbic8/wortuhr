@@ -69,7 +69,7 @@ bool publishEffectConfig() {
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicEfxState;
   cfg["command_topic"]= topicEfxCmd;
-  // Liste der Optionen – Reihenfolge entspricht 0 bis 9
+  // Liste der Optionen – Reihenfolge entspricht 0 bis 13
   JsonArray opts = cfg.createNestedArray("options");
   opts.add("kein Effekt");
   opts.add("zufällig");
@@ -84,6 +84,7 @@ bool publishEffectConfig() {
   opts.add("Spirale");
   opts.add("Schlangenfresser");
   opts.add("Raute");
+  opts.add("Feuerwerk");
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;

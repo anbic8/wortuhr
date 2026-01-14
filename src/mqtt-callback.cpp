@@ -37,6 +37,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     else if (opt == "Rain")         effectMode = 9;
     else if (opt == "Spirale")      effectMode = 10;
     else if (opt == "Schlangenfresser") effectMode = 11;
+    else if (opt == "Raute")        effectMode = 12;
+    else if (opt == "Feuerwerk")    effectMode = 13;
     else {
       // unbekannte Option, ggf. Default setzen
       effectMode = 0;
