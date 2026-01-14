@@ -61,7 +61,7 @@ extern String DEVICE_ID;
 extern String DEVICE_NAME;
 extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.2.8"
+#define FW_VERSION "4.2.9"
 
 
 // Size of firmware version string stored in EEPROM
@@ -102,6 +102,15 @@ extern String topicAniTimeCmd;
 extern String topicAniDepthState;
 extern String topicAniDepthCmd;
 extern const char* effectdepthOptions[3];
+
+extern String topicIpAddress;
+extern String topicUptime;
+extern String topicRssi;
+extern String topicHeapMemory;
+extern String topicBrightness;
+extern String topicLastNtpSync;
+extern String topicTemperature;
+extern String topicSystemLoad;
 
 extern WiFiClient espClient;
 extern PubSubClient client;

@@ -101,6 +101,16 @@ const char* effectdepthOptions[3] = {
   "stark"
 };
 
+// --- Topics für Sensoren ---
+String topicIpAddress;
+String topicUptime;
+String topicRssi;
+String topicHeapMemory;
+String topicBrightness;
+String topicLastNtpSync;
+String topicTemperature;
+String topicSystemLoad;
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -1080,6 +1090,16 @@ void buildMqttTopics() {
   
   topicAniDepthState = prefix + "anidepth";
   topicAniDepthCmd = prefix + "anidepth/set";
+  
+  // Sensor topics
+  topicIpAddress = prefix + "ip_address";
+  topicUptime = prefix + "uptime";
+  topicRssi = prefix + "rssi";
+  topicHeapMemory = prefix + "heap_memory";
+  topicBrightness = prefix + "brightness";
+  topicLastNtpSync = prefix + "last_ntp_sync";
+  topicTemperature = prefix + "temperature";
+  topicSystemLoad = prefix + "system_load";
   
   Serial.println("MQTT Topics initialized with prefix: " + prefix);
 }

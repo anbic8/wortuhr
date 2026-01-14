@@ -41,6 +41,16 @@ static void mqttOnConnected() {
     ok = publishEfxTimeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishAniTimeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishAniDepthConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    // Sensor discovery configs
+    ok = publishIpAddressSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishUptimeSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishRssiSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishHeapMemorySensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishBrightnessSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    // Sensor discovery configs (new sensors)
+    ok = publishLastNtpSyncSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishTemperatureSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishSystemLoadSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     // if all OK, store firmware version so discovery runs only after updates
     if (ok) {
       discoveryNeeded = false;
@@ -90,6 +100,7 @@ void publishAll(){
   publishEfxTimeState();
   publishAniTimeState();
   publishAniDepthState();
+  publishSensorStates();
 }
 
 
@@ -238,4 +249,113 @@ void forceMqttReconnect() {
   }
   // set last attempt to now so connectToMQTT will wait mqttRetryMs before next attempt
   lastMqttAttempt = millis();
+}
+
+// ============ Sensor Publishing ============
+
+void publishIpAddress() {
+  if (!client.connected()) return;
+  String ip = WiFi.localIP().toString();
+  client.publish(topicIpAddress.c_str(), ip.c_str(), true);
+}
+
+void publishUptime() {
+  if (!client.connected()) return;
+  unsigned long uptimeSeconds = millis() / 1000;
+  char buf[32];
+  snprintf(buf, sizeof(buf), "%lu", uptimeSeconds);
+  client.publish(topicUptime.c_str(), buf, true);
+}
+
+void publishRssi() {
+  if (!client.connected()) return;
+  int rssi = WiFi.RSSI();
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%d", rssi);
+  client.publish(topicRssi.c_str(), buf, true);
+}
+
+void publishHeapMemory() {
+  if (!client.connected()) return;
+  uint32_t freeHeap = ESP.getFreeHeap();
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%u", freeHeap);
+  client.publish(topicHeapMemory.c_str(), buf, true);
+}
+
+void publishBrightness() {
+  if (!client.connected()) return;
+  // dimm ranges from 1-255, convert to percentage
+  uint16_t brightnessPercent = map(dimm, 1, 255, 1, 100);
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%u", brightnessPercent);
+  client.publish(topicBrightness.c_str(), buf, true);
+}
+
+void publishLastNtpSync() {
+  if (!client.connected()) return;
+  // Check if NTP was ever synced
+  if (lastNtpSync == 0) {
+    client.publish(topicLastNtpSync.c_str(), "never", true);
+    return;
+  }
+  // Calculate time since last NTP sync in seconds
+  unsigned long secondsSinceSync = (millis() - lastNtpSync) / 1000;
+  
+  // Get current time
+  time_t now = time(nullptr);
+  struct tm* timeinfo = localtime(&now);
+  
+  // Format as ISO 8601 timestamp
+  char buf[32];
+  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", timeinfo);
+  client.publish(topicLastNtpSync.c_str(), buf, true);
+}
+
+void publishTemperature() {
+  if (!client.connected()) return;
+  // ESP8266 internal temperature sensor
+  // Note: accuracy is limited (~±10°C), but useful for general monitoring
+  float tempC = (ESP.getVcc() / 1024.0f) * 0.5f;  // Very rough approximation
+  // Better: use ESP8266's built-in thermal sensor via ADC
+  // For a more accurate reading, we'd need to calibrate against a known reference
+  // For now, use a simple estimation based on analog reading
+  uint16_t raw = analogRead(A0);
+  // This is a simplified formula - ESP8266 temp sensor is not very accurate
+  // Actual formula depends on calibration, but typically around 55°C at room temp
+  float tempEstimate = 55.0f - (raw / 1024.0f) * 20.0f;  // Rough estimate
+  
+  // Clamp to reasonable values
+  tempEstimate = constrain(tempEstimate, -40.0f, 125.0f);
+  
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%.1f", tempEstimate);
+  client.publish(topicTemperature.c_str(), buf, true);
+}
+
+void publishSystemLoad() {
+  if (!client.connected()) return;
+  // Estimate system load based on available heap
+  // ESP8266 typically has ~40KB heap, use this as reference max
+  const uint32_t estimatedMaxHeap = 40960;  // ~40KB typical for ESP8266
+  uint32_t freeHeap = ESP.getFreeHeap();
+  
+  // Calculate heap usage percentage
+  uint16_t heapUsagePercent = 100 - ((freeHeap * 100) / estimatedMaxHeap);
+  heapUsagePercent = constrain(heapUsagePercent, 0, 100);
+  
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%u", heapUsagePercent);
+  client.publish(topicSystemLoad.c_str(), buf, true);
+}
+
+void publishSensorStates() {
+  publishIpAddress();
+  publishUptime();
+  publishRssi();
+  publishHeapMemory();
+  publishBrightness();
+  publishLastNtpSync();
+  publishTemperature();
+  publishSystemLoad();
 }

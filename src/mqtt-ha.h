@@ -11,3 +11,13 @@ bool publishHsConfig();
 bool publishEfxTimeConfig();
 bool publishAniTimeConfig();
 bool publishAniDepthConfig();
+
+// Sensor discovery configs
+bool publishIpAddressSensorConfig();
+bool publishUptimeSensorConfig();
+bool publishRssiSensorConfig();
+bool publishHeapMemorySensorConfig();
+bool publishBrightnessSensorConfig();
+bool publishLastNtpSyncSensorConfig();
+bool publishTemperatureSensorConfig();
+bool publishSystemLoadSensorConfig();

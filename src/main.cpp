@@ -370,6 +370,15 @@ if(mode==1){
     Serial.print("MQTT connected: "); Serial.print(client.connected());
     Serial.print(" state="); Serial.println(client.state());
   }
+  // Publish sensor states every 60 seconds
+  static unsigned long lastSensorPublish = 0;
+  if (millis() - lastSensorPublish > 60000) {
+    lastSensorPublish = millis();
+    if (client.connected()) {
+      publishSensorStates();
+      Serial.println("Sensor states published");
+    }
+  }
   }
   
 }

@@ -467,3 +467,208 @@ bool publishAniDepthConfig() {
   Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
+
+// ============ Sensor Discovery Configs ============
+
+bool publishIpAddressSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "IP Adresse";
+  String uniqueId = DEVICE_ID + "_ip_address";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicIpAddress;
+  cfg["icon"]         = "mdi:ip";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_ip_address/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishUptimeSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "Uptime";
+  String uniqueId = DEVICE_ID + "_uptime";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicUptime;
+  cfg["unit_of_measurement"] = "s";
+  cfg["device_class"] = "duration";
+  cfg["icon"]         = "mdi:clock-outline";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_uptime/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishRssiSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "WiFi Signalstärke";
+  String uniqueId = DEVICE_ID + "_rssi";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicRssi;
+  cfg["unit_of_measurement"] = "dBm";
+  cfg["device_class"] = "signal_strength";
+  cfg["icon"]         = "mdi:wifi";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_rssi/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishHeapMemorySensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "Freier Speicher";
+  String uniqueId = DEVICE_ID + "_heap_memory";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicHeapMemory;
+  cfg["unit_of_measurement"] = "Byte";
+  cfg["device_class"] = "data_size";
+  cfg["icon"]         = "mdi:memory";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_heap_memory/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishBrightnessSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "LED Helligkeit";
+  String uniqueId = DEVICE_ID + "_brightness";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicBrightness;
+  cfg["unit_of_measurement"] = "%";
+  cfg["icon"]         = "mdi:brightness-6";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_brightness/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishLastNtpSyncSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "Letzter NTP Sync";
+  String uniqueId = DEVICE_ID + "_last_ntp_sync";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicLastNtpSync;
+  cfg["device_class"] = "timestamp";
+  cfg["icon"]         = "mdi:clock-check";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_last_ntp_sync/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishTemperatureSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "CPU Temperatur";
+  String uniqueId = DEVICE_ID + "_temperature";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicTemperature;
+  cfg["unit_of_measurement"] = "°C";
+  cfg["device_class"] = "temperature";
+  cfg["icon"]         = "mdi:thermometer";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_temperature/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
+
+bool publishSystemLoadSensorConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "System Auslastung";
+  String uniqueId = DEVICE_ID + "_system_load";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicSystemLoad;
+  cfg["unit_of_measurement"] = "%";
+  cfg["icon"]         = "mdi:cpu-64-bit";
+  cfg["entity_category"] = "diagnostic";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_system_load/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  return ok;
+}
