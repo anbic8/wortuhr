@@ -41,13 +41,23 @@ class WortuhrCardCompact extends LitElementBase {
       :host {
         display: block;
       }
+      ha-card {
+        box-shadow: none;
+        background: none;
+        padding: 0;
+        border: none;
+      }
       .card {
-        padding: 12px;
-        background: linear-gradient(145deg, #0f172a, #111827);
-        color: #e5e7eb;
-        border-radius: 12px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-        max-width: 400px;
+        width: 100%;
+        max-width: 100%;
+        padding: 5px;
+        border: 2px solid var(--mycardbackgroundcolor-1);
+        border-radius: var(--Borderradius);
+        background-image: linear-gradient(43deg, var(--mycardbackgroundcolor-1) 0%, var(--mycardbackgroundcolor-2, var(--Kartenhintergrund)) 31%, var(--mycardbackgroundcolor-3));
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
       }
       .header {
         display: flex;
@@ -58,8 +68,9 @@ class WortuhrCardCompact extends LitElementBase {
         flex-wrap: wrap;
       }
       .title {
-        font-size: 0.95rem;
-        font-weight: 700;
+        font-size: clamp(13px, 2.5vw, 17px);
+        font-weight: bold;
+        color: var(--Textfarbe, black);
       }
       .controls-row {
         display: flex;
@@ -80,49 +91,49 @@ class WortuhrCardCompact extends LitElementBase {
         min-width: 60px;
       }
       .brightness-label {
-        font-size: 0.75rem;
-        color: #9ca3af;
+        font-size: clamp(10px, 1.5vw, 12px);
+        color: var(--secondary-text-color, black);
         min-width: 30px;
         text-align: right;
       }
       button {
-        background: linear-gradient(135deg, #22d3ee, #06b6d4);
-        color: #0b1324;
+        background-color: var(--primary-color, white);
+        color: var(--Textfarbe, black);
         border: none;
-        border-radius: 6px;
+        border-radius: 15px;
         padding: 6px 12px;
         font-weight: 600;
-        font-size: 0.85rem;
+        font-size: clamp(10px, 1.5vw, 12px);
         cursor: pointer;
-        box-shadow: 0 4px 10px rgba(6, 182, 212, 0.3);
+        transition: transform 0.2s ease;
         white-space: nowrap;
       }
       button:hover {
-        opacity: 0.9;
+        transform: scale(1.1);
       }
       .tabs {
         display: flex;
         gap: 4px;
         margin-bottom: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid var(--divider-color, #e0e0e0);
       }
       .tab {
         padding: 6px 10px;
-        font-size: 0.8rem;
+        font-size: clamp(9px, 1.3vw, 11px);
         cursor: pointer;
         background: transparent;
         border: none;
-        color: #9ca3af;
+        color: var(--secondary-text-color, black);
         border-bottom: 2px solid transparent;
         transition: all 0.2s;
         box-shadow: none;
       }
       .tab:hover {
-        color: #d1d5db;
+        color: var(--Textfarbe, black);
       }
       .tab.active {
-        color: #22d3ee;
-        border-bottom-color: #22d3ee;
+        color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
       }
       .tab-content {
         display: none;
@@ -135,37 +146,37 @@ class WortuhrCardCompact extends LitElementBase {
         align-items: center;
         gap: 6px;
         margin: 6px 0;
-        font-size: 0.85rem;
+        font-size: clamp(10px, 1.5vw, 12px);
       }
       .label {
-        font-size: 0.8rem;
-        color: #d1d5db;
+        font-size: clamp(9px, 1.3vw, 11px);
+        color: var(--Textfarbe, black);
         min-width: 70px;
         flex-shrink: 0;
       }
       select, input[type="color"], input[type="range"] {
         flex: 1;
-        background: rgba(30, 41, 59, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: #e5e7eb;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--divider-color, #e0e0e0);
+        color: var(--Textfarbe, black);
         border-radius: 6px;
         padding: 5px 6px;
         box-sizing: border-box;
-        font-size: 0.8rem;
+        font-size: clamp(9px, 1.3vw, 11px);
         transition: all 0.2s ease;
       }
       select option {
-        background: #1e293b;
-        color: #e5e7eb;
+        background: var(--primary-color, white);
+        color: var(--Textfarbe, black);
       }
       select:hover, input[type="color"]:hover, input[type="range"]:hover {
-        background: rgba(30, 41, 59, 0.95);
-        border-color: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: var(--accent-color);
       }
       select:focus, input[type="color"]:focus, input[type="range"]:focus {
         outline: none;
-        border-color: rgba(34, 211, 238, 0.5);
-        box-shadow: 0 0 8px rgba(34, 211, 238, 0.15);
+        border-color: var(--accent-color);
+        box-shadow: 0 0 8px rgba(var(--accent-color-rgb, 52, 211, 153), 0.15);
       }
       input[type="color"] {
         width: 40px;
@@ -187,12 +198,12 @@ class WortuhrCardCompact extends LitElementBase {
         width: 24px;
         height: 24px;
         border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid var(--divider-color, #e0e0e0);
         flex-shrink: 0;
       }
       .missing {
-        color: #fbbf24;
-        font-size: 0.75rem;
+        color: var(--warning-color, #fbbf24);
+        font-size: clamp(9px, 1.3vw, 11px);
       }
     `;
   }
@@ -218,61 +229,80 @@ class WortuhrCardCompact extends LitElementBase {
     const brightness = v1State?.attributes?.brightness ?? 255;
 
     return html`
-      <ha-card class="card">
-        <div class="header">
-          <div class="title">${this.config.title || 'Wortuhr'}</div>
-          <div class="controls-row">
-            <div class="brightness-control">
-              <input
-                type="range"
-                min="1"
-                max="255"
-                .value=${brightness}
-                @change=${(ev) => this._setBrightnessAll(entities, Number(ev.target.value))}
-              />
-              <span class="brightness-label">${Math.round((brightness / 255) * 100)}%</span>
+      <ha-card>
+        <div class="card">
+          <div class="header">
+            <div class="title">${this.config.title || 'Wortuhr'}</div>
+            <div class="controls-row">
+              <div class="brightness-control">
+                <input
+                  type="range"
+                  min="1"
+                  max="255"
+                  .value=${brightness}
+                  @change=${(ev) => this._setBrightnessAll(entities, Number(ev.target.value))}
+                />
+                <span class="brightness-label">${Math.round((brightness / 255) * 100)}%</span>
+              </div>
+              ${powerState
+                ? html`<button @click=${() => this._togglePower(entities.power)}>
+                    ${powerState.state === 'on' ? 'Aus' : 'An'}
+                  </button>`
+                : html`<span class="missing">Fehler</span>`}
             </div>
-            ${powerState
-              ? html`<button @click=${() => this._togglePower(entities.power)}>
-                  ${powerState.state === 'on' ? 'Aus' : 'An'}
-                </button>`
-              : html`<span class="missing">Fehler</span>`}
           </div>
-        </div>
 
-        <div class="tabs">
-          <button class="tab ${this._activeTab === 'effects' ? 'active' : ''}" @click=${() => this._activeTab = 'effects'}>
-            Effekte
-          </button>
-          <button class="tab ${this._activeTab === 'animation' ? 'active' : ''}" @click=${() => this._activeTab = 'animation'}>
-            Animation
-          </button>
-          <button class="tab ${this._activeTab === 'colors' ? 'active' : ''}" @click=${() => this._activeTab = 'colors'}>
-            Farben
-          </button>
-        </div>
+          <div class="tabs">
+            <button class="tab ${this._activeTab === 'effects' ? 'active' : ''}" @click=${() => this._activeTab = 'effects'}>
+              Effekte
+            </button>
+            <button class="tab ${this._activeTab === 'animation' ? 'active' : ''}" @click=${() => this._activeTab = 'animation'}>
+              Animation
+            </button>
+            <button class="tab ${this._activeTab === 'vordergrund' ? 'active' : ''}" @click=${() => this._activeTab = 'vordergrund'}>
+              Vordergrund
+            </button>
+            <button class="tab ${this._activeTab === 'hintergrund' ? 'active' : ''}" @click=${() => this._activeTab = 'hintergrund'}>
+              Hintergrund
+            </button>
+            <button class="tab ${this._activeTab === 'status' ? 'active' : ''}" @click=${() => this._activeTab = 'status'}>
+              Status
+            </button>
+          </div>
 
-        <div class="tab-content ${this._activeTab === 'effects' ? 'active' : ''}">
-          ${this._selectRowCompact('Übergang', entities.effect, this._effectOptions())}
-          ${this._selectRowCompact('Tempo', entities.effectTime, this._speedOptions())}
-        </div>
+          <div class="tab-content ${this._activeTab === 'effects' ? 'active' : ''}">
+            ${this._selectRowCompact('Übergang', entities.effect, this._effectOptions())}
+            ${this._selectRowCompact('Tempo', entities.effectTime, this._speedOptions())}
+          </div>
 
-        <div class="tab-content ${this._activeTab === 'animation' ? 'active' : ''}">
-          ${this._selectRowCompact('Animation', entities.animation, this._animationOptions())}
-          ${this._selectRowCompact('Tempo', entities.animationTime, this._speedOptions())}
-          ${this._selectRowCompact('Stärke', entities.animationDepth, this._depthOptions())}
-        </div>
+          <div class="tab-content ${this._activeTab === 'animation' ? 'active' : ''}">
+            ${this._selectRowCompact('Animation', entities.animation, this._animationOptions())}
+            ${this._selectRowCompact('Tempo', entities.animationTime, this._speedOptions())}
+            ${this._selectRowCompact('Stärke', entities.animationDepth, this._depthOptions())}
+          </div>
 
-        <div class="tab-content ${this._activeTab === 'colors' ? 'active' : ''}">
-          <div style="font-size: 0.8rem; color: #9ca3af; margin-bottom: 6px;">Vordergrund:</div>
-          ${this._colorRowCompact('V1', entities.v1)}
-          ${this._colorRowCompact('V2', entities.v2)}
-          ${this._selectRowCompact('V-Schema', entities.vs, this._schemaOptions())}
-          
-          <div style="font-size: 0.8rem; color: #9ca3af; margin: 8px 0 6px 0;">Hintergrund:</div>
-          ${this._colorRowCompact('H1', entities.h1)}
-          ${this._colorRowCompact('H2', entities.h2)}
-          ${this._selectRowCompact('H-Schema', entities.hs, this._schemaOptions())}
+          <div class="tab-content ${this._activeTab === 'vordergrund' ? 'active' : ''}">
+            <div style="font-size: clamp(9px, 1.3vw, 11px); color: var(--secondary-text-color, black); margin-bottom: 6px;">Farben:</div>
+            ${this._colorRowCompact('Farbe 1', entities.v1)}
+            ${this._colorRowCompact('Farbe 2', entities.v2)}
+            ${this._selectRowCompact('Schema', entities.vs, this._schemaOptions())}
+          </div>
+
+          <div class="tab-content ${this._activeTab === 'hintergrund' ? 'active' : ''}">
+            <div style="font-size: clamp(9px, 1.3vw, 11px); color: var(--secondary-text-color, black); margin-bottom: 6px;">Farben:</div>
+            ${this._colorRowCompact('Farbe 1', entities.h1)}
+            ${this._colorRowCompact('Farbe 2', entities.h2)}
+            ${this._selectRowCompact('Schema', entities.hs, this._schemaOptions())}
+          </div>
+
+          <div class="tab-content ${this._activeTab === 'status' ? 'active' : ''}">
+            <div style="font-size: clamp(9px, 1.3vw, 11px); color: var(--secondary-text-color, black); margin-bottom: 6px;">Diagnose-Informationen:</div>
+            ${this._statusRow('IP-Adresse', entities.ipAddress)}
+            ${this._statusRow('WiFi-Signalstärke', entities.rssi, 'dBm')}
+            ${this._statusRow('System Auslastung', entities.systemLoad, '%')}
+            ${this._formatUptimeRow('Uptime', entities.uptime)}
+            ${this._statusRow('Letzter NTP Sync', entities.lastNtpSync)}
+          </div>
         </div>
       </ha-card>
     `;
@@ -294,6 +324,11 @@ class WortuhrCardCompact extends LitElementBase {
       h2: 'h2',
       vs: 'vs',
       hs: 'hs',
+      ipAddress: 'ip_address',
+      uptime: 'uptime',
+      rssi: 'rssi',
+      systemLoad: 'system_load',
+      lastNtpSync: 'last_ntp_sync',
     };
 
     const resolved = {};
@@ -346,6 +381,11 @@ class WortuhrCardCompact extends LitElementBase {
       h2: ['h2', 'hintergrundfarbe_2', 'hintergrund_farbe_2'],
       vs: ['vs', 'vordergrundfarbschema', 'vordergrund_farbschema'],
       hs: ['hs', 'hintergrundfarbschema', 'hintergrund_farbschema'],
+      ip_address: ['ip_address', 'ip_adresse'],
+      uptime: ['uptime'],
+      rssi: ['rssi', 'wifi_signalstarke', 'wifi_signalstärke'],
+      system_load: ['system_load', 'system_auslastung'],
+      last_ntp_sync: ['last_ntp_sync', 'letzter_ntp_sync'],
     };
     
     const possibleSuffixes = suffixMaps[normSuffix] || [suffix];
@@ -361,6 +401,7 @@ class WortuhrCardCompact extends LitElementBase {
         if (normBase && normEid === `switch_${normBase}_${normSuff}`) return eid;
         if (normBase && normEid === `light_${normBase}_${normSuff}`) return eid;
         if (normBase && normEid === `select_${normBase}_${normSuff}`) return eid;
+        if (normBase && normEid === `sensor_${normBase}_${normSuff}`) return eid;
         
         const eidWithoutDomain = normEid.split('_').slice(1).join('_');
         if (normBase && eidWithoutDomain === `${normBase}_${normSuff}`) return eid;
@@ -430,6 +471,76 @@ class WortuhrCardCompact extends LitElementBase {
         <div class="color-display" style="background: ${displayColor};"></div>
       </div>
     `;
+  }
+
+  _statusRow(label, entityId, unit = '') {
+    const stateObj = this._state(entityId);
+    if (!stateObj) return html`<div class="row"><span class="missing">${label}: fehlt</span></div>`;
+    
+    const value = stateObj.state;
+    const displayValue = unit ? `${value} ${unit}` : value;
+    
+    return html`
+      <div class="row">
+        <span class="label">${label}</span>
+        <span style="flex: 1; color: var(--secondary-text-color, black);">${displayValue}</span>
+      </div>
+    `;
+  }
+
+  _formatUptimeRow(label, entityId) {
+    const stateObj = this._state(entityId);
+    if (!stateObj) return html`<div class="row"><span class="missing">${label}: fehlt</span></div>`;
+    
+    const seconds = parseInt(stateObj.state, 10);
+    if (isNaN(seconds)) {
+      return html`
+        <div class="row">
+          <span class="label">${label}</span>
+          <span style="flex: 1; color: var(--secondary-text-color, black);">${stateObj.state}</span>
+        </div>
+      `;
+    }
+    
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    let displayValue = '';
+    if (days > 0) {
+      displayValue = `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      displayValue = `${hours}h ${minutes}m`;
+    } else {
+      displayValue = `${minutes}m`;
+    }
+    
+    return html`
+      <div class="row">
+        <span class="label">${label}</span>
+        <span style="flex: 1; color: var(--secondary-text-color, black);">${displayValue}</span>
+      </div>
+    `;
+  }
+
+  _formatUptime(entityId) {
+    const stateObj = this._state(entityId);
+    if (!stateObj) return '';
+    
+    const seconds = parseInt(stateObj.state, 10);
+    if (isNaN(seconds)) return stateObj.state;
+    
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
   }
 
   _togglePower(entityId) {
@@ -616,7 +727,12 @@ class WortuhrCardEditor extends LitElementBase {
       'hs', 'hintergrundfarbschema', 'hintergrund_farbschema',
       'efxtime', 'ubergangsgeschwindigkeit', 'uebergangsgeschwindigkeit',
       'anitime', 'animationsgeschwindigkeit',
-      'anidepth', 'animationsstarke', 'animationsintentat'
+      'anidepth', 'animationsstarke', 'animationsintentat',
+      'ip_address', 'ip_adresse', 'ipaddress', 'ip',
+      'uptime',
+      'rssi', 'wifi_signalstarke', 'wifi_signalstärke', 'wifi_signal', 'wifisignal',
+      'system_load', 'system_auslastung', 'systemload', 'speicherauslastung',
+      'last_ntp_sync', 'letzter_ntp_sync', 'lastntpsync', 'ntpsync'
     ];
     
     const deviceEntityCounts = {};
