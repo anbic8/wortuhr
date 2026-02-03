@@ -16,6 +16,88 @@ void readTime(){
   checkon();
 }
 
+// Render a two-digit countdown (00-99) centered on the matrix using a larger 5x7 font
+// which: 0=user countdown, 1=newyear countdown
+void showCountdown(int secondsLeft, int which) {
+  // 5x7 font, each row is 5 bits (MSB on left)
+  const uint8_t font[10][7] = {
+    {0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110}, //0
+    {0b00100,0b01100,0b00100,0b00100,0b00100,0b00100,0b01110}, //1
+    {0b01110,0b10001,0b00001,0b00010,0b00100,0b01000,0b11111}, //2
+    {0b01110,0b10001,0b00001,0b00110,0b00001,0b10001,0b01110}, //3
+    {0b00010,0b00110,0b01010,0b10010,0b11111,0b00010,0b00010}, //4
+    {0b11111,0b10000,0b11110,0b00001,0b00001,0b10001,0b01110}, //5
+    {0b00110,0b01000,0b10000,0b11110,0b10001,0b10001,0b01110}, //6
+    {0b11111,0b00001,0b00010,0b00100,0b01000,0b01000,0b01000}, //7
+    {0b01110,0b10001,0b10001,0b01110,0b10001,0b10001,0b01110}, //8
+    {0b01110,0b10001,0b10001,0b01111,0b00001,0b00010,0b01100}  //9
+  };
+
+  int tens = secondsLeft / 10;
+  int ones = secondsLeft % 10;
+  // clear matrixanzeige
+  for(int r=0;r<MATRIX_SIZE;r++) for(int c=0;c<MATRIX_SIZE;c++) matrixanzeige[r][c]=0;
+
+  const int fw = 5, fh = 7, gap = 1;
+  int totalW = fw*2 + gap; // for 11x11 matrix this is 11
+  int startCol = (MATRIX_SIZE - totalW) / 2; // should be 0 for 11
+  int startRow = (MATRIX_SIZE - fh) / 2; // center vertically
+
+  // draw digits into matrixanzeige
+  for(int row=0; row<fh; row++){
+    uint8_t rowT = font[tens][row];
+    uint8_t rowO = font[ones][row];
+    for(int col=0; col<fw; col++){
+      int bit = fw-1-col;
+      if (rowT & (1 << bit)) {
+        int rr = startRow + row;
+        int cc = startCol + col;
+        if (rr>=0 && rr<MATRIX_SIZE && cc>=0 && cc<MATRIX_SIZE) matrixanzeige[rr][cc]=1;
+      }
+      if (rowO & (1 << bit)) {
+        int rr = startRow + row;
+        int cc = startCol + fw + gap + col;
+        if (rr>=0 && rr<MATRIX_SIZE && cc>=0 && cc<MATRIX_SIZE) matrixanzeige[rr][cc]=1;
+      }
+    }
+  }
+
+  // Map matrixanzeige -> anzeige colors
+  for(int r=0;r<MATRIX_SIZE;r++){
+    for(int c=0;c<MATRIX_SIZE;c++){
+      if (matrixanzeige[r][c]==1){
+        // use foreground color vf1 for digits
+        anzeige[r][c][0] = vf1[0];
+        anzeige[r][c][1] = vf1[1];
+        anzeige[r][c][2] = vf1[2];
+      } else {
+        // dim background using hf1
+        anzeige[r][c][0] = hf1[0];
+        anzeige[r][c][1] = hf1[1];
+        anzeige[r][c][2] = hf1[2];
+      }
+    }
+  }
+
+  showmystrip();
+
+  // when hitting zero or negative, clear the corresponding countdown
+  if (secondsLeft <= 0) {
+    int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+    // persist only user countdown; newyear countdown is RAM-only
+    if (which == 1) {
+      newyear_countdown_ts = 0;
+    } else {
+      countdown_ts = 0;
+      int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
+      EEPROM.begin(eepromTotalSize);
+      EEPROM.put(countdownOffset, countdown_ts);
+      EEPROM.commit();
+      EEPROM.end();
+    }
+  }
+}
+
 void readTimeNet(){
   // Get current time from NTP
   time(&now);                        // read the current time from NTP
@@ -87,6 +169,25 @@ void checkon(){
 void showClock(){
 
   
+    // If a countdown is active and within the last 99 seconds, show digits
+    time(&now);
+    localtime_r(&now, &tm);
+    long sleft_user = -1;
+    long sleft_new = -1;
+    if (countdown_ts > 0) sleft_user = (long)countdown_ts - (long)now;
+    if (newyear_countdown_ts > 0) sleft_new = (long)newyear_countdown_ts - (long)now;
+
+    int which = -1;
+    long showSeconds = -1;
+    if (sleft_user >= 0 && sleft_user <= 99) { which = 0; showSeconds = sleft_user; }
+    if (sleft_new >= 0 && sleft_new <= 99) {
+      if (which == -1 || sleft_new < showSeconds) { which = 1; showSeconds = sleft_new; }
+    }
+    if (which != -1) {
+      showCountdown((int)showSeconds, which);
+      return;
+    }
+
     setmatrixanzeige();
 
   if (nacht==1){ 

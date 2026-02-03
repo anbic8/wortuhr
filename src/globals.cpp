@@ -148,6 +148,10 @@ unsigned long lastNtpSync=0; // Last NTP sync timestamp
 int on = 1;  // Nachtmodus 0 für Nachtmodus 1 für Uhrzeit normal
 int gebstat=0; 
 
+// Countdown timestamp (epoch seconds). 0 = disabled
+unsigned long countdown_ts = 0;
+unsigned long newyear_countdown_ts = 0;
+
 //Globals für die Anzeige
 design user_design={};
 

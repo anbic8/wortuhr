@@ -65,11 +65,12 @@ void setup() {
   // Initialize Serial Monitor
   Serial.begin(115200);
   delay(1000); // Warte auf Serial Monitor
-  const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1; // +1 for HA flag
+  const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1; // +1 for HA flag
   EEPROM.begin(eepromTotalSize );
   EEPROM.get( 0, user_connect );
   // read stored firmware version (fixed-size string at end of used area)
-  int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+  int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+  int verOffset = countdownOffset + sizeof(unsigned long);
   char stored_fw[VERSION_STR_MAX + 1];
   for (int i = 0; i < VERSION_STR_MAX; ++i) {
     uint8_t b = EEPROM.read(verOffset + i);
@@ -109,6 +110,9 @@ void setup() {
   char verBuf[VERSION_STR_MAX];
   memset(verBuf, 0, sizeof(verBuf));
   strncpy(verBuf, FW_VERSION, VERSION_STR_MAX - 1);
+  // read stored countdown timestamp (if present)
+  EEPROM.get(countdownOffset, countdown_ts);
+  if (countdown_ts == 0xFFFFFFFFUL) countdown_ts = 0; // treat erased as disabled
   // EEPROM Debug: zeige gelesene Werte (vorsichtig, kann leer/garbage sein)
   Serial.println("EEPROM: gelesene Einstellungen:");
   Serial.print(" SSID: '"); Serial.print(user_connect.ssid); Serial.println("'");
@@ -183,6 +187,24 @@ void setup() {
     Serial.println(" Timeout! Verwende lokale Zeit.");
   }
 #endif 
+
+  // Compute New Year countdown in RAM (always next Jan 1 00:00)
+  time(&now);
+  localtime_r(&now, &tm);
+  int year_now = tm.tm_year + 1900;
+  struct tm tnew;
+  tnew.tm_year = year_now + 1 - 1900; // next year
+  tnew.tm_mon = 0; // January
+  tnew.tm_mday = 1;
+  tnew.tm_hour = 0;
+  tnew.tm_min = 0;
+  tnew.tm_sec = 0;
+  tnew.tm_isdst = -1;
+  time_t newyear_ts = mktime(&tnew);
+  if (newyear_ts > 0) {
+    newyear_countdown_ts = (unsigned long)newyear_ts;
+    Serial.print("Computed New Year countdown (RAM): "); Serial.println(newyear_countdown_ts);
+  }
 
   strip.begin();
   //Button1
@@ -296,24 +318,46 @@ void loop() {
  
 if(mode==1){
   milliaktuell = millis();
-    
-  if(milliaktuell>threshold){
-    
-    readTime();
-    letzterstand=milliaktuell;
-    threshold = letzterstand+warten-(seconds*1000)+1000;
-    
 
-    showClock();
-    Serial.println();
-    
-  };
+  // If a countdown is active and in the last 99 seconds, update every second
+  if (countdown_ts > 0) {
+    readTime(); // refresh `now` and `seconds`
+    long sleft = (long)countdown_ts - (long)now;
+    static long lastCountdownSecond = -999999;
+    if (sleft >= 0 && sleft <= 99) {
+      if (sleft != lastCountdownSecond) {
+        lastCountdownSecond = sleft;
+        showClock();
+        Serial.println();
+      }
+      // during countdown we skip the minute-based refresh
+    } else {
+      // countdown not in last-99 window -> fall back to normal timing
+      lastCountdownSecond = -999999;
+      if (milliaktuell > threshold) {
+        readTime();
+        letzterstand = milliaktuell;
+        threshold = letzterstand + warten - (seconds * 1000) + 1000;
+        showClock();
+        Serial.println();
+      }
+    }
+  } else {
+    // normal minute-based update
+    if (milliaktuell > threshold) {
+      readTime();
+      letzterstand = milliaktuell;
+      threshold = letzterstand + warten - (seconds * 1000) + 1000;
+      showClock();
+      Serial.println();
+    }
+  }
 
-  if(aniMode>0){
+  if (aniMode > 0) {
     animationen();
-  };
+  }
 
-};
+}
   //Listen to Buttons
   bt1.tick();
   bt2.tick();
@@ -385,8 +429,8 @@ if(mode==1){
 
 // write current FW_VERSION into EEPROM (used after successful discovery publishes)
 void saveFirmwareVersion() {
-  const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1;
-  int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+  const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
+  int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage) + sizeof(unsigned long);
   char verBuf[VERSION_STR_MAX];
   memset(verBuf, 0, sizeof(verBuf));
   strncpy(verBuf, FW_VERSION, VERSION_STR_MAX - 1);

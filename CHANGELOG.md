@@ -3,6 +3,19 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.10] - 2026-02-03
+
+### Added
+- Countdown: `datetime-local` Eingabe unter dem Bereich "Geburtstage" zur Konfiguration eines Countdowns
+- Große Ziffern-Darstellung auf der Matrix für die letzten 99 Sekunden
+- Unabhängiger Neujahrs-Countdown (RAM-only, automatisch auf nächsten 01.01 00:00 gesetzt)
+
+### Fixed
+- `/color` Webseite: Speicherauslastung behoben (HTML-Streaming statt großer String-Allokation)
+
+### Changed
+- Anzeige aktualisiert jede Sekunde während aktiver Countdown-Phase
+
 ## [4.2.9] - 2026-01-14
 
 ### Added
@@ -85,7 +98,7 @@ Das Projekt folgt [Semantic Versioning](https://semver.org/):
 
 Die aktuelle Version ist in [globals.h](src/globals.h) definiert:
 ```cpp
-#define FW_VERSION "4.2.8"
+#define FW_VERSION "4.2.10"
 ```
 
 Synchronisiere diese mit `version.txt`!

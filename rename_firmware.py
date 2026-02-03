@@ -9,9 +9,18 @@ def post_build_rename(source, target, env):
     
     # Definiere die Ziel-Dateinamen basierend auf dem Environment
     filename_map = {
+        # NTP builds
         "deutsche_11x11": "firmware_deutsche_11x11.bin",
         "bayrisch_11x11": "firmware_bayrisch_11x11.bin",
-        "mini_8x8": "firmware_mini_8x8.bin"
+        "mini_8x8": "firmware_mini_8x8.bin",
+        # RCT/RTC builds (some configs use _rct, some _rtc)
+        "deutsche_11x11_rct": "firmware_deutsche_11x11_rct.bin",
+        "bayrisch_11x11_rct": "firmware_bayrisch_11x11_rct.bin",
+        "mini_8x8_rct": "firmware_mini_8x8_rct.bin",
+        # aliases in case env names use 'rtc' spelling
+        "deutsche_11x11_rtc": "firmware_deutsche_11x11_rct.bin",
+        "bayrisch_11x11_rtc": "firmware_bayrisch_11x11_rct.bin",
+        "mini_8x8_rtc": "firmware_mini_8x8_rct.bin"
     }
     
     if env_name in filename_map:

@@ -60,8 +60,9 @@ void handleWifi() {
   haDiscoveryEnabled = ha_flag;
 
   // EEPROM-Operationen: begin() einmal, alle Daten schreiben, dann commit()
-  int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
-  int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1;
+  int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+  int verOffset = countdownOffset + sizeof(unsigned long);
+  int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
   int haFlagOffset = verOffset + VERSION_STR_MAX;
   
   EEPROM.begin(eepromTotalSize);
@@ -217,9 +218,11 @@ void handledesignPath() {
   }
 }
 void handlecolorPath() {
+  Serial.println("handlecolorPath: entry");
+  uint32_t freeHeapBefore = ESP.getFreeHeap();
+  Serial.print("handlecolorPath: freeHeap="); Serial.println(freeHeapBefore);
 
   String body;
-  body.reserve(8192); // Pre-allocate large buffer for HTML
   body = "<main class='form-signin'><form action='/color' method='post'> <h1 class=''>Farbeinstellungen</h1>";
   
   // Kompakte Vorschau mit minimalem JavaScript
@@ -482,15 +485,22 @@ void handlecolorPath() {
     server.send(303);
     
   } else {
-    // GET Request - Formular anzeigen
+    // GET Request - stream the page in small chunks to reduce peak heap usage
+    uint32_t freeHeapNow = ESP.getFreeHeap();
+    Serial.print("handlecolorPath: freeHeap before stream="); Serial.println(freeHeapNow);
+    if (freeHeapNow < 7000) {
+      // still too low: send a tiny info page
+      String small = "<html><body><h1>Farbeinstellungen vorübergehend nicht verfügbar</h1><p>Freier Heap: "+String(freeHeapNow)+"</p></body></html>";
+      Serial.println("handlecolorPath: low memory, sending small page");
+      server.send(200, "text/html", small);
+      return;
+    }
+
+    // Use chunked transfer to avoid building a large single String
     server.setContentLength(CONTENT_LENGTH_UNKNOWN);
     server.send(200, "text/html", "");
-    
-    // Header senden
     server.sendContent(FPSTR(htmlhead));
     server.sendContent(body);
-    
-    // Formulare senden
     server.sendContent(vf1form);
     server.sendContent(vf2form);
     server.sendContent(vsform);
@@ -504,7 +514,6 @@ void handlecolorPath() {
     server.sendContent(anidepthform);
     server.sendContent(dimmform);
     server.sendContent("<button type='submit'>Speichern</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main></div> </body></html>");
-    server.sendContent("");
   }
 }
 
@@ -514,8 +523,9 @@ void handleHAConfig() {
     bool enabled = server.hasArg("ha_enable") && server.arg("ha_enable") == "1";
     haDiscoveryEnabled = enabled;
     // persist single byte after version slot
-    int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
-    int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + VERSION_STR_MAX + 1;
+    int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+    int verOffset = countdownOffset + sizeof(unsigned long);
+    int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
     int haFlagOffset = verOffset + VERSION_STR_MAX;
     EEPROM.begin(eepromTotalSize);
     EEPROM.write(haFlagOffset, enabled ? 1 : 0);

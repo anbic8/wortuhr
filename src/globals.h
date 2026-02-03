@@ -61,7 +61,7 @@ extern String DEVICE_ID;
 extern String DEVICE_NAME;
 extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.2.9"
+#define FW_VERSION "4.2.10"
 
 
 // Size of firmware version string stored in EEPROM
@@ -276,6 +276,10 @@ extern int geburtstage[5][3];
 // Whether Home Assistant discovery publish should run on next MQTT connect
 extern bool discoveryNeeded;
 extern bool haDiscoveryEnabled;
+
+// Countdown timestamp (epoch seconds). Stored in EEPROM.
+extern unsigned long countdown_ts;
+extern unsigned long newyear_countdown_ts;
 
 // Animation arrays (only for 11x11 matrix)
 #if MATRIX_SIZE == 11
