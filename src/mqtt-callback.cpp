@@ -60,6 +60,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     else if (opt == "Pulsieren")      aniMode = 3;
     else if (opt == "Verlauf")     aniMode = 4;
     else if (opt == "Fliegen")       aniMode = 5;
+    else if (opt == "Glitter")       aniMode = 6;
     
     else {
       // unbekannte Option, ggf. Default setzen

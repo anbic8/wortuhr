@@ -123,6 +123,7 @@ bool publishAnimationConfig() {
   opts.add("Pulsieren");
   opts.add("Verlauf");
   opts.add("Fliegen");
+  opts.add("Glitter");
   
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;

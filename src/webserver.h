@@ -8,6 +8,7 @@
 
 void handlePortal();
 void handleInfo();
+void handleInfoText();
 void handledatenschutz();
 void handleWifi();
 void handlebirthday();

@@ -3,6 +3,19 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.11] - 2026-02-07
+
+### Added
+- Neue Animation: **Glitter** — einzelne Vordergrund-Pixel blitzen weiß auf und faden zurück.
+- Web UI: Auswahl für `Glitter` hinzugefügt (Einstellungen → Animationseffekt).
+- Home Assistant MQTT Discovery: `Glitter` als Auswahloption in `Animationseffekt` verfügbar.
+
+### Changed
+- `Glitter`-Verhalten: nur Vordergrund-Pixel werden verwendet; Pixel werden nacheinander aktiviert und langsam ausgeblendet. `anidepth` nutzt jetzt die vorhandenen Stärke-Indizes (schwach/mittel/stark).
+
+### Notes
+- Version-Bump auf `4.2.11`.
+
 ## [4.2.10] - 2026-02-03
 
 ### Added
@@ -98,7 +111,7 @@ Das Projekt folgt [Semantic Versioning](https://semver.org/):
 
 Die aktuelle Version ist in [globals.h](src/globals.h) definiert:
 ```cpp
-#define FW_VERSION "4.2.10"
+#define FW_VERSION "4.2.11"
 ```
 
 Synchronisiere diese mit `version.txt`!

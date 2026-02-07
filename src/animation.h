@@ -10,4 +10,5 @@ void animationen();
     void pulsieren();
     void anifade();
     void fly();
+    void glitter();
     void startup();

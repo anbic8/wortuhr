@@ -61,7 +61,7 @@ extern String DEVICE_ID;
 extern String DEVICE_NAME;
 extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.2.10"
+#define FW_VERSION "4.2.11"
 
 
 // Size of firmware version string stored in EEPROM
@@ -80,7 +80,7 @@ extern String topicEfxCmd;
 extern const char* effectOptions[14];
 extern String topicAniState;
 extern String topicAniCmd;
-extern const char* aniOptions[6];
+extern const char* aniOptions[7];
 extern String topicV1State;
 extern String topicV1Cmd;
 extern String topicV2State;
@@ -226,9 +226,9 @@ extern String htmlefxtime[3];
 extern int htmlefxtimeint[3];
 extern int efxtimeint;
 
-extern String htmlani[6];
+extern String htmlani[7];
 extern String htmlanitime[3];
-extern int htmlanitimeint[5][3];
+extern int htmlanitimeint[7][3];
 extern int anitimeint;
 extern String htmlanidepth[3];
 extern int flypos[3][2];

@@ -111,8 +111,8 @@ void publishEffectState() {
   client.publish(topicEfxState.c_str(), opt, true);
 }
 void publishAniState() {
-  // safeguard: aniMode in [0..5]
-  uint8_t idx = constrain(aniMode, 0, 5);
+  // safeguard: aniMode in [0..6]
+  uint8_t idx = constrain(aniMode, 0, 6);
   const char* opt = aniOptions[idx];
   client.publish(topicAniState.c_str(), opt, true);
 }

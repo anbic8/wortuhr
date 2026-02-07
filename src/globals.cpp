@@ -50,8 +50,8 @@ const char* effectOptions[14] = {
 };
 String topicAniState;
 String topicAniCmd;
-const char* aniOptions[6] = {
-  "keine Animation", "Blinken", "Vordergrundblinken", "Pulsieren", "Verlauf","Fliegen"
+const char* aniOptions[7] = {
+    "keine Animation", "Blinken", "Vordergrundblinken", "Pulsieren", "Verlauf","Fliegen", "Glitter"
 };
 // --- Topics für Licht v1 ---
 String topicV1State;
@@ -212,15 +212,17 @@ String htmlefxtime[3]={"langsam", "mittel", "schnell"};
 int htmlefxtimeint[3]={150,100,50};
 int efxtimeint=0;
 
-String htmlani[6]={"keine Animation", "Blinken", "Vordergrundblinken", "Pulsieren", "Verlauf","Fliegen"};
+String htmlani[7]={"keine Animation", "Blinken", "Vordergrundblinken", "Pulsieren", "Verlauf","Fliegen", "Glitter"};
 String htmlanitime[3]={"langsam", "mittel", "schnell"};
-int htmlanitimeint[5][3]={
-  {0,0,0},
-  {1500, 1000, 500},
-  {1500, 1000, 500},
-  {400, 250, 125},
-  {400, 250, 125}
-  };
+int htmlanitimeint[7][3]={
+    {0,0,0},
+    {1500, 1000, 500},
+    {1500, 1000, 500},
+    {400, 250, 125},
+    {400, 250, 125},
+    {400, 250, 125},
+    {500, 300, 150}
+    };
 int anitimeint=0;
 String htmlanidepth[3]={"schwach", "mittel", "stark"};
 int flypos[3][2]={
@@ -571,320 +573,136 @@ int startcolors[13][3]={{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,255},{0,64,127},{0,
 #endif
 
 const char htmlhead[] PROGMEM = R"rawliteral(
-  <!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wortuhr</title>
-     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-        }
-
-        body {
-            font-family: 'Roboto', Arial, sans-serif;
-            background: linear-gradient(135deg, #1c2833, #34495e);
-            background-attachment: fixed;
-    background-size: cover;
-            color: #fff;
-        }
-        a {
-            text-decoration: none;
-            color: #fff;
-        }
-
-        .menu {
-            display: flex;
-            flex-direction: column;
-            width: 250px;
-            position: fixed;
-            height: 100%;
-            top: 0;
-            left: 0;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .menu a {
-            text-decoration: none;
-            color: #fff;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid #34495e;
-        }
-
-        .menu a:hover {
-            background-color: #34495e;
-        }
-
-        .menu a i {
-            font-size: 1.5em;
-        }
-
-        .content {
-            margin-left: 260px;
-            padding: 20px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 2em;
-        }
-
-        form {
-            max-width: 600px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-floating {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        select {
-            width: 100%;
-            padding: 10px;
-            font-size: 1em;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background: #fff;
-            color: #333;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            font-size: 1.2em;
-            color: #fff;
-            background: linear-gradient(135deg, #4caf50, #2e7d32);
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: linear-gradient(135deg, #66bb6a, #388e3c);
-        }
-
-        .menu-button {
-            display: none;
-            background-color: #333;
-            color: #fff;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            width: 100%;
-        }
-        
-
-        @media screen and (max-width: 768px) {
-            .menu {
-                display: none;
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-            }
-            .menu-button {
-                display: block;
-            }
-            .content {
-                margin-left: 0;
-                padding: 10px;
-            }
-
-            .form {
-                width: 100%;
-            }
-            .menu-button {
-                display: block;
-            }
-            .menu.open {
-                display: flex;
-                position: static;
-                width: 100%;
-            }
-        }
-    </style>
-    <script src='https://kit.fontawesome.com/a3508372ae.js' crossorigin="anonymous"></script> 
-    <script>
-        function toggleMenu() {
-            const menu = document.getElementById('menu');
-            if (menu.classList.contains('open')) {
-                menu.classList.remove('open');
-            } else {
-                menu.classList.add('open');
-            }
-        }
-
-        
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wortuhr</title>
+  <style>
+    :root {
+      --bg: #1b232c;
+      --panel: rgba(255,255,255,0.06);
+      --accent: #4caf50;
+      --text: #f2f2f2;
+      --muted: rgba(255,255,255,0.7);
+      --border: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #19222b, #2f3b45);
+      color: var(--text);
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #10161c;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+    }
+    nav a:hover {
+      background: rgba(255,255,255,0.12);
+    }
+    main {
+      max-width: 920px;
+      margin: 20px auto 40px;
+      padding: 0 16px;
+    }
+    h1, h2 { margin: 12px 0; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      color: var(--muted);
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #0f1419;
+      color: var(--text);
+    }
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    small { color: var(--muted); }
+    a.link { color: #8dd1ff; }
+  </style>
 </head>
 <body>
-    <button class="menu-button" onclick="toggleMenu()">☰ Menu</button>
-    <nav class="menu" id="menu">
-        <a href="/wifi"><i class="fas fa-wifi"></i>Verbindung</a>
-        <a href="/setting"><i class="fas fa-cog"></i>Einstellungen</a>
-        <a href="/color"><i class="fas fa-palette"></i>Farben</a>
-        <a href="/birthday"><i class="fa-solid fa-cake-candles"></i>Geburtstage</a>
-        <a href="/info"><i class="fas fa-info-circle"></i>Info</a>
-        <a href="/update"><i class="fa-solid fa-upload"></i>Update</a>
-        
-    </nav>
-    <div class="content">
-           
+  <nav>
+    <a href="/wifi">Verbindung</a>
+    <a href="/color">Farben</a>
+    <a href="/birthday">Geburtstag/Countdown</a>
+    <a href="/info">Info</a>
+    <a href="/update">Update</a>
+  </nav>
+  <main>
 
 )rawliteral";
 
 
 const char htmlinfo[] PROGMEM = R"rawliteral(
-<main style="max-width: 800px; margin: 0 auto;">
-    <h1><i class="fas fa-clock"></i> Willkommen bei deiner Wortuhr!</h1>
-    
-    <div style="background: rgba(76, 175, 80, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #4caf50;">
-        <p style="margin: 0; font-size: 1.1em;">
-            <i class="fas fa-heart"></i> Schön, dass du da bist! Diese handgefertigte Wortuhr zeigt dir die Zeit auf eine ganz besondere Art – 
-            in Worten statt in Ziffern. Lass uns gemeinsam schauen, wie du deine Uhr ganz nach deinen Wünschen einrichten kannst.
-        </p>
-    </div>
+<h1>Wortuhr Info</h1>
 
-    <h2><i class="fas fa-rocket"></i> Erste Schritte – Los geht's!</h2>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <ol style="line-height: 1.8;">
-            <li><strong><a href="/wifi" style="color: #66bb6a;"><i class="fas fa-wifi"></i> Verbindung einrichten</a></strong><br>
-                Zuerst verbindest du deine Uhr mit deinem WLAN. Gib einfach deine Netzwerkdaten ein – fertig! 
-                Optional kannst du auch MQTT für Smarthome-Integration aktivieren (z.B. für Home Assistant).</li>
-            
-            <li><strong><a href="/color" style="color: #66bb6a;"><i class="fas fa-palette"></i> Farben wählen</a></strong><br>
-                Jetzt wird's bunt! Wähle deine Lieblingsfarben für Vorder- und Hintergrund. Du kannst zwischen verschiedenen 
-                Farbschemata wählen – von einfarbig bis Regenbogen-Verlauf. Die Helligkeit regelst du mit dem Schieberegler.</li>
-            
-            <li><strong><a href="/setting" style="color: #66bb6a;"><i class="fas fa-cog"></i> Einstellungen anpassen</a></strong><br>
-                Hier legst du fest, wie die Zeit angezeigt wird: Möchtest du "viertel vor" oder "dreiviertel"? 
-                Soll das Wort "Uhr" immer leuchten? Und wann soll die Uhr nachts in den Nachtmodus gehen?</li>
-            
-            <li><strong><a href="/birthday" style="color: #66bb6a;"><i class="fa-solid fa-cake-candles"></i> Geburtstage eintragen</a></strong> (optional)<br>
-                Trage wichtige Geburtstage ein – deine Uhr erinnert dich daran mit einer speziellen Anzeige!</li>
-        </ol>
-    </div>
+<div class="card">
+  <p>Dieses Webinterface laeuft lokal im Heimnetzwerk. Hier richtest du WLAN, Farben, Geburtstage und Updates ein.</p>
+</div>
 
-    <h2><i class="fas fa-book-open"></i> Detaillierte Bedienungsanleitung</h2>
-    
-    <h3><i class="fas fa-palette"></i> Farben und Effekte</h3>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <p>Im <a href="/color" style="color: #66bb6a;">Farben-Menü</a> hast du die volle kreative Kontrolle:</p>
-        <ul style="line-height: 1.6;">
-            <li><strong>Vordergrundfarben:</strong> Die Farbe der leuchtenden Buchstaben (die die Zeit anzeigen)</li>
-            <li><strong>Hintergrundfarben:</strong> Die Farbe der nicht aktiven Buchstaben</li>
-            <li><strong>Farbschemata:</strong> Wähle zwischen einfarbig, Schachbrett, Spalten, Zeilen, Verlauf oder Regenbogen</li>
-            <li><strong>Helligkeit:</strong> Passe die Leuchtintensität an (von gedimmt bis hell)</li>
-            <li><strong>Effekte & Animationen:</strong> Aktiviere sanfte Übergänge oder dynamische Animationen</li>
-        </ul>
-        <p><em>Tipp: Die Live-Vorschau zeigt dir sofort, wie deine Einstellungen aussehen werden!</em></p>
-    </div>
+<div class="card">
+  <h2>Schnellzugriffe</h2>
+  <ul>
+    <li><a class="link" href="/wifi">Verbindung</a> einrichten</li>
+    <li><a class="link" href="/color">Farben</a> anpassen</li>
+    <li><a class="link" href="/birthday">Geburtstag/Countdown</a> verwalten</li>
+    <li><a class="link" href="/update">Update</a> starten</li>
+  </ul>
+</div>
 
-    <h3><i class="fas fa-cog"></i> Einstellungen und Anzeigeoptionen</h3>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <p>In den <a href="/setting" style="color: #66bb6a;">Einstellungen</a> bestimmst du das Verhalten deiner Uhr:</p>
-        <ul style="line-height: 1.6;">
-            <li><strong>Zeitanzeige bei xx:45:</strong> "dreiviertel" (z.B. dreiviertel vier) oder "viertel vor" (z.B. viertel vor vier)</li>
-            <li><strong>Wort "Uhr":</strong> Wann soll es leuchten? Immer, zur vollen Stunde oder nie</li>
-            <li><strong>Nachtmodus:</strong> Lege eine Zeit fest, wann die Uhr automatisch dimmt oder ausgeht (z.B. 23:00 bis 6:00)</li>
-            <li><strong>Nachtmodus-Verhalten:</strong> LEDs komplett ausschalten oder nur stark dimmen</li>
-        </ul>
-    </div>
+<div class="card">
+  <h2>Tipps</h2>
+  <ul>
+    <li>Nach dem Speichern von WLAN oder MQTT startet die Uhr neu.</li>
+    <li>Ein Countdown kann fuer ein wichtiges Datum gesetzt werden.</li>
+    <li>Nutze ein stabiles 5V Netzteil (mindestens 2A).</li>
+  </ul>
+</div>
 
-    <h3><i class="fas fa-wifi"></i> WLAN und MQTT</h3>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <p>Über <a href="/wifi" style="color: #66bb6a;">Verbindung</a> richtest du die Netzwerkanbindung ein:</p>
-        <ul style="line-height: 1.6;">
-            <li><strong>WLAN-Zugangsdaten:</strong> Deine Uhr benötigt Internet für die Zeitsynchronisation</li>
-            <li><strong>MQTT (optional):</strong> Für Smarthome-Fans! Steuere deine Uhr über Home Assistant, ioBroker oder andere Systeme</li>
-            <li><strong>MQTT-Präfix:</strong> Gib deiner Uhr einen eindeutigen Namen, falls du mehrere hast (z.B. "wohnzimmer" oder "schlafzimmer")</li>
-            <li><strong>Home Assistant:</strong> Aktiviere die automatische Erkennung für nahtlose Integration</li>
-        </ul>
-        <p><em>Hinweis: Nach dem Speichern startet die Uhr neu – das ist ganz normal!</em></p>
-    </div>
+<div class="card">
+  <p>Rechtliches findest du unter <a class="link" href="/datenschutz">Datenschutz</a>.</p>
+</div>
 
-    <h3><i class="fa-solid fa-upload"></i> Firmware-Update</h3>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <p>Über das <a href="/update" style="color: #66bb6a;">Update-Menü</a> kannst du neue Funktionen und Verbesserungen installieren:</p>
-        <ul style="line-height: 1.6;">
-            <li>Lade die neueste Firmware-Datei (.bin) herunter</li>
-            <li>Wähle die Datei im Update-Menü aus und starte das Update</li>
-            <li>Warte, bis der Upload abgeschlossen ist – die Uhr startet automatisch neu</li>
-        </ul>
-        <p><em>Wichtig: Trenne während des Updates nicht die Stromversorgung!</em></p>
-    </div>
-
-    <h2><i class="fas fa-tools"></i> Technische Details</h2>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <ul style="line-height: 1.6;">
-            <li><strong>LEDs:</strong> Adressierbarer WS2812s LED-Strip für brillante Farbdarstellung</li>
-            <li><strong>Prozessor:</strong> ESP8266 Mikrocontroller mit WLAN</li>
-            <li><strong>Zeitsynchronisation:</strong> Automatisch über NTP-Server (Internet erforderlich)</li>
-            <li><strong>Stromversorgung:</strong> USB-Netzteil mit mindestens 2A (5V) empfohlen</li>
-            <li><strong>Webinterface:</strong> Erreichbar unter <strong>wortuhr.local</strong> (oder deinem gewählten MQTT-Präfix)</li>
-        </ul>
-    </div>
-
-    <h2><i class="fas fa-heart"></i> Pflege und Wartung</h2>
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <ul style="line-height: 1.6;">
-            <li><strong>Reinigung:</strong> Verwende nur ein weiches, trockenes oder leicht angefeuchtetes Tuch</li>
-            <li><strong>Standort:</strong> Vermeide direkte Sonneneinstrahlung und Feuchtigkeit</li>
-            <li><strong>Stromversorgung:</strong> Nutze ein qualitativ hochwertiges USB-Netzteil (5V, mind. 2A)</li>
-            <li><strong>Transport:</strong> Behandle die Uhr vorsichtig – sie ist ein handgefertigtes Unikat</li>
-        </ul>
-    </div>
-
-    <h2><i class="fas fa-question-circle"></i> Hilfe und Support</h2>
-    <div style="background: rgba(33, 150, 243, 0.2); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
-        <p style="margin: 0;">
-            Falls du Fragen hast oder Unterstützung benötigst, bin ich gerne für dich da! 
-            Schreib mir einfach eine E-Mail an 
-            <a href="mailto:bichlmaier.andreas0+wortuhr@gmail.de" style="color: #64b5f6;">bichlmaier.andreas0@gmail.de</a>
-        </p>
-    </div>
-
-    <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
-        <h3><i class="fa-solid fa-scale-balanced"></i> Rechtliche Hinweise</h3>
-        <p>
-            <a href="/datenschutz" style="color: #66bb6a; font-size: 1.1em;">
-                <i class="fas fa-shield-alt"></i> Datenschutz und Gewährleistung anzeigen
-            </a>
-        </p>
-        <p style="font-size: 0.9em; color: rgba(255,255,255,0.7); margin-top: 10px;">
-            Diese Uhr wird von mir mit viel Liebe zum Detail handgefertigt. Alle wichtigen rechtlichen 
-            Informationen zu Datenschutz, Gewährleistung und verwendeten Open-Source-Komponenten findest du im verlinkten Bereich.
-        </p>
-    </div>
-
-    <div style="text-align: center; padding: 20px; margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="color: rgba(255,255,255,0.5);">
-            <i class="fas fa-code"></i> Mit <i class="fas fa-heart" style="color: #e74c3c;"></i> handgefertigt von Andy B
-        </p>
-    </div>
-</main>
-</body></html>
-
-        )rawliteral";
+<div class="card">
+  <p>Anleitung: <a class="link" href="https://github.com/anbic8/wortuhr/blob/main/ANLEITUNG.md" target="_blank">ANLEITUNG.md</a></p>
+</div>
+)rawliteral";
 
 const char htmlrecht[] PROGMEM = R"rawliteral(
 <main style="max-width: 800px; margin: 0 auto;">

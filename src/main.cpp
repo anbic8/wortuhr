@@ -158,6 +158,7 @@ void setup() {
   server.on("/color", handlecolorPath);
   server.on("/setting", handledesignPath);
   server.on("/info", handleInfo);
+  server.on("/infotext", handleInfoText);
   server.on("/wifi", handleWifi);
   server.on("/birthday", handlebirthday);
   #ifdef USE_RCT
