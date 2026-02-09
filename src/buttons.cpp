@@ -103,6 +103,7 @@ void bt2click(){
           stunden=0;
         }
         showwhilesetting();
+        Serial.print("Stunden: "); Serial.println(stunden);
       }
       if(settimemode==2){
         minutes = minutes+1;
@@ -110,6 +111,7 @@ void bt2click(){
           minutes=0;
         }
         showwhilesetting();
+        Serial.print("Minuten: "); Serial.println(minutes);
       }
     #else
       // NTP-Modus: Demo - Minuten ändern
@@ -135,10 +137,12 @@ void bt2longs(){
       // RTC Mode: Zyklus durch Einstellungsmodi
       if(settimemode<3){
         settimemode++;
+        Serial.print("Settimemode: "); Serial.println(settimemode);
       }
       if(settimemode==3){
         settimemode=0;
         setDate(seconds, minutes, stunden, day, month, year);
+        Serial.print("Zeit eingestellt");
       }
     #endif
   }
@@ -151,5 +155,6 @@ void showwhilesetting(){
        h = hours;
      m = minutes%5;
   setmatrixanzeige();
+  setanzeige();
       showmystrip();
 }

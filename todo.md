@@ -3,5 +3,4 @@ Anleitung QR CODE
 
 countdown optionen über ha
 
-animationen:
--firework
+Zeit lokal als utc auch über RTC

@@ -287,10 +287,6 @@ void showClock(){
   }
   
 
-  //Serial output
- 
-  Serial.println("Uhr wurde angezeigt");
-
   anistate=0;
 }
 

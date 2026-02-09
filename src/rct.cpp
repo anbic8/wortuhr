@@ -1,11 +1,14 @@
 #include "rct.h"
 #include "globals.h"
+#include "show.h"
+#include "effects.h"
 
 #ifdef USE_RCT
 #include <Wire.h>
 
 void readTimeRCT()
 {
+    Serial.println("Lese Zeit von RTC...");
     Wire.beginTransmission(DS1307_ADDRESS);
     Wire.write(0x00);
     Wire.endTransmission();
@@ -25,6 +28,12 @@ void readTimeRCT()
    mb = int(minutes/5);
   h = hours;
   m = minutes%5;
+  Serial.print("Zeit von RTC: ");
+  Serial.print(stunden); Serial.print(":");
+  if (minutes < 10) Serial.print("0"); 
+  Serial.print(minutes); Serial.print(":");
+  if (seconds < 10) Serial.print("0");
+  Serial.println(seconds);
 }
 
 void setDate(int s, int m, int h, int d, int month, int y )
@@ -34,11 +43,16 @@ void setDate(int s, int m, int h, int d, int month, int y )
     Wire.write(decToBcd(s));   // seconds
     Wire.write(decToBcd(m));   // minutes
     Wire.write(decToBcd(h));   // hours (24-hour format)
+    Wire.write(decToBcd(1));
     Wire.write(decToBcd(d));   // day
     Wire.write(decToBcd(month));   // month
-    Wire.write(decToBcd(y)); // year
+    Wire.write(decToBcd(y % 100)); // year (two-digit)
     Wire.write(0x00);
     Wire.endTransmission();
+    Serial.print("Zeit in RTC gespeichert");
+    Serial.print(" "); Serial.print(h); Serial.print(":"); Serial.print(m); Serial.print(":"); Serial.println(s);
+    readTimeRCT(); // Refresh time variables after setting
+    showClock();
 }
 
 void handlesettime() {
@@ -60,9 +74,13 @@ void handlesettime() {
   } else {
     String body ="<main class='form-signin'> <form action='/settime' method='post'> <h1 class=''>Zeit einstellen</h1><br/>";
     body += "<div class='form-floating'><label>Uhrzeit hh:mm:ss</label><br>";
-    body += "<input type='number' id='hours' name='hours' min='0' max='23' step='1'>:<input type='number' id='minutes' name='minutes' min='0' max='59' step='1'>:<input type='number' id='seconds' name='seconds' min='0' max='59' step='1'></div><br/>";
+    body += "<input type='number' id='hours' name='hours' min='0' max='23' step='1' value='" + String(stunden) + "'>:";
+    body += "<input type='number' id='minutes' name='minutes' min='0' max='59' step='1' value='" + String(minutes) + "'>:";
+    body += "<input type='number' id='seconds' name='seconds' min='0' max='59' step='1' value='" + String(seconds) + "'></div><br/>";
     body += "<div class='form-floating'><label>Datum einstellen dd.mm.yyyy</label><br>";
-    body += "<input type='number' id='day' name='day' min='1' max='31' step='1'>.<input type='number' id='month' name='month' min='1' max='12' step='1'>.<input type='number' id='year' name='year' min='2025' max='3000' step='1'></div><br/>";
+    body += "<input type='number' id='day' name='day' min='1' max='31' step='1' value='" + String(day) + "'>.";
+    body += "<input type='number' id='month' name='month' min='1' max='12' step='1' value='" + String(month) + "'>.";
+    body += "<input type='number' id='year' name='year' min='2025' max='3000' step='1' value='" + String(year) + "'></div><br/>";
     body += "<br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
     server.send(200, "text/html", htmlhead + body);
   }

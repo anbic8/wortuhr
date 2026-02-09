@@ -313,6 +313,8 @@ Serial.println();
 
 
   EEPROM.get( sizeof(settings) + sizeof(MyColor)+ sizeof(design) , geburtstage );
+
+  
 }
 
 void loop() {
@@ -321,38 +323,42 @@ if(mode==1){
   milliaktuell = millis();
 
   // If a countdown is active and in the last 99 seconds, update every second
-  if (countdown_ts > 0) {
-    readTime(); // refresh `now` and `seconds`
-    long sleft = (long)countdown_ts - (long)now;
+  
+  if(sleft >= 0 && sleft <= 121){
+    readTime();
     static long lastCountdownSecond = -999999;
-    if (sleft >= 0 && sleft <= 99) {
-      if (sleft != lastCountdownSecond) {
-        lastCountdownSecond = sleft;
-        showClock();
-        Serial.println();
-      }
-      // during countdown we skip the minute-based refresh
-    } else {
-      // countdown not in last-99 window -> fall back to normal timing
-      lastCountdownSecond = -999999;
-      if (milliaktuell > threshold) {
-        readTime();
-        letzterstand = milliaktuell;
-        threshold = letzterstand + warten - (seconds * 1000) + 1000;
-        showClock();
-        Serial.println();
-      }
-    }
-  } else {
-    // normal minute-based update
-    if (milliaktuell > threshold) {
-      readTime();
-      letzterstand = milliaktuell;
-      threshold = letzterstand + warten - (seconds * 1000) + 1000;
-      showClock();
-      Serial.println();
-    }
+    long sleft = (long)countdown_ts - (long)now;
+        if (sleft >= 0 && sleft <= 99) {
+          Serial.print("zwischen 0 und 99 Sekunden left: ");
+          if (sleft != lastCountdownSecond) {
+            lastCountdownSecond = sleft;
+            Serial.print("neue sleft angezeigt: ");
+            showClock();
+            
+          }
+          // during countdown we skip the minute-based refresh
+        }
+  }else{
+          if (milliaktuell > threshold) {
+            readTime();
+            letzterstand = milliaktuell;
+            threshold = letzterstand + warten - (seconds * 1000) + 1000;
+            showClock();
+            Serial.println("Uhr aktualisiert");
+
+             if (countdown_ts > 0) {
+              long sleft = (long)countdown_ts - (long)now;
+              Serial.print("Countdown TS:");
+              Serial.print(countdown_ts);
+              Serial.print(" Aktuelle Zeit (now): ");              Serial.println(now);
+              Serial.print("Countdown Sekunden left: ");
+              Serial.println(sleft);
+          }
   }
+}
+
+ 
+ 
 
   if (aniMode > 0) {
     animationen();

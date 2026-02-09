@@ -152,6 +152,8 @@ int gebstat=0;
 unsigned long countdown_ts = 0;
 unsigned long newyear_countdown_ts = 0;
 
+unsigned long sleft = -1;
+
 //Globals für die Anzeige
 design user_design={};
 
