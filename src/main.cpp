@@ -68,6 +68,12 @@ void setup() {
   const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1; // +1 for HA flag
   EEPROM.begin(eepromTotalSize );
   EEPROM.get( 0, user_connect );
+
+      // Timezone für Europa einstellen (z.B. CET/CEST)
+    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+    tzset();  // Timezone aktualisieren - Auto-DST!
+
+
   // read stored firmware version (fixed-size string at end of used area)
   int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
   int verOffset = countdownOffset + sizeof(unsigned long);
@@ -320,45 +326,42 @@ Serial.println();
 void loop() {
  
 if(mode==1){
+  
   milliaktuell = millis();
 
-  // If a countdown is active and in the last 99 seconds, update every second
-  
-  if(sleft >= 0 && sleft <= 121){
+  static long sleft = 0;
+  static bool secondMode = false;
+
+  // minute-based update
+  if (milliaktuell > threshold) {
+    Serial.println("====================================");
     readTime();
-    static long lastCountdownSecond = -999999;
-    long sleft = (long)countdown_ts - (long)now;
-        if (sleft >= 0 && sleft <= 99) {
-          Serial.print("zwischen 0 und 99 Sekunden left: ");
-          if (sleft != lastCountdownSecond) {
-            lastCountdownSecond = sleft;
-            Serial.print("neue sleft angezeigt: ");
-            showClock();
-            
-          }
-          // during countdown we skip the minute-based refresh
-        }
-  }else{
-          if (milliaktuell > threshold) {
-            readTime();
-            letzterstand = milliaktuell;
-            threshold = letzterstand + warten - (seconds * 1000) + 1000;
-            showClock();
-            Serial.println("Uhr aktualisiert");
+    letzterstand = milliaktuell;
+    
+    if (countdown_ts > 0) {
+      sleft = (long)countdown_ts - (long)now;
+      Serial.print("Countdown TS:");
+      Serial.print(countdown_ts);
+      Serial.print(" Aktuelle Zeit (now): ");              Serial.println(now);
+      Serial.print("Countdown Sekunden left: ");
+      Serial.println(sleft);
+      secondMode = (sleft >= 0 && sleft <= 120);
+    } else {
+      Serial.println("Kein Countdown aktiv");
+      secondMode = false;
+    }
 
-             if (countdown_ts > 0) {
-              long sleft = (long)countdown_ts - (long)now;
-              Serial.print("Countdown TS:");
-              Serial.print(countdown_ts);
-              Serial.print(" Aktuelle Zeit (now): ");              Serial.println(now);
-              Serial.print("Countdown Sekunden left: ");
-              Serial.println(sleft);
-          }
+    if(secondMode) {
+      warten = 1000; 
+    } else {
+      warten = 60000 - (seconds * 1000) + 1000; // adjust wait to align with next minute
+    }
+    threshold = letzterstand + warten;
+    showClock();
+    Serial.println("Uhr aktualisiert");
+    Serial.print("secondMode: ");Serial.println(secondMode);
+    Serial.print("Nächste Aktualisierung in ms: "); Serial.println(warten);
   }
-}
-
- 
- 
 
   if (aniMode > 0) {
     animationen();

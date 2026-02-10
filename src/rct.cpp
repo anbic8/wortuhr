@@ -22,13 +22,26 @@ void readTimeRCT()
     month = bcdToDec(Wire.read());
     year = bcdToDec(Wire.read())+2000;
     
-    
-  hours   = stunden%12;
- zeit = stunden*60+minutes; 
-   mb = int(minutes/5);
-  h = hours;
-  m = minutes%5;
-  Serial.print("Zeit von RTC: ");
+    // LokaleVariablen aktualisieren
+    hours   = stunden%12;
+    zeit = stunden*60+minutes; 
+    mb = int(minutes/5);
+    h = hours;
+    m = minutes%5;
+  
+    // **NEU: Berechne Unix-Timestamp mit DST-Anpassung**
+    struct tm rtc_time = {
+        .tm_sec = seconds,
+        .tm_min = minutes,
+        .tm_hour = stunden,
+        .tm_mday = day,
+        .tm_mon = month - 1,
+        .tm_year = year - 1900,
+        .tm_isdst = -1  // Automatische DST-Erkennung
+    };
+    now = mktime(&rtc_time);  // Konvertiert mit Timezone zu Unix-Timestamp
+  
+    Serial.print("Zeit von RTC: ");
   Serial.print(stunden); Serial.print(":");
   if (minutes < 10) Serial.print("0"); 
   Serial.print(minutes); Serial.print(":");

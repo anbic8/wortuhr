@@ -133,11 +133,7 @@ void readTimeNet(){
 }
 
 void checkon(){
-  Serial.print("an:");
-  Serial.println(an);
   
-  Serial.print("aus:");
-  Serial.println(aus);
  if(aus>an){
     if(zeit>an && zeit<aus){
       on=1;
@@ -153,8 +149,7 @@ void checkon(){
     }
   }
 
-  Serial.print("Nachtmodus: ");
-  Serial.println(on);
+  
 
   if(mqtton==on){
     mqttonset=0;
@@ -170,8 +165,8 @@ void showClock(){
 
   
     // If a countdown is active and within the last 99 seconds, show digits
-    time(&now);
-    localtime_r(&now, &tm);
+    // NOTE: Don't call time(&now) here - it's already set in readTime()
+    // Multiple time() calls cause timing drift/desync with countdown calculation
     long sleft_user = -1;
     long sleft_new = -1;
     if (countdown_ts > 0) sleft_user = (long)countdown_ts - (long)now;
@@ -352,13 +347,9 @@ void setmatrixanzeige(){
   }// aus Eins Uhr wird Ein Uhr
   
   #if MATRIX_SIZE == 11
-  Serial.println("DEBUG MODULO:");
   for (int i=0; i<m; i++){
     matrixanzeige[MATRIX_SIZE-1][matrixminmodulomap[i]] = 1;
-    Serial.print("Modulo ");
-    Serial.print(i);
-    Serial.print(" LED ");
-    Serial.println(matrixminmodulomap[i]);
+
   }  //Modulominitues
   #endif
 

@@ -281,7 +281,7 @@ extern bool haDiscoveryEnabled;
 extern unsigned long countdown_ts;
 extern unsigned long newyear_countdown_ts;
 
-extern unsigned long sleft;
+
 
 // Animation arrays (only for 11x11 matrix)
 #if MATRIX_SIZE == 11

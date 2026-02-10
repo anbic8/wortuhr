@@ -142,7 +142,7 @@ int h=0, m=0, mb=0;
 unsigned long letzterstand=0;
 unsigned long letzterani=0;
 unsigned long milliaktuell=0;
-unsigned long warten=60000; //warten für die Uhr 10s.
+unsigned long warten=60000; //warten für die Uhr.
 unsigned long threshold=0, zeitneu2=0;
 unsigned long lastNtpSync=0; // Last NTP sync timestamp
 int on = 1;  // Nachtmodus 0 für Nachtmodus 1 für Uhrzeit normal
@@ -152,7 +152,6 @@ int gebstat=0;
 unsigned long countdown_ts = 0;
 unsigned long newyear_countdown_ts = 0;
 
-unsigned long sleft = -1;
 
 //Globals für die Anzeige
 design user_design={};
@@ -574,6 +573,7 @@ int t5[12]={1,20,23,42,45,44,9,12,31,34,53,54};
 int startcolors[13][3]={{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,255},{0,64,127},{0,127,127},{0,127,64},{64,64,64},{0,0,0},{0,0,0},{0,0,0},{0,0,0}};
 #endif
 
+#ifdef USE_RCT
 const char htmlhead[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html lang="de">
@@ -661,6 +661,8 @@ const char htmlhead[] PROGMEM = R"rawliteral(
 <body>
   <nav>
     <a href="/wifi">Verbindung</a>
+    <a href="/setting">Einstellungen</a>
+    <a href="/settime">Zeit einstellen</a>
     <a href="/color">Farben</a>
     <a href="/birthday">Geburtstag/Countdown</a>
     <a href="/info">Info</a>
@@ -669,7 +671,104 @@ const char htmlhead[] PROGMEM = R"rawliteral(
   <main>
 
 )rawliteral";
+#else
+const char htmlhead[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wortuhr</title>
+  <style>
+    :root {
+      --bg: #1b232c;
+      --panel: rgba(255,255,255,0.06);
+      --accent: #4caf50;
+      --text: #f2f2f2;
+      --muted: rgba(255,255,255,0.7);
+      --border: rgba(255,255,255,0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #19222b, #2f3b45);
+      color: var(--text);
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #10161c;
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.04);
+    }
+    nav a:hover {
+      background: rgba(255,255,255,0.12);
+    }
+    main {
+      max-width: 920px;
+      margin: 20px auto 40px;
+      padding: 0 16px;
+    }
+    h1, h2 { margin: 12px 0; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      color: var(--muted);
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #0f1419;
+      color: var(--text);
+    }
+    button {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    small { color: var(--muted); }
+    a.link { color: #8dd1ff; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/wifi">Verbindung</a>
+    <a href="/setting">Einstellungen</a>
+    <a href="/color">Farben</a>
+    <a href="/birthday">Geburtstag/Countdown</a>
+    <a href="/info">Info</a>
+    <a href="/update">Update</a>
+  </nav>
+  <main>
 
+)rawliteral";
+#endif
 
 const char htmlinfo[] PROGMEM = R"rawliteral(
 <h1>Wortuhr Info</h1>
