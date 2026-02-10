@@ -61,7 +61,7 @@ extern String DEVICE_ID;
 extern String DEVICE_NAME;
 extern String CONFIG_URL;
 #define DEVICE_VENDOR   "ZeitlichtT"
-#define FW_VERSION "4.2.11"
+#define FW_VERSION "4.2.12"
 
 
 // Size of firmware version string stored in EEPROM

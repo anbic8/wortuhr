@@ -3,6 +3,16 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.12] - 2026-02-10
+
+### Fixed
+- Countdown-Anzeige nutzt jetzt denselben `now`-Zeitstempel wie die Berechnung, um Sekunden-Drift zu vermeiden.
+- RTC funktioniert, setzt Sommer und Winterzeit automatisch
+
+
+### Notes
+- Version-Bump auf `4.2.12`.
+
 ## [4.2.11] - 2026-02-07
 
 ### Added
