@@ -3,6 +3,21 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.13] - 2026-02-15
+
+### Added
+- Web UI: responsive navigation for small screens (toggle menu).
+- Web UI: compact form rows for time inputs.
+
+### Changed
+- Home Assistant discovery is sent on every boot when enabled.
+
+### Fixed
+- Transition effect "Schlangenfresser": background colors are preserved while eating the foreground.
+
+### Notes
+- Version-Bump auf `4.2.13`.
+
 ## [4.2.12] - 2026-02-10
 
 ### Fixed

@@ -193,12 +193,16 @@ void handledesignPath() {
     server.sendContent("</select>");
 
     server.sendContent("<label>Nachtmodus einschalten (HH:MM)</label>");
-    server.sendContent(String("<input type='number' name='aush' min='0' max='23' value='") + aush + "'>");
-    server.sendContent(String("<input type='number' name='ausm' min='0' max='59' value='") + ausm + "'>");
+    server.sendContent("<div class='form-row'>");
+    server.sendContent(String("<div class='field'><input type='number' name='aush' min='0' max='23' value='") + aush + "'></div>");
+    server.sendContent(String("<div class='field'><input type='number' name='ausm' min='0' max='59' value='") + ausm + "'></div>");
+    server.sendContent("</div>");
 
     server.sendContent("<label>Nachtmodus ausschalten (HH:MM)</label>");
-    server.sendContent(String("<input type='number' name='anh' min='0' max='23' value='") + anh + "'>");
-    server.sendContent(String("<input type='number' name='anm' min='0' max='59' value='") + anm + "'>");
+    server.sendContent("<div class='form-row'>");
+    server.sendContent(String("<div class='field'><input type='number' name='anh' min='0' max='23' value='") + anh + "'></div>");
+    server.sendContent(String("<div class='field'><input type='number' name='anm' min='0' max='59' value='") + anm + "'></div>");
+    server.sendContent("</div>");
 
     server.sendContent("</div>");
     server.sendContent("<button type='submit'>Speichern</button>");

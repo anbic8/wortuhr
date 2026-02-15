@@ -109,7 +109,12 @@ void setup() {
     haDiscoveryEnabled = (haFlag != 0);
   }
   Serial.print("HomeAssistant Discovery enabled: "); Serial.println(haDiscoveryEnabled);
-  if (!haDiscoveryEnabled) discoveryNeeded = false;
+  if (haDiscoveryEnabled) {
+    // Always send discovery on each boot when enabled.
+    discoveryNeeded = true;
+  } else {
+    discoveryNeeded = false;
+  }
   // NOTE: do NOT overwrite stored firmware version here.
   // The current firmware version will be written after successful discovery publishes.
   // Prepare verBuf (can be used later by saveFirmwareVersion)

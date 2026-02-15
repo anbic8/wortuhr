@@ -379,14 +379,21 @@ void snakeeater(){
   delay(efxtime);
   
   // Sammle alle Vordergrund-Positionen der alten Zeit aus anzeigealt
-  // Wir erkennen Vordergrund daran, dass die Farbe nicht komplett schwarz ist
+  // Wir erkennen Vordergrund daran, dass die Farbe nicht dem Hintergrund entspricht
   int targets[50][2];
   int targetCount = 0;
   
   for(int row = 0; row < MATRIX_SIZE && targetCount < 50; row++) {
     for(int col = 0; col < MATRIX_SIZE && targetCount < 50; col++) {
-      // Prüfe ob Pixel in anzeigealt eine Farbe hat (nicht schwarz)
-      if(anzeigealt[row][col][0] > 10 || anzeigealt[row][col][1] > 10 || anzeigealt[row][col][2] > 10) {
+      // Vordergrund, wenn die alte Farbe sichtbar vom Hintergrund abweicht
+      bool differs = false;
+      for(int i = 0; i < 3; i++) {
+        if(abs(anzeigealt[row][col][i] - hintergrund[row][col][i]) > 10) {
+          differs = true;
+          break;
+        }
+      }
+      if(differs) {
         targets[targetCount][0] = row;
         targets[targetCount][1] = col;
         targetCount++;
@@ -454,9 +461,9 @@ void snakeeater(){
               }
             }
             
-            // Wenn Pixel gefressen: zeige schwarz, sonst alte Farbe aus anzeigealt
+            // Wenn Pixel gefressen: zeige Hintergrund, sonst alte Farbe aus anzeigealt
             if(eaten) {
-              strip.setPixelColor(matrix[r][c], strip.Color(0, 0, 0));
+              strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
             } else {
               strip.setPixelColor(matrix[r][c], strip.Color(anzeigealt[r][c][0], anzeigealt[r][c][1], anzeigealt[r][c][2]));
             }
@@ -477,10 +484,10 @@ void snakeeater(){
     }
   }
   
-  // Alle alten Pixel sind gefressen - zeige komplett schwarz
+  // Alle alten Pixel sind gefressen - zeige Hintergrund
   for(int r = 0; r < MATRIX_SIZE; r++) {
     for(int c = 0; c < MATRIX_SIZE; c++) {
-      strip.setPixelColor(matrix[r][c], strip.Color(0, 0, 0));
+      strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
     }
   }
   strip.show();
@@ -562,8 +569,8 @@ void snakeeater(){
               // Buchstabe platziert: zeige berechnete Farbe aus anzeige[][]
               strip.setPixelColor(matrix[r][c], strip.Color(anzeige[r][c][0], anzeige[r][c][1], anzeige[r][c][2]));
             } else {
-              // Noch nicht platziert: zeige schwarz
-              strip.setPixelColor(matrix[r][c], strip.Color(0, 0, 0));
+              // Noch nicht platziert: zeige Hintergrund
+              strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
             }
           }
         }

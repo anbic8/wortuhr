@@ -607,6 +607,36 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
+    }
+    .nav-bar {
+      flex: 1 1 180px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .nav-title {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .nav-toggle {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .nav-btn {
+      display: none;
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     nav a {
       color: var(--text);
@@ -617,6 +647,21 @@ const char htmlhead[] PROGMEM = R"rawliteral(
     }
     nav a:hover {
       background: rgba(255,255,255,0.12);
+    }
+    @media (max-width: 720px) {
+      .nav-btn {
+        display: inline-flex;
+        align-items: center;
+      }
+      .nav-links {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .nav-toggle:checked + .nav-links {
+        display: flex;
+      }
     }
     main {
       max-width: 920px;
@@ -635,6 +680,15 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       display: block;
       margin: 10px 0 6px;
       color: var(--muted);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .form-row .field {
+      display: flex;
+      flex-direction: column;
     }
     input, select {
       width: 100%;
@@ -660,13 +714,20 @@ const char htmlhead[] PROGMEM = R"rawliteral(
 </head>
 <body>
   <nav>
-    <a href="/wifi">Verbindung</a>
-    <a href="/setting">Einstellungen</a>
-    <a href="/settime">Zeit einstellen</a>
-    <a href="/color">Farben</a>
-    <a href="/birthday">Geburtstag/Countdown</a>
-    <a href="/info">Info</a>
-    <a href="/update">Update</a>
+    <div class="nav-bar">
+      <span class="nav-title">Wortuhr</span>
+      <label class="nav-btn" for="nav-toggle">Menue</label>
+    </div>
+    <input class="nav-toggle" type="checkbox" id="nav-toggle">
+    <div class="nav-links">
+      <a href="/wifi">Verbindung</a>
+      <a href="/setting">Einstellungen</a>
+      <a href="/settime">Zeit einstellen</a>
+      <a href="/color">Farben</a>
+      <a href="/birthday">Geburtstag/Countdown</a>
+      <a href="/info">Info</a>
+      <a href="/update">Update</a>
+    </div>
   </nav>
   <main>
 
@@ -705,6 +766,36 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
+    }
+    .nav-bar {
+      flex: 1 1 180px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .nav-title {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .nav-toggle {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .nav-btn {
+      display: none;
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     nav a {
       color: var(--text);
@@ -715,6 +806,21 @@ const char htmlhead[] PROGMEM = R"rawliteral(
     }
     nav a:hover {
       background: rgba(255,255,255,0.12);
+    }
+    @media (max-width: 720px) {
+      .nav-btn {
+        display: inline-flex;
+        align-items: center;
+      }
+      .nav-links {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .nav-toggle:checked + .nav-links {
+        display: flex;
+      }
     }
     main {
       max-width: 920px;
@@ -733,6 +839,15 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       display: block;
       margin: 10px 0 6px;
       color: var(--muted);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .form-row .field {
+      display: flex;
+      flex-direction: column;
     }
     input, select {
       width: 100%;
@@ -758,12 +873,19 @@ const char htmlhead[] PROGMEM = R"rawliteral(
 </head>
 <body>
   <nav>
-    <a href="/wifi">Verbindung</a>
-    <a href="/setting">Einstellungen</a>
-    <a href="/color">Farben</a>
-    <a href="/birthday">Geburtstag/Countdown</a>
-    <a href="/info">Info</a>
-    <a href="/update">Update</a>
+    <div class="nav-bar">
+      <span class="nav-title">Wortuhr</span>
+      <label class="nav-btn" for="nav-toggle">Menue</label>
+    </div>
+    <input class="nav-toggle" type="checkbox" id="nav-toggle">
+    <div class="nav-links">
+      <a href="/wifi">Verbindung</a>
+      <a href="/setting">Einstellungen</a>
+      <a href="/color">Farben</a>
+      <a href="/birthday">Geburtstag/Countdown</a>
+      <a href="/info">Info</a>
+      <a href="/update">Update</a>
+    </div>
   </nav>
   <main>
 
