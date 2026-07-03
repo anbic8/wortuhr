@@ -1,5 +1,6 @@
 #include "rct.h"
 #include "globals.h"
+#include "webserver_html.h"
 #include "show.h"
 #include "effects.h"
 
@@ -8,7 +9,7 @@
 
 void readTimeRCT()
 {
-    Serial.println("Lese Zeit von RTC...");
+    LOGLN("Lese Zeit von RTC...");
     Wire.beginTransmission(DS1307_ADDRESS);
     Wire.write(0x00);
     Wire.endTransmission();
@@ -41,12 +42,12 @@ void readTimeRCT()
     };
     now = mktime(&rtc_time);  // Konvertiert mit Timezone zu Unix-Timestamp
   
-    Serial.print("Zeit von RTC: ");
-  Serial.print(stunden); Serial.print(":");
-  if (minutes < 10) Serial.print("0"); 
-  Serial.print(minutes); Serial.print(":");
-  if (seconds < 10) Serial.print("0");
-  Serial.println(seconds);
+    LOG("Zeit von RTC: ");
+  LOG(stunden); LOG(":");
+  if (minutes < 10) LOG("0"); 
+  LOG(minutes); LOG(":");
+  if (seconds < 10) LOG("0");
+  LOGLN(seconds);
 }
 
 void setDate(int s, int m, int h, int d, int month, int y )
@@ -62,8 +63,8 @@ void setDate(int s, int m, int h, int d, int month, int y )
     Wire.write(decToBcd(y % 100)); // year (two-digit)
     Wire.write(0x00);
     Wire.endTransmission();
-    Serial.print("Zeit in RTC gespeichert");
-    Serial.print(" "); Serial.print(h); Serial.print(":"); Serial.print(m); Serial.print(":"); Serial.println(s);
+    LOG("Zeit in RTC gespeichert");
+    LOG(" "); LOG(h); LOG(":"); LOG(m); LOG(":"); LOGLN(s);
     readTimeRCT(); // Refresh time variables after setting
     showClock();
 }

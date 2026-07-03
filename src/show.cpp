@@ -1,5 +1,6 @@
 #include "show.h"
 #include "globals.h"
+#include "eeprom_layout.h"
 #include "color.h"
 #include <EEPROM.h>
 #include "effects.h"
@@ -83,15 +84,13 @@ void showCountdown(int secondsLeft, int which) {
 
   // when hitting zero or negative, clear the corresponding countdown
   if (secondsLeft <= 0) {
-    int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
     // persist only user countdown; newyear countdown is RAM-only
     if (which == 1) {
       newyear_countdown_ts = 0;
     } else {
       countdown_ts = 0;
-      int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
-      EEPROM.begin(eepromTotalSize);
-      EEPROM.put(countdownOffset, countdown_ts);
+      EepromLayout::beginAll();
+      EEPROM.put(EepromLayout::COUNTDOWN_OFFSET, countdown_ts);
       EEPROM.commit();
       EEPROM.end();
     }
@@ -120,14 +119,14 @@ void readTimeNet(){
   static unsigned long lastDebugOutput = 0;
   if (millis() - lastDebugOutput > 10000) {
     lastDebugOutput = millis();
-    Serial.print("Zeit von NTP: ");
-    Serial.print(stunden);
-    Serial.print(":");
-    if (minutes < 10) Serial.print("0");
-    Serial.print(minutes);
-    Serial.print(":");
-    if (seconds < 10) Serial.print("0");
-    Serial.println(seconds);
+    LOG("Zeit von NTP: ");
+    LOG(stunden);
+    LOG(":");
+    if (minutes < 10) LOG("0");
+    LOG(minutes);
+    LOG(":");
+    if (seconds < 10) LOG("0");
+    LOGLN(seconds);
   }
 
 }
@@ -211,7 +210,7 @@ void showClock(){
   }else{
 
   if(gebstat==1){
-    EEPROM.get(sizeof(settings), user_color );
+    EEPROM.get(EepromLayout::COLOR_OFFSET, user_color);
     vordergrundschema = user_color.vs;
     gebstat=0;
   }

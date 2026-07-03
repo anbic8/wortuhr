@@ -3,3 +3,7 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# Firmware binaries are attached to GitHub Releases (see
+# .github/workflows/release.yml) instead of being tracked in the repo.
+firmware_*.bin

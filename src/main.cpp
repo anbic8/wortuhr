@@ -31,6 +31,8 @@
 
 #include "buttons.h"
 #include "globals.h"
+#include "eeprom_layout.h"
+#include "secure_storage.h"
 #include "webserver.h"
 #include "show.h"
 #include "color.h"
@@ -46,17 +48,20 @@
 
  
 void clearEEPROM() {
-  const int size = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage) + VERSION_STR_MAX;
-  EEPROM.begin(size);
-  for (int i = 0; i < size; ++i) {
-    EEPROM.write(i, 0xFF); // oder 0x00 wenn du Nullen willst
-  }
-  EEPROM.commit();
-  EEPROM.end();
-  Serial.println("EEPROM gelöscht");
+  EepromLayout::eraseAll();
+  LOGLN("EEPROM gelöscht");
   delay(500);
 }
 
+// Shared timeout for both the initial (loop()-polled) NTP sync and the
+// hourly resync below, so the two no longer drift apart (previously 30s vs 15s).
+#define NTP_SYNC_TIMEOUT_MS 15000
+
+// Set once configTime() is kicked off in setup(); cleared by loop() once
+// the clock has synced or the timeout above elapses. Always false for
+// USE_RCT builds (RTC time is available immediately, no wait needed).
+static bool ntpInitialSyncPending = false;
+static unsigned long ntpSyncStartMs = 0;
 
 void setup() {
 
@@ -65,9 +70,35 @@ void setup() {
   // Initialize Serial Monitor
   Serial.begin(115200);
   delay(1000); // Warte auf Serial Monitor
-  const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1; // +1 for HA flag
-  EEPROM.begin(eepromTotalSize );
-  EEPROM.get( 0, user_connect );
+
+  // Strip, buttons and the boot animation have no EEPROM/WiFi/NTP
+  // dependency, so they run first: the matrix shows something and the
+  // buttons respond immediately, instead of only after WiFi + NTP finish
+  // (which can otherwise take up to ~50 seconds combined).
+  strip.begin();
+  //Button1
+  bt1.attachClick(bt1click);
+  bt1.attachLongPressStart(bt1longs);
+  bt1.attachDoubleClick(bt1double);
+  //Button2
+  bt2.attachClick(bt2click);
+  bt2.attachLongPressStart(bt2longs);
+  bt2.attachDoubleClick(bt2double);
+  //Button3 alter Button1
+  bt3.attachClick(bt1click);
+  bt3.attachLongPressStart(bt1longs);
+  bt3.attachDoubleClick(bt1double);
+  startup();
+
+  EepromLayout::beginAll();
+  EEPROM.get(EepromLayout::SETTINGS_OFFSET, user_connect);
+  // Credentials are only encrypted once this exact layout version has been
+  // written (see webserver.cpp handleWifi()). A device still on legacy
+  // (unversioned, reads as 0xFF) or a different future layout keeps its
+  // fields in plaintext here - decrypting those would corrupt them.
+  if (EepromLayout::readLayoutVersion() == EepromLayout::CURRENT_LAYOUT_VERSION) {
+    SecureStorage::cryptFields(user_connect);
+  }
 
       // Timezone für Europa einstellen (z.B. CET/CEST)
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
@@ -75,8 +106,8 @@ void setup() {
 
 
   // read stored firmware version (fixed-size string at end of used area)
-  int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
-  int verOffset = countdownOffset + sizeof(unsigned long);
+  int countdownOffset = EepromLayout::COUNTDOWN_OFFSET;
+  int verOffset = EepromLayout::VERSION_STR_OFFSET;
   char stored_fw[VERSION_STR_MAX + 1];
   for (int i = 0; i < VERSION_STR_MAX; ++i) {
     uint8_t b = EEPROM.read(verOffset + i);
@@ -84,31 +115,31 @@ void setup() {
   }
   stored_fw[VERSION_STR_MAX] = '\0';
   if (stored_fw[0] == '\0') {
-    Serial.println("Keine gespeicherte Firmware-Version gefunden");
+    LOGLN("Keine gespeicherte Firmware-Version gefunden");
     discoveryNeeded = true;
   } else {
-    Serial.print("Gespeicherte Firmware-Version: ");
-    Serial.println(stored_fw);
+    LOG("Gespeicherte Firmware-Version: ");
+    LOGLN(stored_fw);
     if (String(stored_fw) != String(FW_VERSION)) {
-      Serial.print("Update erkannt: ");
-      Serial.print(stored_fw);
-      Serial.print(" -> ");
-      Serial.println(FW_VERSION);
+      LOG("Update erkannt: ");
+      LOG(stored_fw);
+      LOG(" -> ");
+      LOGLN(FW_VERSION);
       discoveryNeeded = true;
     } else {
       discoveryNeeded = false;
-      Serial.println("Firmware unverändert — Discovery übersprungen");
+      LOGLN("Firmware unverändert — Discovery übersprungen");
     }
   }
   // read HA discovery enabled flag (single byte after version slot)
-  int haFlagOffset = verOffset + VERSION_STR_MAX;
+  int haFlagOffset = EepromLayout::HA_FLAG_OFFSET;
   uint8_t haFlag = EEPROM.read(haFlagOffset);
   if (haFlag == 0xFF) {
     haDiscoveryEnabled = true; // default enabled
   } else {
     haDiscoveryEnabled = (haFlag != 0);
   }
-  Serial.print("HomeAssistant Discovery enabled: "); Serial.println(haDiscoveryEnabled);
+  LOG("HomeAssistant Discovery enabled: "); LOGLN(haDiscoveryEnabled);
   if (haDiscoveryEnabled) {
     // Always send discovery on each boot when enabled.
     discoveryNeeded = true;
@@ -125,10 +156,10 @@ void setup() {
   EEPROM.get(countdownOffset, countdown_ts);
   if (countdown_ts == 0xFFFFFFFFUL) countdown_ts = 0; // treat erased as disabled
   // EEPROM Debug: zeige gelesene Werte (vorsichtig, kann leer/garbage sein)
-  Serial.println("EEPROM: gelesene Einstellungen:");
-  Serial.print(" SSID: '"); Serial.print(user_connect.ssid); Serial.println("'");
-  Serial.print(" MQTT Server: '"); Serial.print(user_connect.mqtt_server); Serial.println("'");
-  Serial.print(" MQTT Port: "); Serial.println(user_connect.mqtt_port);
+  LOGLN("EEPROM: gelesene Einstellungen:");
+  LOG(" SSID: '"); LOG(user_connect.ssid); LOGLN("'");
+  LOG(" MQTT Server: '"); LOG(user_connect.mqtt_server); LOGLN("'");
+  LOG(" MQTT Port: "); LOGLN(user_connect.mqtt_port);
   
   
 
@@ -143,6 +174,10 @@ void setup() {
   byte tries = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
+    // Keep buttons and the watchdog serviced during this blocking wait.
+    bt1.tick();
+    bt2.tick();
+    ESP.wdtFeed();
     if (tries++ > 20) {
       WiFi.mode(WIFI_AP);
       WiFi.softAP(ssid, password);
@@ -151,18 +186,18 @@ void setup() {
   }
   // Log Verbindung / AP Status
   if (WiFi.status() == WL_CONNECTED) {
-    Serial.print("WLAN verbunden, IP: ");
-    Serial.println(WiFi.localIP());
+    LOG("WLAN verbunden, IP: ");
+    LOGLN(WiFi.localIP());
   } else {
-    Serial.println("WLAN nicht verbunden, Access Point gestartet");
-    Serial.print("AP SSID: ");
-    Serial.println(ssid);
-    Serial.print("AP IP: ");
-    Serial.println(WiFi.softAPIP());
+    LOGLN("WLAN nicht verbunden, Access Point gestartet");
+    LOG("AP SSID: ");
+    LOGLN(ssid);
+    LOG("AP IP: ");
+    LOGLN(WiFi.softAPIP());
   }
   if (MDNS.begin(dns_name.c_str())) {
-    Serial.println("DNS gestartet, erreichbar unter: ");
-    Serial.println("http://" + String(dns_name) + ".local/");
+    LOGLN("DNS gestartet, erreichbar unter: ");
+    LOGLN("http://" + String(dns_name) + ".local/");
   }
 
   server.on("/",  handlePortal);
@@ -180,25 +215,20 @@ void setup() {
   server.on("/upload", HTTP_POST, handleUpdate, handleUploading);
   server.on("/ha", handleHAConfig);
   server.on("/ha/discover", handleHADiscover);
+  server.on("/factory-reset", handleFactoryReset);
   server.begin();
-  Serial.println("Webserver gestartet");
+  LOGLN("Webserver gestartet");
 
 #ifndef USE_RCT
+  // Kick off NTP sync without blocking setup(): loop() polls for
+  // completion below (see ntpInitialSyncPending), so the webserver,
+  // buttons and mDNS become responsive immediately instead of after
+  // up to NTP_SYNC_TIMEOUT_MS of waiting here.
   configTime(MY_TZ, MY_NTP_SERVER);
-  // Wait for NTP time sync at startup (increased timeout to 30 seconds)
-  Serial.print("Warte auf NTP-Zeitsynchronisation...");
-  time_t ntpTimeout = millis();
-  while (time(nullptr) < 100000 && (millis() - ntpTimeout < 30000)) {
-    delay(100);
-    Serial.print(".");
-  }
-  if (time(nullptr) > 100000) {
-    Serial.println(" erfolgreich!");
-    lastNtpSync = millis(); // Mark initial sync time
-  } else {
-    Serial.println(" Timeout! Verwende lokale Zeit.");
-  }
-#endif 
+  ntpInitialSyncPending = true;
+  ntpSyncStartMs = millis();
+  LOGLN("NTP-Zeitsynchronisation gestartet (nicht-blockierend)...");
+#endif
 
   // Compute New Year countdown in RAM (always next Jan 1 00:00)
   time(&now);
@@ -215,36 +245,21 @@ void setup() {
   time_t newyear_ts = mktime(&tnew);
   if (newyear_ts > 0) {
     newyear_countdown_ts = (unsigned long)newyear_ts;
-    Serial.print("Computed New Year countdown (RAM): "); Serial.println(newyear_countdown_ts);
+    LOG("Computed New Year countdown (RAM): "); LOGLN(newyear_countdown_ts);
   }
 
-  strip.begin();
-  //Button1
-  bt1.attachClick(bt1click);
-  bt1.attachLongPressStart(bt1longs);
-  bt1.attachDoubleClick(bt1double); 
-  //Button2
-  bt2.attachClick(bt2click);
-  bt2.attachLongPressStart(bt2longs);
-  bt2.attachDoubleClick(bt2double); 
-  //Button3 alter Button1
-  bt3.attachClick(bt1click);
-  bt3.attachLongPressStart(bt1longs);
-  bt3.attachDoubleClick(bt1double);  
-
-
-  Serial.print("Matrixmodulomap: ");
+  LOG("Matrixmodulomap: ");
 for (int i=0; i<4; i++) {
-  Serial.print(matrixminmodulomap[i]);
-  Serial.print(" ");
+  LOG(matrixminmodulomap[i]);
+  LOG(" ");
 }
-Serial.println();
+LOGLN();
 
 
-    EEPROM.get(sizeof(settings) + sizeof(MyColor), user_design );
+    EEPROM.get(EepromLayout::DESIGN_OFFSET, user_design);
    mqttenable = user_design.mqttenable;
-    Serial.print("MQTT ENABLE: ");
-    Serial.println(mqttenable);
+    LOG("MQTT ENABLE: ");
+    LOGLN(mqttenable);
 
   // MQTT-Client initialisieren (nur wenn Konfiguration plausibel)
   if (WiFi.status() == WL_CONNECTED && mqttenable == true) {
@@ -259,7 +274,7 @@ Serial.println();
       client.setCallback(mqttCallback);
       client.setBufferSize(1024);
     } else {
-      Serial.println("MQTT-Konfiguration ungültig, MQTT deaktiviert");
+      LOGLN("MQTT-Konfiguration ungültig, MQTT deaktiviert");
       mqttenable = false;
     }
   }
@@ -285,23 +300,24 @@ Serial.println();
     aus,
     nacht,
     sommerzeit,
-    dimm
+    dimm,
+    mqttenable
   };
 
-  EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
+  EEPROM.put(EepromLayout::DESIGN_OFFSET, customDesign);
   EEPROM.commit();
     }
 
-  Serial.print("user_design.db = ");
-  Serial.println(user_design.db);
+  LOG("user_design.db = ");
+  LOGLN(user_design.db);
   
   // Device model set by build version
   #if VERSION_TYPE == 1
     DEVICE_MODEL = "bayrische Wortuhr";
-    Serial.println("Bayrische Build-Version");
+    LOGLN("Bayrische Build-Version");
   #else
     DEVICE_MODEL = "deutsche Wortuhr";
-    Serial.println("Deutsche Build-Version");
+    LOGLN("Deutsche Build-Version");
   #endif
   
   // iist and nexthour are now set at compile time via VERSION_TYPE
@@ -317,21 +333,34 @@ Serial.println();
   #ifdef USE_RCT
     Wire.begin(5, 13); // Initialize I2C for RTC
   #endif
-  
-  startup();
+
   neuefarbe();
 
 
 
-  EEPROM.get( sizeof(settings) + sizeof(MyColor)+ sizeof(design) , geburtstage );
+  EEPROM.get(EepromLayout::BIRTHDAY_OFFSET, geburtstage);
 
   
 }
 
 void loop() {
- 
-if(mode==1){
-  
+
+#ifndef USE_RCT
+  if (ntpInitialSyncPending) {
+    if (time(nullptr) > 100000) {
+      LOGLN("NTP-Sync erfolgreich!");
+      lastNtpSync = millis();
+      ntpInitialSyncPending = false;
+      threshold = 0; // force an immediate render now that we have real time
+    } else if (millis() - ntpSyncStartMs > NTP_SYNC_TIMEOUT_MS) {
+      LOGLN("NTP-Sync Timeout! Verwende lokale Zeit.");
+      ntpInitialSyncPending = false;
+    }
+  }
+#endif
+
+if(mode==1 && !ntpInitialSyncPending){
+
   milliaktuell = millis();
 
   static long sleft = 0;
@@ -339,20 +368,20 @@ if(mode==1){
 
   // minute-based update
   if (milliaktuell > threshold) {
-    Serial.println("====================================");
+    LOGLN("====================================");
     readTime();
     letzterstand = milliaktuell;
     
     if (countdown_ts > 0) {
       sleft = (long)countdown_ts - (long)now;
-      Serial.print("Countdown TS:");
-      Serial.print(countdown_ts);
-      Serial.print(" Aktuelle Zeit (now): ");              Serial.println(now);
-      Serial.print("Countdown Sekunden left: ");
-      Serial.println(sleft);
+      LOG("Countdown TS:");
+      LOG(countdown_ts);
+      LOG(" Aktuelle Zeit (now): ");              LOGLN(now);
+      LOG("Countdown Sekunden left: ");
+      LOGLN(sleft);
       secondMode = (sleft >= 0 && sleft <= 120);
     } else {
-      Serial.println("Kein Countdown aktiv");
+      LOGLN("Kein Countdown aktiv");
       secondMode = false;
     }
 
@@ -363,9 +392,9 @@ if(mode==1){
     }
     threshold = letzterstand + warten;
     showClock();
-    Serial.println("Uhr aktualisiert");
-    Serial.print("secondMode: ");Serial.println(secondMode);
-    Serial.print("Nächste Aktualisierung in ms: "); Serial.println(warten);
+    LOGLN("Uhr aktualisiert");
+    LOG("secondMode: ");LOGLN(secondMode);
+    LOG("Nächste Aktualisierung in ms: "); LOGLN(warten);
   }
 
   if (aniMode > 0) {
@@ -389,9 +418,9 @@ if(mode==1){
     lastHeapCheck = millis();
     uint32_t freeHeap = ESP.getFreeHeap();
     if (freeHeap < 8192) {
-      Serial.print("WARNING: Low heap memory: ");
-      Serial.print(freeHeap);
-      Serial.println(" bytes");
+      LOG("WARNING: Low heap memory: ");
+      LOG(freeHeap);
+      LOGLN(" bytes");
     }
   }
   
@@ -400,18 +429,18 @@ if(mode==1){
   static unsigned long lastNtpResync = 0;
   if (WiFi.status() == WL_CONNECTED && (millis() - lastNtpResync > 3600000)) { // 1 hour = 3600000 ms
     lastNtpResync = millis();
-    Serial.println("NTP-Zeitsynchronisierung starten...");
+    LOGLN("NTP-Zeitsynchronisierung starten...");
     configTime(MY_TZ, MY_NTP_SERVER);
     delay(100);
     time_t ntpTimeout = millis();
-    while (time(nullptr) < 100000 && (millis() - ntpTimeout < 15000)) {
+    while (time(nullptr) < 100000 && (millis() - ntpTimeout < NTP_SYNC_TIMEOUT_MS)) {
       delay(100);
     }
     if (time(nullptr) > 100000) {
-      Serial.println("NTP-Sync erfolgreich!");
+      LOGLN("NTP-Sync erfolgreich!");
       lastNtpSync = millis();
     } else {
-      Serial.println("NTP-Sync fehlgeschlagen, verwende lokale Zeit");
+      LOGLN("NTP-Sync fehlgeschlagen, verwende lokale Zeit");
     }
   }
   #endif
@@ -426,8 +455,8 @@ if(mode==1){
   static unsigned long lastMqttLog = 0;
   if (millis() - lastMqttLog > 10000) {
     lastMqttLog = millis();
-    Serial.print("MQTT connected: "); Serial.print(client.connected());
-    Serial.print(" state="); Serial.println(client.state());
+    LOG("MQTT connected: "); LOG(client.connected());
+    LOG(" state="); LOGLN(client.state());
   }
   // Publish sensor states every 60 seconds
   static unsigned long lastSensorPublish = 0;
@@ -435,7 +464,7 @@ if(mode==1){
     lastSensorPublish = millis();
     if (client.connected()) {
       publishSensorStates();
-      Serial.println("Sensor states published");
+      LOGLN("Sensor states published");
     }
   }
   }
@@ -444,14 +473,12 @@ if(mode==1){
 
 // write current FW_VERSION into EEPROM (used after successful discovery publishes)
 void saveFirmwareVersion() {
-  const int eepromTotalSize = sizeof(settings)+sizeof(MyColor)+sizeof(design)+sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
-  int verOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage) + sizeof(unsigned long);
   char verBuf[VERSION_STR_MAX];
   memset(verBuf, 0, sizeof(verBuf));
   strncpy(verBuf, FW_VERSION, VERSION_STR_MAX - 1);
-  EEPROM.begin(eepromTotalSize);
-  EEPROM.put(verOffset, verBuf);
+  EepromLayout::beginAll();
+  EEPROM.put(EepromLayout::VERSION_STR_OFFSET, verBuf);
   EEPROM.commit();
-  Serial.print("Firmware-Version gespeichert: ");
-  Serial.println(verBuf);
+  LOG("Firmware-Version gespeichert: ");
+  LOGLN(verBuf);
 }

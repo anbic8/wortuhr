@@ -1,0 +1,75 @@
+name: Release
+
+# Fires when a version tag is pushed, matching the tagging convention
+# described in VERSIONIERUNG.md (git tag -a vX.Y.Z && git push origin main --tags).
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment:
+          - deutsche_11x11
+          - bayrisch_11x11
+          - mini_8x8
+          - deutsche_11x11_rct
+          - bayrisch_11x11_rct
+          - mini_8x8_rct
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            pio-
+
+      - name: Install PlatformIO
+        run: pip install -U platformio
+
+      - name: Build ${{ matrix.environment }}
+        run: pio run -e ${{ matrix.environment }}
+
+      # rename_firmware.py already copies the built .bin to the project
+      # root as firmware_<environment>.bin - upload that directly.
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware_${{ matrix.environment }}
+          path: firmware_${{ matrix.environment }}.bin
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifact directories
+        run: |
+          mkdir -p release
+          find artifacts -name "*.bin" -exec cp {} release/ \;
+          ls -la release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.bin
+          generate_release_notes: true

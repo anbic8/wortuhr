@@ -1,5 +1,6 @@
 #include "buttons.h"
 #include "globals.h"
+#include "eeprom_layout.h"
 #include "show.h"
 #include "effects.h"
 #ifdef USE_RCT
@@ -91,10 +92,11 @@ void bt2click(){
           aus,
           nacht,
           sommerzeit,
-          dimm
+          dimm,
+          mqttenable
         };
 
-        EEPROM.put(sizeof(settings)+sizeof(MyColor), customDesign);
+        EEPROM.put(EepromLayout::DESIGN_OFFSET, customDesign);
         EEPROM.commit();
       }
       if(settimemode==1){
@@ -103,7 +105,7 @@ void bt2click(){
           stunden=0;
         }
         showwhilesetting();
-        Serial.print("Stunden: "); Serial.println(stunden);
+        LOG("Stunden: "); LOGLN(stunden);
       }
       if(settimemode==2){
         minutes = minutes+1;
@@ -111,7 +113,7 @@ void bt2click(){
           minutes=0;
         }
         showwhilesetting();
-        Serial.print("Minuten: "); Serial.println(minutes);
+        LOG("Minuten: "); LOGLN(minutes);
       }
     #else
       // NTP-Modus: Demo - Minuten ändern
@@ -137,12 +139,12 @@ void bt2longs(){
       // RTC Mode: Zyklus durch Einstellungsmodi
       if(settimemode<3){
         settimemode++;
-        Serial.print("Settimemode: "); Serial.println(settimemode);
+        LOG("Settimemode: "); LOGLN(settimemode);
       }
       if(settimemode==3){
         settimemode=0;
         setDate(seconds, minutes, stunden, day, month, year);
-        Serial.print("Zeit eingestellt");
+        LOG("Zeit eingestellt");
       }
     #endif
   }

@@ -23,63 +23,39 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     
   }
   else if (String(topic) == topicEfxCmd) {
-    String opt = msg;  // msg = empfangener Payload
-
-    if      (opt == "kein Effekt")  effectMode = 0;
-    else if (opt == "zufällig")     effectMode = 1;
-    else if (opt == "Fade")         effectMode = 2;
-    else if (opt == "Running")      effectMode = 3;
-    else if (opt == "Schlange")     effectMode = 4;
-    else if (opt == "Zeilen")       effectMode = 5;
-    else if (opt == "Scrollen")      effectMode = 6;
-    else if (opt == "Slide in")     effectMode = 7;
-    else if (opt == "Diagonal")     effectMode = 8;
-    else if (opt == "Rain")         effectMode = 9;
-    else if (opt == "Spirale")      effectMode = 10;
-    else if (opt == "Schlangenfresser") effectMode = 11;
-    else if (opt == "Raute")        effectMode = 12;
-    else if (opt == "Feuerwerk")    effectMode = 13;
-    else {
-      // unbekannte Option, ggf. Default setzen
-      effectMode = 0;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+    int idx = findOptionIndex(effectOptions, EFFECT_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Effekt-Payload: ");
+      LOGLN(msg);
+      idx = 0;
     }
+    effectMode = idx;
 
-    Serial.print("EFX_MODE: ");
-    Serial.println(effectMode);
-    
+    LOG("EFX_MODE: ");
+    LOGLN(effectMode);
+
     // Trigger sofortigen Update
     mqttonset = 1;
   }
-    else if (String(topic) == topicAniCmd) {
-    String opt = msg;  // msg = empfangener Payload
-    if      (opt == "keine Animation")  aniMode = 0;
-    else if (opt == "Blinken")     aniMode = 1;
-    else if (opt == "Vordergrundblinken")         aniMode = 2;
-    else if (opt == "Pulsieren")      aniMode = 3;
-    else if (opt == "Verlauf")     aniMode = 4;
-    else if (opt == "Fliegen")       aniMode = 5;
-    else if (opt == "Glitter")       aniMode = 6;
-    
-    else {
-      // unbekannte Option, ggf. Default setzen
-      effectMode = 0;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+  else if (String(topic) == topicAniCmd) {
+    int idx = findOptionIndex(aniOptions, ANI_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Animations-Payload: ");
+      LOGLN(msg);
+      idx = 0;
     }
+    aniMode = idx;
 
-    Serial.print("Ani_MODE: ");
-    Serial.println(aniMode);
-    
+    LOG("Ani_MODE: ");
+    LOGLN(aniMode);
   }
   else if (String(topic) == topicV1Cmd)  {
     // 1) JSON parsen
   StaticJsonDocument<256> doc;
   DeserializationError err = deserializeJson(doc, payload, length);
   if (err) {
-    Serial.print("Ungültiges JSON: ");
-    Serial.println(err.c_str());
+    LOG("Ungültiges JSON: ");
+    LOGLN(err.c_str());
     return;
   }
 
@@ -95,7 +71,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       mqtton = newOn;
       
       mqttonset = 1;
-      Serial.printf("Power: %s\n", on ? "AN":"AUS");
+      LOGF("Power: %s\n", on ? "AN":"AUS");
     }
   }
 
@@ -113,7 +89,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     vf1[0] = r;
     vf1[1] = g;
     vf1[2] = b;
-    Serial.printf("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
+    LOGF("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
   }
 
   // 4) Anzeige aktualisieren
@@ -127,8 +103,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   StaticJsonDocument<256> doc;
   DeserializationError err = deserializeJson(doc, payload, length);
   if (err) {
-    Serial.print("Ungültiges JSON: ");
-    Serial.println(err.c_str());
+    LOG("Ungültiges JSON: ");
+    LOGLN(err.c_str());
     return;
   }
 
@@ -160,7 +136,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     vf2[0] = r;
     vf2[1] = g;
     vf2[2] = b;
-    Serial.printf("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
+    LOGF("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
   }
   if (doc.containsKey("brightness")) {
     dimm = doc["brightness"];       // brightness
@@ -177,8 +153,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   StaticJsonDocument<256> doc;
   DeserializationError err = deserializeJson(doc, payload, length);
   if (err) {
-    Serial.print("Ungültiges JSON: ");
-    Serial.println(err.c_str());
+    LOG("Ungültiges JSON: ");
+    LOGLN(err.c_str());
     return;
   }
 
@@ -194,7 +170,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
       hf1[0] = 0;
     hf1[1] = 0;
     hf1[2] = 0;
-    Serial.printf("Hintergrund1 ausgeschaltet.");
+    LOGF("Hintergrund1 ausgeschaltet.");
     }
   }
 
@@ -208,7 +184,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     hf1[0] = r;
     hf1[1] = g;
     hf1[2] = b;
-    Serial.printf("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
+    LOGF("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
   }
   if (doc.containsKey("brightness")) {
     dimm = doc["brightness"];       // brightness
@@ -223,8 +199,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   StaticJsonDocument<256> doc;
   DeserializationError err = deserializeJson(doc, payload, length);
   if (err) {
-    Serial.print("Ungültiges JSON: ");
-    Serial.println(err.c_str());
+    LOG("Ungültiges JSON: ");
+    LOGLN(err.c_str());
     return;
   }
 
@@ -256,7 +232,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     hf2[0] = r;
     hf2[1] = g;
     hf2[2] = b;
-    Serial.printf("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
+    LOGF("Neue Farbe: R=%u G=%u B=%u\n", r, g, b);
   }
   if (doc.containsKey("brightness")) {
     dimm = doc["brightness"];       // brightness
@@ -268,100 +244,66 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
   // … weitere else if für v1, v2, vs, … …
   else if (String(topic) == topicVsCmd) {
-    String opt = msg;  // msg = empfangener Payload
-    if      (opt == "einfarbig")  vordergrundschema = 0;
-    else if (opt == "Schachbrett")     vordergrundschema = 1;
-    else if (opt == "Spalten")         vordergrundschema = 2;
-    else if (opt == "Zeilen")      vordergrundschema = 3;
-    else if (opt == "Verlauf")     vordergrundschema = 4;
-    else if (opt == "Zufällig")       vordergrundschema = 5;
-    
-    else {
-      // unbekannte Option, ggf. Default setzen
-      vordergrundschema = 0;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+    int idx = findOptionIndex(farbschemaOptions, FARBSCHEMA_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Farbschema-Payload: ");
+      LOGLN(msg);
+      idx = 0;
     }
+    vordergrundschema = idx;
 
-    Serial.print("Vs_MODE: ");
-    Serial.println(vordergrundschema);
-    
+    LOG("Vs_MODE: ");
+    LOGLN(vordergrundschema);
   }
   else if (String(topic) == topicHsCmd) {
-    String opt = msg;  // msg = empfangener Payload
-    if      (opt == "einfarbig")  hintergrundschema = 0;
-    else if (opt == "Schachbrett")     hintergrundschema = 1;
-    else if (opt == "Spalten")         hintergrundschema = 2;
-    else if (opt == "Zeilen")      hintergrundschema = 3;
-    else if (opt == "Verlauf")     hintergrundschema = 4;
-    else if (opt == "Zufällig")       hintergrundschema = 5;
-    
-    else {
-      // unbekannte Option, ggf. Default setzen
-      hintergrundschema = 0;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+    int idx = findOptionIndex(farbschemaOptions, FARBSCHEMA_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Farbschema-Payload: ");
+      LOGLN(msg);
+      idx = 0;
     }
+    hintergrundschema = idx;
 
-    Serial.print("Hs_MODE: ");
-    Serial.println(hintergrundschema);
-    
+    LOG("Hs_MODE: ");
+    LOGLN(hintergrundschema);
   }
   else if (String(topic) == topicEfxTimeCmd) {
-    String opt = msg;  // msg = empfangener Payload
-    if      (opt == "langsam")  efxtimeint = 0;
-    else if (opt == "mittel")     efxtimeint = 1;
-    else if (opt == "schnell")         efxtimeint = 2;
-    
-    else {
-      // unbekannte Option, ggf. Default setzen
-      efxtimeint = 1;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+    int idx = findOptionIndex(effecttimeOptions, EFFECTTIME_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Zeit-Payload: ");
+      LOGLN(msg);
+      idx = 1;
     }
+    efxtimeint = idx;
 
     efxtime = htmlefxtimeint[efxtimeint];
-    Serial.print("EfxTime_MODE: ");
-    Serial.println(efxtimeint);
-    
-    
+    LOG("EfxTime_MODE: ");
+    LOGLN(efxtimeint);
   }
-    else if (String(topic) == topicAniTimeCmd) {
-    String opt = msg;  // msg = empfangener Payload
-    if      (opt == "langsam")  anitimeint = 0;
-    else if (opt == "mittel")     anitimeint = 1;
-    else if (opt == "schnell")         anitimeint = 2;
-    
-    else {
-      // unbekannte Option, ggf. Default setzen
-      anitimeint = 1;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+  else if (String(topic) == topicAniTimeCmd) {
+    int idx = findOptionIndex(effecttimeOptions, EFFECTTIME_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Zeit-Payload: ");
+      LOGLN(msg);
+      idx = 1;
     }
+    anitimeint = idx;
 
-    anitime= htmlanitimeint[aniMode][anitimeint];
-    Serial.print("AniTime_MODE: ");
-    Serial.println(anitimeint);
-    
-    
+    anitime = htmlanitimeint[aniMode][anitimeint];
+    LOG("AniTime_MODE: ");
+    LOGLN(anitimeint);
   }
   else if (String(topic) == topicAniDepthCmd) {
-    String opt = msg;  // msg = empfangener Payload
-    if      (opt == "schwach")  anidepth = 0;
-    else if (opt == "mittel")     anidepth = 1;
-    else if (opt == "stark")         anidepth = 2;
-    
-    else {
-      // unbekannte Option, ggf. Default setzen
-      anidepth = 1;
-      Serial.print("Unbekannter Effekt-Payload: ");
-      Serial.println(opt);
+    int idx = findOptionIndex(effectdepthOptions, EFFECTDEPTH_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Staerke-Payload: ");
+      LOGLN(msg);
+      idx = 1;
     }
+    anidepth = idx;
 
-    Serial.print("AniDepth_MODE: ");
-    Serial.println(anidepth);
-    
-    
+    LOG("AniDepth_MODE: ");
+    LOGLN(anidepth);
   }
   checkon();
   publishAll();

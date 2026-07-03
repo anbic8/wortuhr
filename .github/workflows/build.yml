@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - deutsche_11x11
+          - bayrisch_11x11
+          - mini_8x8
+          - deutsche_11x11_rct
+          - bayrisch_11x11_rct
+          - mini_8x8_rct
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            pio-
+
+      - name: Install PlatformIO
+        run: pip install -U platformio
+
+      - name: Build ${{ matrix.environment }}
+        run: pio run -e ${{ matrix.environment }}

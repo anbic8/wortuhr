@@ -20,9 +20,9 @@ void handlebirthday() {
       }
     }
 
-    EEPROM.put(sizeof(settings) + sizeof(MyColor) + sizeof(design), geburtstage);
+    EEPROM.put(EepromLayout::BIRTHDAY_OFFSET, geburtstage);
 
-    int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
+    int countdownOffset = EepromLayout::COUNTDOWN_OFFSET;
     if (server.hasArg("countdown")) {
       String dt = server.arg("countdown");
       if (dt.length() >= 16) {

@@ -65,15 +65,16 @@ void handleWifi() {
     bool ha_flag = server.hasArg("ha_enable") ? (server.arg("ha_enable") == "1") : false;
     haDiscoveryEnabled = ha_flag;
 
-    int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
-    int verOffset = countdownOffset + sizeof(unsigned long);
-    int eepromTotalSize = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
-    int haFlagOffset = verOffset + VERSION_STR_MAX;
+    // Encrypt a copy for storage; user_connect itself must stay plaintext
+    // in RAM so WiFi/MQTT keep working with the live credentials.
+    settings encryptedForStorage = user_connect;
+    SecureStorage::cryptFields(encryptedForStorage);
 
-    EEPROM.begin(eepromTotalSize);
-    EEPROM.put(0, user_connect);
-    EEPROM.put(sizeof(settings) + sizeof(MyColor), user_design);
-    EEPROM.write(haFlagOffset, ha_flag ? 1 : 0);
+    EepromLayout::beginAll();
+    EEPROM.put(EepromLayout::SETTINGS_OFFSET, encryptedForStorage);
+    EEPROM.put(EepromLayout::DESIGN_OFFSET, user_design);
+    EEPROM.write(EepromLayout::HA_FLAG_OFFSET, ha_flag ? 1 : 0);
+    EepromLayout::writeLayoutVersion(EepromLayout::CURRENT_LAYOUT_VERSION);
     EEPROM.commit();
     EEPROM.end();
 
@@ -147,7 +148,7 @@ void handledesignPath() {
       mqttenable
     };
 
-    EEPROM.put(sizeof(settings) + sizeof(MyColor), customDesign);
+    EEPROM.put(EepromLayout::DESIGN_OFFSET, customDesign);
     EEPROM.commit();
 
     dvv = customDesign.dv;
@@ -273,7 +274,7 @@ void handlecolorPath() {
     dimm = new_dimm;
 
     user_design.dimm = new_dimm;
-    EEPROM.put(sizeof(settings) + sizeof(MyColor), user_design);
+    EEPROM.put(EepromLayout::DESIGN_OFFSET, user_design);
 
     MyColor customVar = {
       vf1_idx,
@@ -289,7 +290,7 @@ void handlecolorPath() {
       server.arg("anidepth").toInt()
     };
 
-    EEPROM.put(sizeof(settings), customVar);
+    EEPROM.put(EepromLayout::COLOR_OFFSET, customVar);
     EEPROM.commit();
     readTime();
     neuefarbe();
@@ -334,56 +335,56 @@ void handlecolorPath() {
 
     server.sendContent("<label for='vs'>Vordergrundschema</label>");
     server.sendContent("<select name='vs' id='vs'>");
-    for (int i = 0; i < 6; i++) {
-      String opt = String("<option value='") + i + "'" + (i == vordergrundschema ? " selected" : "") + ">" + htmlfarbschema[i] + "</option>";
+    for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == vordergrundschema ? " selected" : "") + ">" + farbschemaOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
 
     server.sendContent("<label for='hs'>Hintergrundschema</label>");
     server.sendContent("<select name='hs' id='hs'>");
-    for (int i = 0; i < 6; i++) {
-      String opt = String("<option value='") + i + "'" + (i == hintergrundschema ? " selected" : "") + ">" + htmlfarbschema[i] + "</option>";
+    for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == hintergrundschema ? " selected" : "") + ">" + farbschemaOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
 
     server.sendContent("<label for='efx'>Uebergangseffekt</label>");
     server.sendContent("<select name='efx' id='efx'>");
-    for (int i = 0; i < 14; i++) {
-      String opt = String("<option value='") + i + "'" + (i == effectMode ? " selected" : "") + ">" + htmlefx[i] + "</option>";
+    for (int i = 0; i < EFFECT_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == effectMode ? " selected" : "") + ">" + effectOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
 
     server.sendContent("<label for='efxtime'>Uebergangsgeschwindigkeit</label>");
     server.sendContent("<select name='efxtime' id='efxtime'>");
-    for (int i = 0; i < 3; i++) {
-      String opt = String("<option value='") + i + "'" + (i == efxtimeint ? " selected" : "") + ">" + htmlefxtime[i] + "</option>";
+    for (int i = 0; i < EFFECTTIME_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == efxtimeint ? " selected" : "") + ">" + effecttimeOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
 
     server.sendContent("<label for='ani'>Animation</label>");
     server.sendContent("<select name='ani' id='ani'>");
-    for (int i = 0; i < 7; i++) {
-      String opt = String("<option value='") + i + "'" + (i == aniMode ? " selected" : "") + ">" + htmlani[i] + "</option>";
+    for (int i = 0; i < ANI_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == aniMode ? " selected" : "") + ">" + aniOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
 
     server.sendContent("<label for='anitime'>Animationszeit</label>");
     server.sendContent("<select name='anitime' id='anitime'>");
-    for (int i = 0; i < 3; i++) {
-      String opt = String("<option value='") + i + "'" + (i == anitimeint ? " selected" : "") + ">" + htmlanitime[i] + "</option>";
+    for (int i = 0; i < EFFECTTIME_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == anitimeint ? " selected" : "") + ">" + effecttimeOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
 
     server.sendContent("<label for='anidepth'>Animationsstaerke</label>");
     server.sendContent("<select name='anidepth' id='anidepth'>");
-    for (int i = 0; i < 3; i++) {
-      String opt = String("<option value='") + i + "'" + (i == anidepth ? " selected" : "") + ">" + htmlanidepth[i] + "</option>";
+    for (int i = 0; i < EFFECTDEPTH_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == anidepth ? " selected" : "") + ">" + effectdepthOptions[i] + "</option>";
       server.sendContent(opt);
     }
     server.sendContent("</select>");
@@ -404,13 +405,8 @@ void handleHAConfig() {
     bool enabled = server.hasArg("ha_enable") && server.arg("ha_enable") == "1";
     haDiscoveryEnabled = enabled;
 
-    int countdownOffset = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage);
-    int verOffset = countdownOffset + sizeof(unsigned long);
-    int eepromTotalSize = sizeof(settings) + sizeof(MyColor) + sizeof(design) + sizeof(geburtstage) + sizeof(unsigned long) + VERSION_STR_MAX + 1;
-    int haFlagOffset = verOffset + VERSION_STR_MAX;
-
-    EEPROM.begin(eepromTotalSize);
-    EEPROM.write(haFlagOffset, enabled ? 1 : 0);
+    EepromLayout::beginAll();
+    EEPROM.write(EepromLayout::HA_FLAG_OFFSET, enabled ? 1 : 0);
     EEPROM.commit();
     EEPROM.end();
 
@@ -450,6 +446,25 @@ void handleHADiscover() {
     server.sendContent("<div class='card'><p>Erkennung kann nicht gesendet werden.</p></div>");
   }
   sendPageEnd();
+}
+
+void handleFactoryReset() {
+  if (server.method() == HTTP_POST && server.hasArg("confirm") && server.arg("confirm") == "yes") {
+    EepromLayout::eraseAll();
+    sendPageStart("Werkseinstellungen");
+    server.sendContent("<div class='card'><p>Alle Einstellungen wurden geloescht. Die Uhr startet jetzt neu.</p></div>");
+    sendPageEnd();
+    delay(1500);
+    ESP.restart();
+  } else {
+    sendPageStart("Werkseinstellungen");
+    server.sendContent("<div class='card'><p>Achtung: Dies loescht WLAN-, MQTT-, Farb- und Geburtstagseinstellungen unwiderruflich.</p></div>");
+    server.sendContent("<form action='/factory-reset' method='post'>");
+    server.sendContent("<input type='hidden' name='confirm' value='yes'>");
+    server.sendContent("<button type='submit'>Werkseinstellungen wiederherstellen</button>");
+    server.sendContent("</form>");
+    sendPageEnd();
+  }
 }
 
 void handleUpload() {
@@ -495,7 +510,7 @@ void handleUploading() {
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) {
     Serial.setDebugOutput(true);
-    Serial.printf("Update gestartet: %s\n", upload.filename.c_str());
+    LOGF("Update gestartet: %s\n", upload.filename.c_str());
     if (!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)) {
       Update.printError(Serial);
     }
@@ -505,12 +520,12 @@ void handleUploading() {
     }
   } else if (upload.status == UPLOAD_FILE_END) {
     if (Update.end(true)) {
-      Serial.printf("Update abgeschlossen: %u bytes\n", upload.totalSize);
+      LOGF("Update abgeschlossen: %u bytes\n", upload.totalSize);
     } else {
       Update.printError(Serial);
     }
     Serial.setDebugOutput(false);
   } else {
-    Serial.printf("Update abgebrochen\n");
+    LOGF("Update abgebrochen\n");
   }
 }

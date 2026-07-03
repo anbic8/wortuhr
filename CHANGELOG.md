@@ -3,6 +3,31 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.2.14] - 2026-07-03
+
+### Added
+- WLAN-/MQTT-Zugangsdaten (`ssid`, `password`, `mqtt_user`, `mqtt_password`) werden jetzt geräte-gebunden verschlüsselt im EEPROM abgelegt (AES-128-CTR, Schlüssel aus der Chip-ID abgeleitet). Bestehende Geräte migrieren beim nächsten Speichern über `/wifi` automatisch, ohne Neueingabe der Zugangsdaten.
+- Neuer Endpunkt `/factory-reset` im Web-Interface für einen echten Zurücksetzen-auf-Werkseinstellungen.
+- Zentrales EEPROM-Layout (`eeprom_layout.h`) mit einem Layout-Versions-Byte als Basis für zukünftige, sichere Migrationen.
+- Logging jetzt über `LOG()`/`LOGLN()`/`LOGF()`-Makros steuerbar; per Build-Flag `-DLOG_ENABLED=0` für schlankere Release-Builds abschaltbar.
+- GitHub Actions: Build-Matrix (`build.yml`) kompiliert bei jedem Push/PR alle 6 Firmware-Varianten.
+- GitHub Actions: Release-Workflow (`release.yml`) baut bei einem `vX.Y.Z`-Tag automatisch alle 6 Varianten und hängt die `.bin`-Dateien an ein GitHub Release an.
+
+### Changed
+- `globals.h`/`globals.cpp` in themenbezogene Module aufgeteilt (`persistence`, `globals_network`, `globals_mqtt`, `globals_display`, `globals_state`, `globals_design`, `globals_birthday`, `webserver_html`) statt einer 1450-Zeilen-Datei.
+- MQTT-Optionslisten (Effekte, Animationen, Farbschemata, Zeit/Stärke) dedupliziert: ein gemeinsames Array pro Kategorie wird jetzt von eingehendem Callback, ausgehendem State, Web-UI-Dropdowns und Home-Assistant-Discovery gemeinsam genutzt statt vierfach gepflegt zu werden.
+- `setup()` beschleunigt: Boot-Animation und Taster reagieren sofort beim Einschalten statt erst nach WLAN- und NTP-Verbindungsaufbau; NTP-Synchronisierung blockiert den Start nicht mehr, sondern läuft im Hintergrund weiter.
+- Firmware-`.bin`-Dateien werden nicht mehr im Repository getrackt, sondern ausschließlich über GitHub Releases verteilt (siehe oben).
+
+### Fixed
+- MQTT: ein unbekannter Animations-Payload setzte faelschlicherweise `effectMode` statt `aniMode` zurueck.
+- MQTT: Off-by-one-Fehler beim Publizieren von Übergangs-/Animationszeit und -stärke konnte auf ein ungültiges Array-Element zugreifen.
+- EEPROM: das Speichern der Anzeige-Einstellungen über bestimmte Pfade (RTC-Sommerzeit-Umschaltung, initiale Anlage) setzte den `mqttenable`-Wert stillschweigend zurück.
+- `clearEEPROM()` berechnete seine Löschgröße zu klein und liess Countdown-Zeitstempel sowie das Home-Assistant-Flag unberührt.
+
+### Notes
+- Version-Bump auf `4.2.14`.
+
 ## [4.2.13] - 2026-02-15
 
 ### Added

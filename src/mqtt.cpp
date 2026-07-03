@@ -65,25 +65,25 @@ void connectToMQTT() {
   if (client.connected()) return;
   if (millis() - lastMqttAttempt < mqttRetryMs) return;
   lastMqttAttempt = millis();
-  Serial.println("Versuche MQTT-Verbindung...");
+  LOGLN("Versuche MQTT-Verbindung...");
   // build a unique client id using device id + chip id to avoid collisions
   char clientId[48];
   snprintf(clientId, sizeof(clientId), "%s_%lu", DEVICE_ID.c_str(), ESP.getChipId());
-  Serial.print("Using MQTT clientId: "); Serial.println(clientId);
+  LOG("Using MQTT clientId: "); LOGLN(clientId);
 
   if (client.connect(clientId, user_connect.mqtt_user, user_connect.mqtt_password)) {
     // give library a moment to settle and ensure still connected
     delay(100);
     client.loop();
     if (client.connected()) {
-      Serial.println("MQTT verbunden!");
+      LOGLN("MQTT verbunden!");
       mqttOnConnected();
     } else {
-      Serial.print("Verbunden, aber sofort getrennt, state="); Serial.println(client.state());
+      LOG("Verbunden, aber sofort getrennt, state="); LOGLN(client.state());
     }
   } else {
-    Serial.print("Fehler, rc=");
-    Serial.println(client.state());
+    LOG("Fehler, rc=");
+    LOGLN(client.state());
   }
 }
 
@@ -105,14 +105,12 @@ void publishAll(){
 
 
 void publishEffectState() {
-  // safeguard: effectMode in [0..13]
-  uint8_t idx = constrain(effectMode, 0, 13);
+  uint8_t idx = constrain(effectMode, 0, EFFECT_OPTIONS_COUNT - 1);
   const char* opt = effectOptions[idx];
   client.publish(topicEfxState.c_str(), opt, true);
 }
 void publishAniState() {
-  // safeguard: aniMode in [0..6]
-  uint8_t idx = constrain(aniMode, 0, 6);
+  uint8_t idx = constrain(aniMode, 0, ANI_OPTIONS_COUNT - 1);
   const char* opt = aniOptions[idx];
   client.publish(topicAniState.c_str(), opt, true);
 }
@@ -211,39 +209,34 @@ void publishH2State() {
   client.publish(topicH2State.c_str(), buf, true);
 }
 void publishVsState() {
-  // safeguard: effectMode in [0..9]
-  uint8_t idx = constrain(vordergrundschema, 0, 5);
+  uint8_t idx = constrain(vordergrundschema, 0, FARBSCHEMA_OPTIONS_COUNT - 1);
   const char* opt = farbschemaOptions[idx];
   client.publish(topicVsState.c_str(), opt, true);
 }
 void publishHsState() {
-  // safeguard: effectMode in [0..9]
-  uint8_t idx = constrain(hintergrundschema, 0, 5);
+  uint8_t idx = constrain(hintergrundschema, 0, FARBSCHEMA_OPTIONS_COUNT - 1);
   const char* opt = farbschemaOptions[idx];
   client.publish(topicHsState.c_str(), opt, true);
 }
 void publishEfxTimeState() {
-  // safeguard: effectMode in [0..9]
-  uint8_t idx = constrain(efxtimeint, 0, 3);
+  uint8_t idx = constrain(efxtimeint, 0, EFFECTTIME_OPTIONS_COUNT - 1);
   const char* opt = effecttimeOptions[idx];
   client.publish(topicEfxTimeState.c_str(), opt, true);
 }
 void publishAniTimeState() {
-  // safeguard: effectMode in [0..9]
-  uint8_t idx = constrain(anitimeint, 0, 3);
+  uint8_t idx = constrain(anitimeint, 0, EFFECTTIME_OPTIONS_COUNT - 1);
   const char* opt = effecttimeOptions[idx];
   client.publish(topicAniTimeState.c_str(), opt, true);
 }
 void publishAniDepthState() {
-  // safeguard: effectMode in [0..9]
-  uint8_t idx = constrain(anidepth, 0, 3);
+  uint8_t idx = constrain(anidepth, 0, EFFECTDEPTH_OPTIONS_COUNT - 1);
   const char* opt = effectdepthOptions[idx];
   client.publish(topicAniDepthState.c_str(), opt, true);
 }
 
 // Force an immediate reconnect attempt: disconnect and reset timer
 void forceMqttReconnect() {
-  Serial.println("Forcing MQTT reconnect...");
+  LOGLN("Forcing MQTT reconnect...");
   if (client.connected()) {
     client.disconnect();
   }

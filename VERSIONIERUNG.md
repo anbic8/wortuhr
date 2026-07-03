@@ -5,9 +5,9 @@ Dieses Dokument beschreibt, wie die Firmware-Version verwaltet und aktualisiert 
 ## Struktur der Versionsverwaltung
 
 ### 1. `version.txt`
-- **Einzige Quelle der Wahrheit** für die aktuelle Versionsnummer
+- **Dokumentarische Quelle der Wahrheit** für die aktuelle Versionsnummer
 - Format: `X.X.X` (Semantic Versioning)
-- Wird direkt gelesen und in der Firmware verwendet
+- Wird von keinem Build-Skript gelesen — rein zur Nachverfolgung für Menschen
 - Schnell editierbar
 
 ### 2. `CHANGELOG.md`
@@ -16,9 +16,10 @@ Dieses Dokument beschreibt, wie die Firmware-Version verwaltet und aktualisiert 
 - Strukturiert nach Feature-Kategorien
 - Für Nutzer lesbar (Dokumentation)
 
-### 3. `src/globals.h`
+### 3. `src/persistence.h`
 - Enthält `#define FW_VERSION`
 - **MUSS mit `version.txt` synchron sein**
+- Wird tatsächlich einkompiliert und ist das, was die Firmware zur Laufzeit mit der in EEPROM gespeicherten Version vergleicht — **nur diese Datei beeinflusst das reale Geräteverhalten**, `version.txt` ist reine Dokumentation
 - Wird in EEPROM gespeichert nach erfolgreicher Synchronisierung
 
 ## Release-Workflow
@@ -46,18 +47,25 @@ Dieses Dokument beschreibt, wie die Firmware-Version verwaltet und aktualisiert 
 ```
 3. **Speichern**
 
-### Schritt 3: globals.h aktualisieren
-1. Öffne `src/globals.h`
+### Schritt 3: persistence.h aktualisieren
+1. Öffne `src/persistence.h`
 2. Ändere: `#define FW_VERSION "4.2.9"`
-3. **Speichern und kompilieren**
+3. **Speichern und lokal kompilieren** (`pio run`, siehe CLAUDE.md für alle 6 Environments)
 
-### Schritt 4: Git committen
+### Schritt 4: Git committen und taggen
 ```bash
-git add version.txt CHANGELOG.md src/globals.h
+git add version.txt CHANGELOG.md src/persistence.h
 git commit -m "Release v4.2.9: [Kurzbeschreibung der wichtigsten Änderungen]"
 git tag -a v4.2.9 -m "Release 4.2.9"
 git push origin main --tags
 ```
+
+### Schritt 5: GitHub Actions übernimmt den Rest automatisch
+Sobald der Tag `vX.Y.Z` gepusht ist, läuft `.github/workflows/release.yml`:
+- baut alle 6 Environments,
+- hängt die 6 resultierenden `firmware_*.bin`-Dateien automatisch an ein neues GitHub Release.
+
+Kein manuelles Bauen/Hochladen der `.bin`-Dateien mehr nötig — sie werden auch nicht mehr im Repo getrackt (siehe `.gitignore`). Bei jedem normalen Push/PR (auch ohne Tag) baut zusätzlich `.github/workflows/build.yml` alle 6 Environments zur Kontrolle, damit ein nicht kompilierender Stand sofort auffällt.
 
 ## Semantic Versioning Erklärung
 

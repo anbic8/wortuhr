@@ -7,23 +7,23 @@
 // Helper: publish with debug about sizes and connection
 static bool pubWithCheck(const char* topic, const char* payload, bool retain=true) {
   size_t len = strlen(payload);
-  Serial.printf("Publish -> %s len=%u, MQTT_MAX_PACKET_SIZE=%d\n", topic, (unsigned)len, MQTT_MAX_PACKET_SIZE);
+  LOGF("Publish -> %s len=%u, MQTT_MAX_PACKET_SIZE=%d\n", topic, (unsigned)len, MQTT_MAX_PACKET_SIZE);
   // ensure client is still connected
   if (!client.connected()) {
-    Serial.printf("Publish FAILED for %s (connected=0 before publish, client.state()=%d) - skipping publish\n", topic, client.state());
+    LOGF("Publish FAILED for %s (connected=0 before publish, client.state()=%d) - skipping publish\n", topic, client.state());
     return false;
   }
 
   bool ok = client.publish(topic, payload, retain);
   if (!ok) {
     // single retry after yielding to network
-    Serial.printf("Publish attempt failed for %s, retrying after client.loop()\n", topic);
+    LOGF("Publish attempt failed for %s, retrying after client.loop()\n", topic);
     client.loop();
     delay(200);
     ok = client.publish(topic, payload, retain);
   }
   if (!ok) {
-    Serial.printf("Publish FAILED for %s (connected=%d, client.state()=%d)\n", topic, client.connected(), client.state());
+    LOGF("Publish FAILED for %s (connected=%d, client.state()=%d)\n", topic, client.connected(), client.state());
   }
   return ok;
 }
@@ -52,13 +52,13 @@ JsonObject dev = cfg.createNestedObject("device");
   size_t n = serializeJson(cfg, buf, sizeof(buf));
 
   // Debug: zeige JSON
-  Serial.print("Config JSON: ");
-  Serial.println(buf);
+  LOG("Config JSON: ");
+  LOGLN(buf);
 
   // Publish und Ergebnis
   String configTopic = "homeassistant/switch/" + DEVICE_ID + "_power/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  LOGF("Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
 
@@ -71,20 +71,7 @@ bool publishEffectConfig() {
   cfg["command_topic"]= topicEfxCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 13
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("kein Effekt");
-  opts.add("zufällig");
-  opts.add("Fade");
-  opts.add("Running");
-  opts.add("Schlange");
-  opts.add("Zeilen");
-  opts.add("Scrollen");
-  opts.add("Slide in");
-  opts.add("Diagonal");
-  opts.add("Rain");
-  opts.add("Spirale");
-  opts.add("Schlangenfresser");
-  opts.add("Raute");
-  opts.add("Feuerwerk");
+  for (int i = 0; i < EFFECT_OPTIONS_COUNT; ++i) opts.add(effectOptions[i]);
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;
@@ -104,7 +91,7 @@ bool publishEffectConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_efx/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Effect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Effect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAnimationConfig() {
@@ -117,13 +104,7 @@ bool publishAnimationConfig() {
   cfg["command_topic"]= topicAniCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("keine Animation");
-  opts.add("Blinken");
-  opts.add("Vordergrundblinken");
-  opts.add("Pulsieren");
-  opts.add("Verlauf");
-  opts.add("Fliegen");
-  opts.add("Glitter");
+  for (int i = 0; i < ANI_OPTIONS_COUNT; ++i) opts.add(aniOptions[i]);
   
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
@@ -144,7 +125,7 @@ bool publishAnimationConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_ani/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 
@@ -178,7 +159,7 @@ bool publishV1LightConfig() {
   serializeJson(cfg, buf, sizeof(buf));
   String configTopic = "homeassistant/light/" + DEVICE_ID + "_v1/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 
@@ -212,7 +193,7 @@ bool publishV2LightConfig() {
   serializeJson(cfg, buf, sizeof(buf));
   String configTopic = "homeassistant/light/" + DEVICE_ID + "_v2/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 
@@ -246,7 +227,7 @@ bool publishH1LightConfig() {
   serializeJson(cfg, buf, sizeof(buf));
   String configTopic = "homeassistant/light/" + DEVICE_ID + "_h1/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishH2LightConfig() {
@@ -279,7 +260,7 @@ bool publishH2LightConfig() {
   serializeJson(cfg, buf, sizeof(buf));
   String configTopic = "homeassistant/light/" + DEVICE_ID + "_h2/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishVsConfig() {
@@ -292,12 +273,7 @@ bool publishVsConfig() {
   cfg["command_topic"]= topicVsCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("einfarbig");
-  opts.add("Schachbrett");
-  opts.add("Spalten");
-  opts.add("Zeilen");
-  opts.add("Verlauf");
-  opts.add("Zufällig");
+  for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; ++i) opts.add(farbschemaOptions[i]);
   
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
@@ -318,7 +294,7 @@ bool publishVsConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_vs/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishHsConfig() {
@@ -331,12 +307,7 @@ bool publishHsConfig() {
   cfg["command_topic"]= topicHsCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("einfarbig");
-  opts.add("Schachbrett");
-  opts.add("Spalten");
-  opts.add("Zeilen");
-  opts.add("Verlauf");
-  opts.add("Zufällig");
+  for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; ++i) opts.add(farbschemaOptions[i]);
   
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
@@ -357,7 +328,7 @@ bool publishHsConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_hs/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishEfxTimeConfig() {
@@ -370,9 +341,7 @@ bool publishEfxTimeConfig() {
   cfg["command_topic"]= topicEfxTimeCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("langsam");
-  opts.add("mittel");
-  opts.add("schnell");
+  for (int i = 0; i < EFFECTTIME_OPTIONS_COUNT; ++i) opts.add(effecttimeOptions[i]);
 
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
@@ -393,7 +362,7 @@ bool publishEfxTimeConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_efxtime/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAniTimeConfig() {
@@ -406,9 +375,7 @@ bool publishAniTimeConfig() {
   cfg["command_topic"]= topicAniTimeCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("langsam");
-  opts.add("mittel");
-  opts.add("schnell");
+  for (int i = 0; i < EFFECTTIME_OPTIONS_COUNT; ++i) opts.add(effecttimeOptions[i]);
 
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
@@ -429,7 +396,7 @@ bool publishAniTimeConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_anitime/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAniDepthConfig() {
@@ -442,9 +409,7 @@ bool publishAniDepthConfig() {
   cfg["command_topic"]= topicAniDepthCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
-  opts.add("schwach");
-  opts.add("mittel");
-  opts.add("stark");
+  for (int i = 0; i < EFFECTDEPTH_OPTIONS_COUNT; ++i) opts.add(effectdepthOptions[i]);
 
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
@@ -465,7 +430,7 @@ bool publishAniDepthConfig() {
   // Publish mit retain=true
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_anidepth/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
-  Serial.printf("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 

@@ -1,5 +1,6 @@
 #include "color.h"
 #include "globals.h"
+#include "eeprom_layout.h"
 #include "show.h"
 #include <EEPROM.h>
 
@@ -72,7 +73,7 @@ void hintergrunderstellen(int farbe1[3], int farbe2[3]){
 
 void neuefarbe(){
 
- EEPROM.get(sizeof(settings), user_color );
+ EEPROM.get(EepromLayout::COLOR_OFFSET, user_color);
   
   if(user_color.vf1>-1){
   v1 = user_color.vf1;
@@ -115,7 +116,7 @@ void savecolor(){
     anitimeint,
     anidepth
   };
-  EEPROM.put(sizeof(settings), customVar);
+  EEPROM.put(EepromLayout::COLOR_OFFSET, customVar);
   EEPROM.commit();
 }
 
