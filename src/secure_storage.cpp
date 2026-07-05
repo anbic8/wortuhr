@@ -43,4 +43,10 @@ void cryptFields(settings &s) {
   cryptField(s.mqtt_password, sizeof(s.mqtt_password), key, 3);
 }
 
+void cryptBuffer(char *buf, size_t len, uint8_t fieldTag) {
+  uint8_t key[16];
+  deriveDeviceKey(key);
+  cryptField(buf, len, key, fieldTag);
+}
+
 } // namespace SecureStorage

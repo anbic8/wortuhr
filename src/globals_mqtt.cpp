@@ -7,7 +7,7 @@ String topicOnState;
 String topicOnCmd;
 String topicEfxState;
 String topicEfxCmd;
-const char* effectOptions[14] = {
+const char* effectOptions[15] = {
   "kein Effekt",
   "zufällig",
   "Fade",
@@ -21,7 +21,8 @@ const char* effectOptions[14] = {
   "Spirale",
   "Schlangenfresser",
   "Raute",
-  "Feuerwerk"
+  "Feuerwerk",
+  "Zufällig aus Liste"
 };
 String topicAniState;
 String topicAniCmd;
@@ -75,6 +76,38 @@ const char* effectdepthOptions[3] = {
   "mittel",
   "stark"
 };
+
+// --- Topics für Effekte-Modus (WLED-artige Matrixeffekte statt der Uhr) ---
+String topicEfxModeState;
+String topicEfxModeCmd;
+String topicLightEffectState;
+String topicLightEffectCmd;
+const char* lightEffectOptions[20] = {
+  "Rainbow Cycle",
+  "Theater Chase",
+  "Theater Chase Rainbow",
+  "Color Wipe",
+  "Breathing",
+  "Sparkle",
+  "Comet",
+  "Fire",
+  "Plasma",
+  "Confetti",
+  "Diagonal Rainbow Sweep",
+  "Color Wave",
+  "Larson Scanner",
+  "Random Color Fade",
+  "Bouncing Balls",
+  "TV Static",
+  "Matrix Rain",
+  "Sunrise Sunset",
+  "Strobe",
+  "Color Wheel Pulse"
+};
+String topicLightEffectSpeedState;
+String topicLightEffectSpeedCmd;
+
+String topicAvailability;
 
 // --- Topics für Sensoren ---
 String topicIpAddress;
@@ -150,6 +183,17 @@ void buildMqttTopics() {
 
   topicAniDepthState = prefix + "anidepth";
   topicAniDepthCmd = prefix + "anidepth/set";
+
+  topicEfxModeState = prefix + "effectsmode";
+  topicEfxModeCmd = prefix + "effectsmode/set";
+
+  topicLightEffectState = prefix + "lighteffect";
+  topicLightEffectCmd = prefix + "lighteffect/set";
+
+  topicLightEffectSpeedState = prefix + "lighteffectspeed";
+  topicLightEffectSpeedCmd = prefix + "lighteffectspeed/set";
+
+  topicAvailability = prefix + "availability";
 
   // Sensor topics
   topicIpAddress = prefix + "ip_address";

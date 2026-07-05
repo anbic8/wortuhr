@@ -101,6 +101,7 @@ void handleWifi() {
 
     server.sendContent("<label>Home Assistant Erkennung</label>");
     server.sendContent(String("<input type='checkbox' name='ha_enable' value='1' ") + (haDiscoveryEnabled ? "checked" : "") + ">");
+    server.sendContent("<button type='button' onclick=\"fetch('/ha/discover',{method:'POST'})\">Erkennung jetzt senden</button>");
 
     server.sendContent("<label>MQTT Server</label>");
     server.sendContent(String("<input type='text' name='mqtt_server' value='") + user_connect.mqtt_server + "'>");
@@ -159,6 +160,32 @@ void handledesignPath() {
 
     buildLedMappings();
 
+#if MATRIX_SIZE == 8
+    minuteDotsEnabled = server.hasArg("minutedots");
+    if (server.hasArg("minutedots_color")) {
+      String hex = server.arg("minutedots_color");
+      if (hex.charAt(0) == '#') hex = hex.substring(1);
+      if (hex.length() == 6) {
+        int r = (int)strtol(hex.substring(0, 2).c_str(), nullptr, 16);
+        int g = (int)strtol(hex.substring(2, 4).c_str(), nullptr, 16);
+        int b = (int)strtol(hex.substring(4, 6).c_str(), nullptr, 16);
+        unsigned long bestDist = 0xFFFFFFFFUL;
+        int bestIdx = minuteDotsColorIdx;
+        for (int i = 0; i < anzahlfarben; i++) {
+          int rgb[3];
+          getPaletteColor((uint8_t)i, rgb);
+          long dr = r - rgb[0], dg = g - rgb[1], db = b - rgb[2];
+          unsigned long dist = (unsigned long)(dr * dr + dg * dg + db * db);
+          if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+        }
+        minuteDotsColorIdx = bestIdx;
+      }
+    }
+    EEPROM.write(EepromLayout::MINUTE_DOTS_ENABLED_OFFSET, minuteDotsEnabled ? 1 : 0);
+    EEPROM.write(EepromLayout::MINUTE_DOTS_COLOR_OFFSET, (uint8_t)minuteDotsColorIdx);
+    EEPROM.commit();
+#endif
+
     sendPageStart("Einstellungen");
     server.sendContent("<div class='card'><p>Deine Einstellungen wurden gespeichert und uebernommen.</p></div>");
     sendPageEnd();
@@ -206,6 +233,21 @@ void handledesignPath() {
     server.sendContent("</div>");
 
     server.sendContent("</div>");
+
+#if MATRIX_SIZE == 8
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label>Minutengenaue Anzeige (zeigt Minuten-Pixel in der untersten Zeile)</label>");
+    server.sendContent(String("<input type='checkbox' name='minutedots' value='1' ") + (minuteDotsEnabled ? "checked" : "") + ">");
+
+    int dotRgb[3];
+    getPaletteColor((uint8_t)minuteDotsColorIdx, dotRgb);
+    char dotBuf[8];
+    sprintf(dotBuf, "#%02X%02X%02X", dotRgb[0], dotRgb[1], dotRgb[2]);
+    server.sendContent("<label for='minutedots_color'>Farbe der Minuten-Pixel</label>");
+    server.sendContent(String("<input type='color' id='minutedots_color' name='minutedots_color' value='") + dotBuf + "'>");
+    server.sendContent("</div>");
+#endif
+
     server.sendContent("<button type='submit'>Speichern</button>");
     server.sendContent("</form>");
     sendPageEnd();
@@ -291,6 +333,30 @@ void handlecolorPath() {
     };
 
     EEPROM.put(EepromLayout::COLOR_OFFSET, customVar);
+
+    bool newEffectsModeActive = server.hasArg("effectsmode");
+    uint8_t newSelectedLightEffect = (uint8_t)constrain(server.arg("lighteffect").toInt(), 0, LIGHT_EFFECT_OPTIONS_COUNT - 1);
+    if (effectsModeActive && !newEffectsModeActive) {
+      threshold = 0; // sofortiger Uhr-Refresh statt bis zum nächsten Minutenwechsel zu warten
+    }
+    effectsModeActive = newEffectsModeActive;
+    selectedLightEffect = newSelectedLightEffect;
+    lightEffectSpeedIdx = (uint8_t)constrain(server.arg("lighteffectspeed").toInt(), 0, EFFECTTIME_OPTIONS_COUNT - 1);
+
+    EEPROM.write(EepromLayout::LIGHT_EFFECTS_ENABLED_OFFSET, effectsModeActive ? 1 : 0);
+    EEPROM.write(EepromLayout::LIGHT_EFFECT_INDEX_OFFSET, selectedLightEffect);
+    EEPROM.write(EepromLayout::LIGHT_EFFECT_SPEED_OFFSET, lightEffectSpeedIdx);
+
+    // "Zufällig aus Liste" Pool für den Übergangseffekt (echte Effekte 2..13)
+    uint16_t newEffectPoolMask = 0;
+    for (int i = 2; i <= 13; i++) {
+      if (server.hasArg(String("txpool") + i)) {
+        newEffectPoolMask |= (uint16_t)(1U << i);
+      }
+    }
+    effectRandomPoolMask = newEffectPoolMask;
+    EEPROM.put(EepromLayout::EFFECT_RANDOM_POOL_MASK_OFFSET, effectRandomPoolMask);
+
     EEPROM.commit();
     readTime();
     neuefarbe();
@@ -348,7 +414,51 @@ void handlecolorPath() {
       server.sendContent(opt);
     }
     server.sendContent("</select>");
+    server.sendContent("</div>");
 
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label>Vorschau</label>");
+    server.sendContent("<small>Zeigt Vorder-/Hintergrundfarben und -schema als Beispielmuster - nicht die exakte Uhrzeit-Anzeige.</small>");
+    server.sendContent("<div id='colorPreview' class='pixel-grid'></div>");
+    server.sendContent(String("<script>(function(){\n"
+      "var SIZE = ") + MATRIX_SIZE + ";\n" +
+      "var PALETTE=[[255,255,255],[255,0,0],[255,0,128],[255,0,255],[128,0,255],[0,0,255],[0,128,255],[0,255,255],[0,255,128],[0,255,0],[128,255,0],[255,255,0],[255,128,0],[0,0,0]];\n"
+      "var grid=document.getElementById('colorPreview');\n"
+      "grid.style.gridTemplateColumns='repeat('+SIZE+',1fr)';\n"
+      "var cells=[],mask=[];\n"
+      "for(var r=0;r<SIZE;r++){mask[r]=[];cells[r]=[];for(var c=0;c<SIZE;c++){mask[r][c]=Math.random()<0.4;var d=document.createElement('div');d.className='px';grid.appendChild(d);cells[r][c]=d;}}\n"
+      "function hexToRgb(hex){hex=hex.replace('#','');return [parseInt(hex.substring(0,2),16),parseInt(hex.substring(2,4),16),parseInt(hex.substring(4,6),16)];}\n"
+      "function schemeColor(scheme,row,col,c1,c2){\n"
+      "  switch(scheme){\n"
+      "    case 1: return ((row%2==0)===(col%2==0))?c1:c2;\n"
+      "    case 2: return (col%2==0)?c1:c2;\n"
+      "    case 3: return (row%2==0)?c1:c2;\n"
+      "    case 4:\n"
+      "      var f=row/(SIZE-1);\n"
+      "      return [Math.round(c1[0]+(c2[0]-c1[0])*f),Math.round(c1[1]+(c2[1]-c1[1])*f),Math.round(c1[2]+(c2[2]-c1[2])*f)];\n"
+      "    case 5: return PALETTE[Math.floor(Math.random()*PALETTE.length)];\n"
+      "    default: return c1;\n"
+      "  }\n"
+      "}\n"
+      "window.renderColorPreview=function(){\n"
+      "  var vf1=hexToRgb(document.getElementById('vf1_color').value);\n"
+      "  var vf2=hexToRgb(document.getElementById('vf2_color').value);\n"
+      "  var hf1=hexToRgb(document.getElementById('hf1_color').value);\n"
+      "  var hf2=hexToRgb(document.getElementById('hf2_color').value);\n"
+      "  var vs=parseInt(document.getElementById('vs').value,10);\n"
+      "  var hs=parseInt(document.getElementById('hs').value,10);\n"
+      "  for(var r=0;r<SIZE;r++){for(var c=0;c<SIZE;c++){\n"
+      "    var col=mask[r][c]?schemeColor(vs,r,c,vf1,vf2):schemeColor(hs,r,c,hf1,hf2);\n"
+      "    cells[r][c].style.background='rgb('+col[0]+','+col[1]+','+col[2]+')';\n"
+      "  }}\n"
+      "};\n"
+      "['vf1_color','vf2_color','hf1_color','hf2_color'].forEach(function(id){document.getElementById(id).addEventListener('input',renderColorPreview);});\n"
+      "['vs','hs'].forEach(function(id){document.getElementById(id).addEventListener('change',renderColorPreview);});\n"
+      "renderColorPreview();\n"
+      "})();</script>");
+    server.sendContent("</div>");
+
+    server.sendContent("<div class='card'>");
     server.sendContent("<label for='efx'>Uebergangseffekt</label>");
     server.sendContent("<select name='efx' id='efx'>");
     for (int i = 0; i < EFFECT_OPTIONS_COUNT; i++) {
@@ -356,6 +466,16 @@ void handlecolorPath() {
       server.sendContent(opt);
     }
     server.sendContent("</select>");
+
+    server.sendContent("<label>Zufaellige Liste konfigurieren (fuer Uebergangseffekt 'Zufaellig aus Liste')</label>");
+    server.sendContent("<small>Waehle aus, welche Uebergangseffekte in die zufaellige Auswahl aufgenommen werden.</small>");
+    for (int i = 2; i <= 13; i++) {
+      bool checked = (effectRandomPoolMask & (1U << i)) != 0;
+      server.sendContent("<label class='checkbox-row'>");
+      server.sendContent(String("<input type='checkbox' name='txpool") + i + "' value='1' " + (checked ? "checked" : "") + ">");
+      server.sendContent(String("<span>") + effectOptions[i] + "</span>");
+      server.sendContent("</label>");
+    }
 
     server.sendContent("<label for='efxtime'>Uebergangsgeschwindigkeit</label>");
     server.sendContent("<select name='efxtime' id='efxtime'>");
@@ -394,10 +514,57 @@ void handlecolorPath() {
     server.sendContent(String("<input type='number' id='dimm' name='dimm' min='0' max='100' value='") + dimm_percent + "'>");
 
     server.sendContent("</div>");
+
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label>Effekte-Modus (Matrix zeigt Lichteffekte statt der Uhrzeit)</label>");
+    server.sendContent(String("<input type='checkbox' name='effectsmode' value='1' onchange=\"fetch('/api/effectsmode?enabled='+(this.checked?1:0))\" ") + (effectsModeActive ? "checked" : "") + ">");
+
+    server.sendContent("<label for='lighteffect'>Lichteffekt</label>");
+    server.sendContent("<select name='lighteffect' id='lighteffect' onchange=\"fetch('/api/effectsmode?effect='+this.value)\">");
+    for (int i = 0; i < LIGHT_EFFECT_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == selectedLightEffect ? " selected" : "") + ">" + lightEffectOptions[i] + "</option>";
+      server.sendContent(opt);
+    }
+    server.sendContent("</select>");
+
+    server.sendContent("<label for='lighteffectspeed'>Lichteffekt-Geschwindigkeit</label>");
+    server.sendContent("<select name='lighteffectspeed' id='lighteffectspeed' onchange=\"fetch('/api/effectsmode?speed='+this.value)\">");
+    for (int i = 0; i < EFFECTTIME_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == lightEffectSpeedIdx ? " selected" : "") + ">" + effecttimeOptions[i] + "</option>";
+      server.sendContent(opt);
+    }
+    server.sendContent("</select>");
+    server.sendContent("<small>Aenderungen hier wirken sofort, unabhaengig vom Speichern-Button unten.</small>");
+    server.sendContent("</div>");
+
     server.sendContent("<button type='submit'>Speichern</button>");
     server.sendContent("</form>");
     sendPageEnd();
   }
+}
+
+// Sofort-Aktivierung fuer Effekte-Modus-Aenderungen (Checkbox/Lichteffekt/
+// Geschwindigkeit), per fetch() aus der /color-Seite aufgerufen, damit ein
+// ausgewaehlter Lichteffekt direkt anspringt statt erst nach "Speichern".
+void handleEffectsModeApi() {
+  if (server.hasArg("enabled")) {
+    bool newActive = server.arg("enabled").toInt() == 1;
+    if (effectsModeActive && !newActive) {
+      threshold = 0; // sofortiger Uhr-Refresh statt bis zum naechsten Minutenwechsel
+    }
+    effectsModeActive = newActive;
+    EEPROM.write(EepromLayout::LIGHT_EFFECTS_ENABLED_OFFSET, effectsModeActive ? 1 : 0);
+  }
+  if (server.hasArg("effect")) {
+    selectedLightEffect = (uint8_t)constrain(server.arg("effect").toInt(), 0, LIGHT_EFFECT_OPTIONS_COUNT - 1);
+    EEPROM.write(EepromLayout::LIGHT_EFFECT_INDEX_OFFSET, selectedLightEffect);
+  }
+  if (server.hasArg("speed")) {
+    lightEffectSpeedIdx = (uint8_t)constrain(server.arg("speed").toInt(), 0, EFFECTTIME_OPTIONS_COUNT - 1);
+    EEPROM.write(EepromLayout::LIGHT_EFFECT_SPEED_OFFSET, lightEffectSpeedIdx);
+  }
+  EEPROM.commit();
+  server.send(200, "text/plain", "OK");
 }
 
 void handleHAConfig() {
@@ -467,7 +634,51 @@ void handleFactoryReset() {
   }
 }
 
+// Persistiert ein neues OTA-Passwort (leer = Schutz wieder deaktivieren).
+// Verschluesselte Kopie geht ins EEPROM, die Live-Kopie bleibt Klartext im
+// RAM fuer die Basic-Auth-Vergleiche.
+static void saveOtaPassword(const String &newPw) {
+  if (newPw.length() > 0) {
+    char plain[sizeof(otaPassword)];
+    memset(plain, 0, sizeof(plain));
+    strncpy(plain, newPw.c_str(), sizeof(plain) - 1);
+    memcpy(otaPassword, plain, sizeof(otaPassword));
+    otaPasswordSet = true;
+
+    char encrypted[sizeof(otaPassword)];
+    memcpy(encrypted, plain, sizeof(encrypted));
+    SecureStorage::cryptBuffer(encrypted, sizeof(encrypted), 4);
+    EEPROM.put(EepromLayout::OTA_PASSWORD_OFFSET, encrypted);
+    EEPROM.write(EepromLayout::OTA_PASSWORD_SET_OFFSET, 1);
+  } else {
+    otaPasswordSet = false;
+    memset(otaPassword, 0, sizeof(otaPassword));
+    EEPROM.write(EepromLayout::OTA_PASSWORD_SET_OFFSET, 0);
+  }
+  EEPROM.commit();
+}
+
 void handleUpload() {
+  if (server.method() == HTTP_POST) {
+    // Ein bereits gesetztes Passwort darf nur geaendert/entfernt werden,
+    // wenn man das aktuelle Passwort kennt. Das erstmalige Setzen (noch
+    // kein Schutz aktiv) erfordert bewusst keine Auth ("offen bis
+    // konfiguriert").
+    if (otaPasswordSet && !server.authenticate(OTA_USERNAME, otaPassword)) {
+      return server.requestAuthentication();
+    }
+    saveOtaPassword(server.arg("ota_password"));
+    sendPageStart("Update");
+    server.sendContent(String("<div class='card'><p>OTA-Passwortschutz ist jetzt ") + (otaPasswordSet ? "aktiv." : "deaktiviert.") + "</p></div>");
+    server.sendContent("<a class='link' href='/update'>Zurueck</a>");
+    sendPageEnd();
+    return;
+  }
+
+  if (otaPasswordSet && !server.authenticate(OTA_USERNAME, otaPassword)) {
+    return server.requestAuthentication();
+  }
+
   sendPageStart("Update");
   server.sendContent("<div class='card'>");
   server.sendContent(String("<p>Aktuelle Version: <strong>") + String(FW_VERSION) + "</strong></p>");
@@ -488,10 +699,23 @@ void handleUpload() {
   server.sendContent("<small>Waehren des Updates nicht vom Strom trennen.</small>");
   server.sendContent("</div>");
 
+  server.sendContent("<div class='card'>");
+  server.sendContent(String("<p>OTA-Passwortschutz: <strong>") + (otaPasswordSet ? "aktiv" : "nicht konfiguriert (offen)") + "</strong></p>");
+  server.sendContent("<small>Solange kein Passwort gesetzt ist, kann jeder im WLAN eine neue Firmware hochladen.</small>");
+  server.sendContent("<form method='POST' action='/update'>");
+  server.sendContent(String("<label for='ota_password'>") + (otaPasswordSet ? "Neues OTA-Passwort (leer = Schutz entfernen)" : "OTA-Passwort setzen") + "</label>");
+  server.sendContent("<input type='password' id='ota_password' name='ota_password' maxlength='19'>");
+  server.sendContent("<button type='submit'>Speichern</button>");
+  server.sendContent("</form>");
+  server.sendContent("</div>");
+
   sendPageEnd();
 }
 
 void handleUpdate() {
+  if (otaPasswordSet && !server.authenticate(OTA_USERNAME, otaPassword)) {
+    return server.requestAuthentication();
+  }
   sendPageStart("Update");
   if (Update.hasError()) {
     server.sendContent("<div class='card'><p>Update fehlgeschlagen.</p></div>");
@@ -507,18 +731,30 @@ void handleUpdate() {
 }
 
 void handleUploading() {
+  // Wird einmal pro Chunk aufgerufen; die Autorisierung wird bei
+  // UPLOAD_FILE_START geprueft und fuer die restlichen Chunks gemerkt, damit
+  // ohne gueltige Auth nie Bytes an Update.write()/Update.begin() gehen -
+  // die eigentliche 401-Antwort liefert handleUpdate() nach Abschluss.
+  static bool authorized = false;
   HTTPUpload& upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) {
+    authorized = !otaPasswordSet || server.authenticate(OTA_USERNAME, otaPassword);
+    if (!authorized) {
+      LOGLN("OTA-Upload abgelehnt: fehlende/ungueltige Authentifizierung");
+      return;
+    }
     Serial.setDebugOutput(true);
     LOGF("Update gestartet: %s\n", upload.filename.c_str());
     if (!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)) {
       Update.printError(Serial);
     }
   } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (!authorized) return;
     if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
       Update.printError(Serial);
     }
   } else if (upload.status == UPLOAD_FILE_END) {
+    if (!authorized) return;
     if (Update.end(true)) {
       LOGF("Update abgeschlossen: %u bytes\n", upload.totalSize);
     } else {

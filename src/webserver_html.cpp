@@ -13,23 +13,38 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       --bg: #1b232c;
       --panel: rgba(255,255,255,0.06);
       --accent: #4caf50;
+      --accent2: #29b6f6;
+      --accent3: #ab47bc;
       --text: #f2f2f2;
       --muted: rgba(255,255,255,0.7);
       --border: rgba(255,255,255,0.12);
     }
     * { box-sizing: border-box; }
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #19222b, #2f3b45);
+      background: linear-gradient(160deg, #10161c 0%, #1b232c 45%, #202b3a 100%);
       color: var(--text);
+    }
+    /* Lange deutsche Komposita ohne Leerzeichen (z.B.
+       "Uebergangsgeschwindigkeit", "Vordergrundblinken") wuerden sonst
+       nicht umbrechen und die Seite auf schmalen Bildschirmen breiter als
+       den Viewport machen -> horizontaler Scrollbalken. */
+    body, label, small, p, span, a, button, h1, h2 {
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     nav {
       position: sticky;
       top: 0;
       z-index: 10;
-      background: #10161c;
-      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, #0d1116, #141c24);
+      border-bottom: 2px solid var(--accent);
+      border-image: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3)) 1;
       padding: 10px 12px;
       display: flex;
       flex-wrap: wrap;
@@ -44,8 +59,12 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       gap: 12px;
     }
     .nav-title {
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
     .nav-toggle {
       position: absolute;
@@ -73,7 +92,7 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       background: rgba(255,255,255,0.04);
     }
     nav a:hover {
-      background: rgba(255,255,255,0.12);
+      background: linear-gradient(135deg, rgba(76,175,80,0.35), rgba(41,182,246,0.35));
     }
     @media (max-width: 720px) {
       .nav-btn {
@@ -97,8 +116,9 @@ const char htmlhead[] PROGMEM = R"rawliteral(
     }
     h1, h2 { margin: 12px 0; }
     .card {
-      background: var(--panel);
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
       border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
       border-radius: 10px;
       padding: 16px;
       margin: 12px 0;
@@ -125,6 +145,27 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       background: #0f1419;
       color: var(--text);
     }
+    /* input[type=color] renders its current value via a native swatch
+       pseudo-element - the generic padding/background above squeezes and
+       covers it, so the picker looks blank until clicked. Reset those for
+       color inputs specifically so the swatch is visible immediately. */
+    input[type="color"] {
+      padding: 3px;
+      background: transparent;
+      height: 42px;
+      cursor: pointer;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
+    input[type="color"]::-moz-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
     button {
       width: 100%;
       margin-top: 12px;
@@ -132,11 +173,135 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       border: 0;
       border-radius: 8px;
       color: #fff;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #2e9d31);
       cursor: pointer;
     }
     small { color: var(--muted); }
-    a.link { color: #8dd1ff; }
+    a.link { color: #8dd1ff; transition: color 0.15s ease; }
+    a.link:hover { color: #b3e5ff; }
+
+    /* --- Politur: Typografie/Abstaende --- */
+    body { line-height: 1.5; }
+    h1 {
+      font-size: 1.6em;
+      letter-spacing: 0.2px;
+      display: inline-block;
+      background: linear-gradient(90deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    h2 {
+      font-size: 1.15em;
+      color: var(--accent2);
+      font-weight: 600;
+    }
+    label { font-size: 0.92em; font-weight: 500; }
+
+    /* --- Politur: Cards mit dezentem Schatten/Hover --- */
+    .card {
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: box-shadow 0.2s ease, transform 0.2s ease, border-top-color 0.2s ease;
+    }
+    .card:hover {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+      border-top-color: var(--accent2);
+    }
+    /* Farbliche Abwechslung der Card-Akzente, damit nicht jede Seite
+       durchgehend gruen wirkt - je nach Position im Markup. */
+    .card:nth-of-type(3n+2) { border-top-color: var(--accent2); }
+    .card:nth-of-type(3n+2):hover { border-top-color: var(--accent3); }
+    .card:nth-of-type(3n+3) { border-top-color: var(--accent3); }
+    .card:nth-of-type(3n+3):hover { border-top-color: var(--accent); }
+
+    /* --- Politur: Buttons mit Hover/Active-Zustand --- */
+    button {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #5cbf60, var(--accent2));
+      box-shadow: 0 4px 10px rgba(76,175,80,0.35);
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* --- Politur: Fokus-Zustand fuer Inputs/Selects --- */
+    input:not([type="checkbox"]):focus, select:focus {
+      outline: none;
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(41,182,246,0.25);
+    }
+
+    /* --- Politur: Nav-Links weicherer Uebergang --- */
+    nav a { transition: background 0.15s ease; }
+
+    /* --- Politur: Checkboxen als Toggle-Switches (reines CSS, wie schon
+       beim bestehenden .nav-toggle Checkbox-Trick fuers Mobilmenue) --- */
+    input[type="checkbox"]:not(.nav-toggle) {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 46px;
+      height: 26px;
+      min-width: 46px;
+      border-radius: 999px;
+      background: #2a333d;
+      border: 1px solid var(--border);
+      position: relative;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: background 0.2s ease;
+    }
+    input[type="checkbox"]:not(.nav-toggle)::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #cfd8dc;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    input[type="checkbox"]:not(.nav-toggle):checked {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    input[type="checkbox"]:not(.nav-toggle):checked::after {
+      transform: translateX(20px);
+      background: #fff;
+    }
+    input[type="checkbox"]:not(.nav-toggle):focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      color: var(--text);
+      font-size: 0.92em;
+    }
+    .checkbox-row span { flex: 1; min-width: 0; }
+
+    /* Live-Farbvorschau (Pixelgrid) auf der Farben-Seite */
+    .pixel-grid {
+      display: grid;
+      gap: 2px;
+      max-width: 260px;
+      margin: 10px auto;
+      background: #05070a;
+      padding: 6px;
+      border-radius: 8px;
+    }
+    .pixel-grid .px {
+      aspect-ratio: 1 / 1;
+      border-radius: 2px;
+      background: #000;
+    }
   </style>
 </head>
 <body>
@@ -172,23 +337,38 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       --bg: #1b232c;
       --panel: rgba(255,255,255,0.06);
       --accent: #4caf50;
+      --accent2: #29b6f6;
+      --accent3: #ab47bc;
       --text: #f2f2f2;
       --muted: rgba(255,255,255,0.7);
       --border: rgba(255,255,255,0.12);
     }
     * { box-sizing: border-box; }
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #19222b, #2f3b45);
+      background: linear-gradient(160deg, #10161c 0%, #1b232c 45%, #202b3a 100%);
       color: var(--text);
+    }
+    /* Lange deutsche Komposita ohne Leerzeichen (z.B.
+       "Uebergangsgeschwindigkeit", "Vordergrundblinken") wuerden sonst
+       nicht umbrechen und die Seite auf schmalen Bildschirmen breiter als
+       den Viewport machen -> horizontaler Scrollbalken. */
+    body, label, small, p, span, a, button, h1, h2 {
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     nav {
       position: sticky;
       top: 0;
       z-index: 10;
-      background: #10161c;
-      border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, #0d1116, #141c24);
+      border-bottom: 2px solid var(--accent);
+      border-image: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3)) 1;
       padding: 10px 12px;
       display: flex;
       flex-wrap: wrap;
@@ -203,8 +383,12 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       gap: 12px;
     }
     .nav-title {
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: 0.2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
     .nav-toggle {
       position: absolute;
@@ -232,7 +416,7 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       background: rgba(255,255,255,0.04);
     }
     nav a:hover {
-      background: rgba(255,255,255,0.12);
+      background: linear-gradient(135deg, rgba(76,175,80,0.35), rgba(41,182,246,0.35));
     }
     @media (max-width: 720px) {
       .nav-btn {
@@ -256,8 +440,9 @@ const char htmlhead[] PROGMEM = R"rawliteral(
     }
     h1, h2 { margin: 12px 0; }
     .card {
-      background: var(--panel);
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
       border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
       border-radius: 10px;
       padding: 16px;
       margin: 12px 0;
@@ -284,6 +469,27 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       background: #0f1419;
       color: var(--text);
     }
+    /* input[type=color] renders its current value via a native swatch
+       pseudo-element - the generic padding/background above squeezes and
+       covers it, so the picker looks blank until clicked. Reset those for
+       color inputs specifically so the swatch is visible immediately. */
+    input[type="color"] {
+      padding: 3px;
+      background: transparent;
+      height: 42px;
+      cursor: pointer;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
+    input[type="color"]::-moz-color-swatch {
+      border: none;
+      border-radius: 4px;
+    }
     button {
       width: 100%;
       margin-top: 12px;
@@ -291,11 +497,135 @@ const char htmlhead[] PROGMEM = R"rawliteral(
       border: 0;
       border-radius: 8px;
       color: #fff;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #2e9d31);
       cursor: pointer;
     }
     small { color: var(--muted); }
-    a.link { color: #8dd1ff; }
+    a.link { color: #8dd1ff; transition: color 0.15s ease; }
+    a.link:hover { color: #b3e5ff; }
+
+    /* --- Politur: Typografie/Abstaende --- */
+    body { line-height: 1.5; }
+    h1 {
+      font-size: 1.6em;
+      letter-spacing: 0.2px;
+      display: inline-block;
+      background: linear-gradient(90deg, var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    h2 {
+      font-size: 1.15em;
+      color: var(--accent2);
+      font-weight: 600;
+    }
+    label { font-size: 0.92em; font-weight: 500; }
+
+    /* --- Politur: Cards mit dezentem Schatten/Hover --- */
+    .card {
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: box-shadow 0.2s ease, transform 0.2s ease, border-top-color 0.2s ease;
+    }
+    .card:hover {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+      border-top-color: var(--accent2);
+    }
+    /* Farbliche Abwechslung der Card-Akzente, damit nicht jede Seite
+       durchgehend gruen wirkt - je nach Position im Markup. */
+    .card:nth-of-type(3n+2) { border-top-color: var(--accent2); }
+    .card:nth-of-type(3n+2):hover { border-top-color: var(--accent3); }
+    .card:nth-of-type(3n+3) { border-top-color: var(--accent3); }
+    .card:nth-of-type(3n+3):hover { border-top-color: var(--accent); }
+
+    /* --- Politur: Buttons mit Hover/Active-Zustand --- */
+    button {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    button:hover {
+      background: linear-gradient(135deg, #5cbf60, var(--accent2));
+      box-shadow: 0 4px 10px rgba(76,175,80,0.35);
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* --- Politur: Fokus-Zustand fuer Inputs/Selects --- */
+    input:not([type="checkbox"]):focus, select:focus {
+      outline: none;
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(41,182,246,0.25);
+    }
+
+    /* --- Politur: Nav-Links weicherer Uebergang --- */
+    nav a { transition: background 0.15s ease; }
+
+    /* --- Politur: Checkboxen als Toggle-Switches (reines CSS, wie schon
+       beim bestehenden .nav-toggle Checkbox-Trick fuers Mobilmenue) --- */
+    input[type="checkbox"]:not(.nav-toggle) {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 46px;
+      height: 26px;
+      min-width: 46px;
+      border-radius: 999px;
+      background: #2a333d;
+      border: 1px solid var(--border);
+      position: relative;
+      cursor: pointer;
+      vertical-align: middle;
+      transition: background 0.2s ease;
+    }
+    input[type="checkbox"]:not(.nav-toggle)::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #cfd8dc;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    input[type="checkbox"]:not(.nav-toggle):checked {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    input[type="checkbox"]:not(.nav-toggle):checked::after {
+      transform: translateX(20px);
+      background: #fff;
+    }
+    input[type="checkbox"]:not(.nav-toggle):focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      color: var(--text);
+      font-size: 0.92em;
+    }
+    .checkbox-row span { flex: 1; min-width: 0; }
+
+    /* Live-Farbvorschau (Pixelgrid) auf der Farben-Seite */
+    .pixel-grid {
+      display: grid;
+      gap: 2px;
+      max-width: 260px;
+      margin: 10px auto;
+      background: #05070a;
+      padding: 6px;
+      border-radius: 8px;
+    }
+    .pixel-grid .px {
+      aspect-ratio: 1 / 1;
+      border-radius: 2px;
+      background: #000;
+    }
   </style>
 </head>
 <body>

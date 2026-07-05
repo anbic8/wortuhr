@@ -37,4 +37,13 @@ extern const char *ssid;
 extern const char *password;
 extern bool mqttenable;
 
+// OTA-Update-Schutz (HTTP Basic Auth auf /update, /upload). Fester
+// Benutzername, konfigurierbares Passwort. Solange otaPasswordSet false
+// ist (Werkszustand / noch nicht konfiguriert), bleibt OTA offen wie
+// bisher. otaPassword liegt hier immer als Klartext im RAM (fuer den
+// Basic-Auth-Vergleich); nur die EEPROM-Kopie ist verschluesselt.
+#define OTA_USERNAME "admin"
+extern bool otaPasswordSet;
+extern char otaPassword[20];
+
 #endif // GLOBALS_NETWORK_H

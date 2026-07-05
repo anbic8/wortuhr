@@ -57,7 +57,7 @@ Dieses Dokument beschreibt, wie die Firmware-Version verwaltet und aktualisiert 
 git add version.txt CHANGELOG.md src/persistence.h
 git commit -m "Release v4.2.9: [Kurzbeschreibung der wichtigsten Änderungen]"
 git tag -a v4.2.9 -m "Release 4.2.9"
-git push origin main --tags
+git push origin newmain v4.2.9
 ```
 
 ### Schritt 5: GitHub Actions übernimmt den Rest automatisch

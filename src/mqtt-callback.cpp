@@ -305,6 +305,36 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     LOG("AniDepth_MODE: ");
     LOGLN(anidepth);
   }
+  else if (String(topic) == topicEfxModeCmd) {
+    effectsModeActive = (msg == "1");
+    if (!effectsModeActive) {
+      threshold = 0; // sofortiger Uhr-Refresh statt bis zum nächsten Minutenwechsel zu warten
+    }
+    LOG("Effekte-Modus: ");
+    LOGLN(effectsModeActive);
+  }
+  else if (String(topic) == topicLightEffectCmd) {
+    int idx = findOptionIndex(lightEffectOptions, LIGHT_EFFECT_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Lichteffekt-Payload: ");
+      LOGLN(msg);
+      idx = 0;
+    }
+    selectedLightEffect = (uint8_t)idx;
+    LOG("Lichteffekt: ");
+    LOGLN(selectedLightEffect);
+  }
+  else if (String(topic) == topicLightEffectSpeedCmd) {
+    int idx = findOptionIndex(effecttimeOptions, EFFECTTIME_OPTIONS_COUNT, msg);
+    if (idx < 0) {
+      LOG("Unbekannter Geschwindigkeit-Payload: ");
+      LOGLN(msg);
+      idx = 1;
+    }
+    lightEffectSpeedIdx = (uint8_t)idx;
+    LOG("Lichteffekt-Geschwindigkeit: ");
+    LOGLN(lightEffectSpeedIdx);
+  }
   checkon();
   publishAll();
   readTime(); showClock();

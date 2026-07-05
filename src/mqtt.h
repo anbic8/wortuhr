@@ -17,6 +17,9 @@ void publishHsState();
 void publishEfxTimeState();
 void publishAniTimeState();
 void publishAniDepthState();
+void publishEffectsModeState();
+void publishLightEffectState();
+void publishLightEffectSpeedState();
 
 // Sensor publishing
 void publishIpAddress();

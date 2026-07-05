@@ -8,6 +8,36 @@
   #include "rct.h"
 #endif
 
+// Picks a random effect index (2..13) from the "Zufällig aus Liste"
+// pool. Falls back to the same behaviour as the "zufällig" option
+// (random(2,14)) if the pool hasn't been configured yet (empty mask).
+static int pickRandomEffectFromPool(uint16_t mask) {
+  int candidates[12];
+  int count = 0;
+  for (int i = 2; i <= 13; i++) {
+    if (mask & (1U << i)) candidates[count++] = i;
+  }
+  if (count == 0) return random(2, 14);
+  return candidates[random(0, count)];
+}
+
+#if MATRIX_SIZE == 8
+// Minute-Pixel-Spalten in der untersten Zeile (7). ZWÖLF/FÜNF/ACHT belegen
+// dort selbst einige der Standard-Spalten (1,3,5,7), deshalb weichen diese
+// drei Stunden auf andere Spalten aus.
+static void minuteDotColumnsForHour(int hour, int cols[4]) {
+  static const int def[4]    = {1,3,5,7};
+  static const int zwoelf[4] = {0,2,4,6}; // hour == 0
+  static const int fuenf[4]  = {0,2,6,7}; // hour == 5
+  static const int acht[4]   = {0,1,4,5}; // hour == 8
+  const int *src = def;
+  if (hour == 0) src = zwoelf;
+  else if (hour == 5) src = fuenf;
+  else if (hour == 8) src = acht;
+  for (int i = 0; i < 4; i++) cols[i] = src[i];
+}
+#endif
+
 void readTime(){
   #ifdef USE_RCT
     readTimeRCT();
@@ -20,6 +50,24 @@ void readTime(){
 // Render a two-digit countdown (00-99) centered on the matrix using a larger 5x7 font
 // which: 0=user countdown, 1=newyear countdown
 void showCountdown(int secondsLeft, int which) {
+#if MATRIX_SIZE == 8
+  // Compact 3x5 font for the 8x8 mini matrix - the 5x7 font below is sized
+  // for the 11x11 build (2*5+1 gap = 11 columns) and doesn't fit into 8
+  // columns (startCol goes negative and both digits get clipped).
+  const uint8_t font[10][5] = {
+    {0b111,0b101,0b101,0b101,0b111}, //0
+    {0b010,0b110,0b010,0b010,0b111}, //1
+    {0b111,0b001,0b111,0b100,0b111}, //2
+    {0b111,0b001,0b111,0b001,0b111}, //3
+    {0b101,0b101,0b111,0b001,0b001}, //4
+    {0b111,0b100,0b111,0b001,0b111}, //5
+    {0b111,0b100,0b111,0b101,0b111}, //6
+    {0b111,0b001,0b010,0b010,0b010}, //7
+    {0b111,0b101,0b111,0b101,0b111}, //8
+    {0b111,0b101,0b111,0b001,0b111}  //9
+  };
+  const int fw = 3, fh = 5, gap = 1;
+#else
   // 5x7 font, each row is 5 bits (MSB on left)
   const uint8_t font[10][7] = {
     {0b01110,0b10001,0b10011,0b10101,0b11001,0b10001,0b01110}, //0
@@ -33,14 +81,15 @@ void showCountdown(int secondsLeft, int which) {
     {0b01110,0b10001,0b10001,0b01110,0b10001,0b10001,0b01110}, //8
     {0b01110,0b10001,0b10001,0b01111,0b00001,0b00010,0b01100}  //9
   };
+  const int fw = 5, fh = 7, gap = 1;
+#endif
 
   int tens = secondsLeft / 10;
   int ones = secondsLeft % 10;
   // clear matrixanzeige
   for(int r=0;r<MATRIX_SIZE;r++) for(int c=0;c<MATRIX_SIZE;c++) matrixanzeige[r][c]=0;
 
-  const int fw = 5, fh = 7, gap = 1;
-  int totalW = fw*2 + gap; // for 11x11 matrix this is 11
+  int totalW = fw*2 + gap; // 11 for the 11x11 font, 7 for the 8x8 mini font
   int startCol = (MATRIX_SIZE - totalW) / 2; // should be 0 for 11
   int startRow = (MATRIX_SIZE - fh) / 2; // center vertically
 
@@ -218,10 +267,32 @@ void showClock(){
   hintergrunderstellen(hf1,hf2);
   }
 
+#if MATRIX_SIZE == 8
+  // Minuten-Pixel bekommen eine eigene Farbe statt der normalen
+  // Vordergrundfarbe - Overwrite direkt nach dem Aufbau von vordergrund,
+  // damit es unabhängig vom gewählten Übergangseffekt greift (alle Effekte
+  // lesen ihre Vordergrundfarbe pro Zelle aus vordergrund[][]).
+  if (minuteDotsEnabled) {
+    int cols[4];
+    minuteDotColumnsForHour(h, cols);
+    int dotRgb[3];
+    getPaletteColor((uint8_t)minuteDotsColorIdx, dotRgb);
+    for (int i = 0; i < 4; i++) {
+      int col = cols[i];
+      if (matrixanzeige[MATRIX_SIZE-1][col] == 1) {
+        vordergrund[MATRIX_SIZE-1][col][0] = dotRgb[0];
+        vordergrund[MATRIX_SIZE-1][col][1] = dotRgb[1];
+        vordergrund[MATRIX_SIZE-1][col][2] = dotRgb[2];
+      }
+    }
+  }
+#endif
 
   int welchereffekt = 0;
   if(effectMode==1){
     welchereffekt= random(2,14);
+  }else if(effectMode==EFFECT_RANDOM_FROM_LIST_INDEX){
+    welchereffekt = pickRandomEffectFromPool(effectRandomPoolMask);
   }else{
     welchereffekt=effectMode;
   }
@@ -350,6 +421,14 @@ void setmatrixanzeige(){
     matrixanzeige[MATRIX_SIZE-1][matrixminmodulomap[i]] = 1;
 
   }  //Modulominitues
+  #elif MATRIX_SIZE == 8
+  if (minuteDotsEnabled) {
+    int cols[4];
+    minuteDotColumnsForHour(h, cols); // h ist hier schon die tatsächlich angezeigte Stunde
+    for (int i=0; i<m; i++){
+      matrixanzeige[MATRIX_SIZE-1][cols[i]] = 1;
+    }
+  }
   #endif
 
 

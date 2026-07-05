@@ -16,6 +16,12 @@ namespace SecureStorage {
 // original plaintext - encrypt and decrypt are the same operation.
 void cryptFields(settings &s);
 
+// Same transform for an arbitrary fixed-size buffer (e.g. the OTA
+// password). `fieldTag` must be distinct from the tags used internally by
+// cryptFields() (0-3) so the keystream doesn't repeat across fields -
+// use 4 or higher for new callers.
+void cryptBuffer(char *buf, size_t len, uint8_t fieldTag);
+
 } // namespace SecureStorage
 
 #endif // SECURE_STORAGE_H

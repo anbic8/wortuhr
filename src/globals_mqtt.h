@@ -9,7 +9,8 @@ extern String topicOnState;
 extern String topicOnCmd;
 extern String topicEfxState;
 extern String topicEfxCmd;
-extern const char* effectOptions[14];
+// 15 Einträge: die 14 bisherigen Übergangseffekte + "Zufällig aus Liste"
+extern const char* effectOptions[15];
 extern String topicAniState;
 extern String topicAniCmd;
 extern const char* aniOptions[7];
@@ -35,6 +36,20 @@ extern String topicAniDepthState;
 extern String topicAniDepthCmd;
 extern const char* effectdepthOptions[3];
 
+// --- Topics für Effekte-Modus (WLED-artige Matrixeffekte statt der Uhr) ---
+extern String topicEfxModeState;
+extern String topicEfxModeCmd;
+extern String topicLightEffectState;
+extern String topicLightEffectCmd;
+extern const char* lightEffectOptions[20];
+extern String topicLightEffectSpeedState;
+extern String topicLightEffectSpeedCmd;
+
+// MQTT Last-Will / Verfügbarkeits-Topic: "online" (retained) nach jedem
+// erfolgreichen Connect, vom Broker automatisch auf "offline" gesetzt,
+// wenn die Verbindung unsauber abbricht (Stromausfall, WLAN-Verlust).
+extern String topicAvailability;
+
 extern String topicIpAddress;
 extern String topicUptime;
 extern String topicRssi;
@@ -53,11 +68,15 @@ void buildMqttTopics();
 // Single source of truth for the option-array sizes above - used by the
 // incoming MQTT callback, outgoing state publishers, the web UI dropdowns
 // and Home Assistant discovery, so all four stay in sync.
-constexpr int EFFECT_OPTIONS_COUNT = 14;
+constexpr int EFFECT_OPTIONS_COUNT = 15;
 constexpr int ANI_OPTIONS_COUNT = 7;
 constexpr int FARBSCHEMA_OPTIONS_COUNT = 6;
 constexpr int EFFECTTIME_OPTIONS_COUNT = 3;
 constexpr int EFFECTDEPTH_OPTIONS_COUNT = 3;
+constexpr int LIGHT_EFFECT_OPTIONS_COUNT = 20;
+// Index der "Zufällig aus Liste"-Option innerhalb effectOptions
+// (Übergangseffekt der Uhr-Anzeige, nicht der Effekte-Modus).
+constexpr int EFFECT_RANDOM_FROM_LIST_INDEX = 14;
 
 // Looks up `value` among the first `count` entries of `options`.
 // Returns -1 if no entry matches.

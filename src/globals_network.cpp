@@ -38,3 +38,6 @@ const char *ssid     = "wortuhr";
 const char *password = "123456789";
 
 bool mqttenable = false;
+
+bool otaPasswordSet = false;
+char otaPassword[20] = {0};

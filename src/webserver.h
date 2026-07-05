@@ -23,6 +23,9 @@ void handleFactoryReset();
 #endif
 void handlecolorPath();
 void handledesignPath();
+// Leichter AJAX-Endpunkt: aktiviert Effekte-Modus-Aenderungen sofort, ohne
+// dass die ganze /color-Seite mit "Speichern" abgeschickt werden muss.
+void handleEffectsModeApi();
 void handleUpload();
 void handleUpdate();
 void handleUploading();

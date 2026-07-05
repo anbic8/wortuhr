@@ -30,6 +30,8 @@ int ste=62;
 // Next hour threshold - set by build version
 #if VERSION_TYPE == 1
   int nexthour = 4;  // Bayrisch: ab 20 min (10 vor halb)
+#elif VERSION_TYPE == 2
+  int nexthour = 4;  // Mini 8x8: ab 20 min
 #else
   int nexthour = 5;  // Deutsch: ab 25 min (halb)
 #endif

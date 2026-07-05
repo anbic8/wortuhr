@@ -29,6 +29,11 @@ extern unsigned long anitime;
 extern int anidepth;
 extern int anistate;
 
+// "Zufällig aus Liste" beim Übergangseffekt (effectMode ==
+// EFFECT_RANDOM_FROM_LIST_INDEX): Bit i gesetzt = Effekt-Index i (2..13)
+// ist Teil der Zufallsauswahl. Nur über die Web-UI konfigurierbar.
+extern uint16_t effectRandomPoolMask;
+
 extern String htmlfarben[14];
 extern int htmlefxtimeint[3];
 extern int efxtimeint;
@@ -36,5 +41,21 @@ extern int efxtimeint;
 extern int htmlanitimeint[7][3];
 extern int anitimeint;
 extern int flypos[3][2];
+
+// Effekte-Modus: zeigt fortlaufende WLED-artige Lichteffekte statt der Uhr.
+// Persistiert in EEPROM (EepromLayout::LIGHT_EFFECTS_ENABLED_OFFSET /
+// LIGHT_EFFECT_INDEX_OFFSET), unabhängig von der (ungenutzten) mode-Variable.
+extern bool effectsModeActive;
+extern uint8_t selectedLightEffect; // 0..LIGHT_EFFECT_OPTIONS_COUNT-1
+
+// Geschwindigkeit der Lichteffekte (0=langsam,1=mittel,2=schnell - nutzt
+// dieselben Labels wie effecttimeOptions).
+extern uint8_t lightEffectSpeedIdx;
+
+// Minutengenaue Anzeige (nur 8x8 Mini): zeigt in der untersten Zeile
+// zusätzliche "Minuten-Pixel" in einer eigenen Farbe (siehe show.cpp
+// setmatrixanzeige()/showClock()). Nur über die Web-UI (/setting) konfigurierbar.
+extern bool minuteDotsEnabled;
+extern int minuteDotsColorIdx; // Palettenindex 0..13
 
 #endif // GLOBALS_DESIGN_H

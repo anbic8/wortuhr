@@ -3,6 +3,30 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.3.0] - 2026-07-05
+
+### Added
+- Neuer "Effekte-Modus": 20 fortlaufende, WLED-artige Lichteffekte (Rainbow Cycle, Theater Chase, Fire, Plasma, Confetti, Bouncing Balls, Matrix Rain, Larson Scanner, u.v.m.) zeigen bei Aktivierung Lichteffekte statt der Uhrzeit. Aktivierbar über Web-UI (wirkt sofort, kein Speichern nötig) und Home Assistant (MQTT switch + select), inkl. Geschwindigkeitsregler (langsam/mittel/schnell).
+- Neue Option "Zufällig aus Liste" beim Übergangseffekt der Uhr-Anzeige: eine über die Web-UI konfigurierbare Teilmenge der Übergangseffekte, aus der bei jedem Wechsel zufällig einer gewählt wird.
+- Live-Farbvorschau auf der Farben-Seite: ein Pixelgrid zeigt Vorder-/Hintergrundfarben und -schema als Beispielmuster und reagiert sofort auf Änderungen, ohne zu speichern.
+- MQTT-Verfügbarkeits-Topic (Last Will): Home Assistant zeigt jetzt korrekt "nicht verfügbar" an, wenn die Uhr die Verbindung unsauber verliert (Stromausfall, WLAN-Abbruch).
+- OTA-Update-Passwortschutz: `/update` und `/upload` können per HTTP Basic Auth abgesichert werden (geräte-gebunden verschlüsselt im EEPROM abgelegt); standardmäßig offen, bis über die Web-UI ein Passwort gesetzt wird.
+- Button "Erkennung jetzt senden" direkt auf der Verbindungsseite, neben der Home-Assistant-Erkennung-Option.
+- Minutengenaue Anzeige für die 8x8-Mini-Variante: zusätzliche Minuten-Pixel in der untersten Zeile (analog zum bestehenden 11x11-Mechanismus), Farbe frei wählbar unter Einstellungen.
+
+### Changed
+- Logging (`LOG()`/`LOGLN()`/`LOGF()`) ist in allen 6 Release-Environments jetzt standardmäßig abgeschaltet (`-DLOG_ENABLED=0`) für schlankere, schnellere Builds.
+- Web-Interface optisch aufgewertet: Farbverläufe, Toggle-Switches statt Standard-Checkboxen, Hover-/Fokus-Effekte, konsistentere Typografie/Abstände.
+- `nexthour` für die 8x8-Mini-Variante auf 4 gesetzt (vorher unbeabsichtigt identisch zur deutschen 11x11-Version).
+
+### Fixed
+- Countdown-Anzeige auf der 8x8-Matrix: der bisherige 5x7-Ziffernfont passte nicht in die 8 Spalten und wurde an den Rändern abgeschnitten; ein neuer kompakter 3x5-Font behebt das.
+- Color-Picker (Vorder-/Hintergrundfarbe) zeigten die aktuelle Farbe erst nach Anklicken an, nicht sofort beim Laden der Seite.
+- Horizontaler Scrollbalken auf schmalen Bildschirmen durch lange, nicht umbrechende Wörter (z.B. "Übergangsgeschwindigkeit") behoben.
+
+### Notes
+- Version-Bump auf `4.3.0`.
+
 ## [4.2.14] - 2026-07-03
 
 ### Added

@@ -11,6 +11,9 @@ bool publishHsConfig();
 bool publishEfxTimeConfig();
 bool publishAniTimeConfig();
 bool publishAniDepthConfig();
+bool publishEffectsModeConfig();
+bool publishLightEffectConfig();
+bool publishLightEffectSpeedConfig();
 
 // Sensor discovery configs
 bool publishIpAddressSensorConfig();

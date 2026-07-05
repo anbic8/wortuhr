@@ -46,6 +46,7 @@ JsonObject dev = cfg.createNestedObject("device");
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Buffer mit Null-Terminator
   char buf[512];
@@ -83,6 +84,7 @@ bool publishEffectConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -117,6 +119,7 @@ bool publishAnimationConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -154,6 +157,7 @@ bool publishV1LightConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -188,6 +192,7 @@ bool publishV2LightConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -222,6 +227,7 @@ bool publishH1LightConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -255,6 +261,7 @@ bool publishH2LightConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -286,6 +293,7 @@ bool publishVsConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -320,6 +328,7 @@ bool publishHsConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -354,6 +363,7 @@ bool publishEfxTimeConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -388,6 +398,7 @@ bool publishAniTimeConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -422,6 +433,7 @@ bool publishAniDepthConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
   char buf[512];
@@ -431,6 +443,96 @@ bool publishAniDepthConfig() {
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_anidepth/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
+}
+
+bool publishEffectsModeConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]          = "Effekte-Modus";
+  String uniqueId = DEVICE_ID + "_effectsmode";
+  cfg["unique_id"]     = uniqueId;
+  cfg["state_topic"]   = topicEfxModeState;
+  cfg["command_topic"] = topicEfxModeCmd;
+  cfg["payload_on"]    = "1";
+  cfg["payload_off"]   = "0";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/switch/" + DEVICE_ID + "_effectsmode/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("EffectsMode Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  return ok;
+}
+
+bool publishLightEffectConfig() {
+  // Larger buffer than the other selects: 20 options (vs. 14 for effectOptions)
+  // push this closer to the 512-byte size used elsewhere.
+  StaticJsonDocument<1024> cfg;
+  cfg["name"]         = "Lichteffekt";
+  String uniqueId = DEVICE_ID + "_lighteffect";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicLightEffectState;
+  cfg["command_topic"]= topicLightEffectCmd;
+  JsonArray opts = cfg.createNestedArray("options");
+  for (int i = 0; i < LIGHT_EFFECT_OPTIONS_COUNT; ++i) opts.add(lightEffectOptions[i]);
+  cfg["optimistic"]     = false;
+  cfg["qos"]            = 1;
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[1024];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_lighteffect/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("LightEffect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
+}
+
+bool publishLightEffectSpeedConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "Lichteffekt-Geschwindigkeit";
+  String uniqueId = DEVICE_ID + "_lighteffectspeed";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicLightEffectSpeedState;
+  cfg["command_topic"]= topicLightEffectSpeedCmd;
+  JsonArray opts = cfg.createNestedArray("options");
+  for (int i = 0; i < EFFECTTIME_OPTIONS_COUNT; ++i) opts.add(effecttimeOptions[i]);
+  cfg["optimistic"]     = false;
+  cfg["qos"]            = 1;
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/select/" + DEVICE_ID + "_lighteffectspeed/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("LightEffectSpeed Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 
@@ -452,6 +554,7 @@ bool publishIpAddressSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -478,6 +581,7 @@ bool publishUptimeSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -504,6 +608,7 @@ bool publishRssiSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -530,6 +635,7 @@ bool publishHeapMemorySensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -555,6 +661,7 @@ bool publishBrightnessSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -580,6 +687,7 @@ bool publishLastNtpSyncSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -606,6 +714,7 @@ bool publishTemperatureSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
@@ -631,6 +740,7 @@ bool publishSystemLoadSensorConfig() {
   dev["model"]          = DEVICE_MODEL;
   dev["sw_version"] = FW_VERSION;
   dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));

@@ -42,6 +42,7 @@
 #include "mqtt-ha.h"
 #include "birthday.h"
 #include "effects.h"
+#include "lighteffects.h"
 #ifdef USE_RCT
   #include "rct.h"
 #endif
@@ -155,6 +156,34 @@ void setup() {
   // read stored countdown timestamp (if present)
   EEPROM.get(countdownOffset, countdown_ts);
   if (countdown_ts == 0xFFFFFFFFUL) countdown_ts = 0; // treat erased as disabled
+
+  // read Effekte-Modus state (erased/0xFF -> disabled, effect 0 - safe defaults)
+  uint8_t fxEnabledByte = EEPROM.read(EepromLayout::LIGHT_EFFECTS_ENABLED_OFFSET);
+  effectsModeActive = (fxEnabledByte == 1);
+  uint8_t fxIdxByte = EEPROM.read(EepromLayout::LIGHT_EFFECT_INDEX_OFFSET);
+  selectedLightEffect = (fxIdxByte < LIGHT_EFFECT_OPTIONS_COUNT) ? fxIdxByte : 0;
+
+  uint8_t fxSpeedByte = EEPROM.read(EepromLayout::LIGHT_EFFECT_SPEED_OFFSET);
+  lightEffectSpeedIdx = (fxSpeedByte <= 2) ? fxSpeedByte : 1; // erased/ungueltig -> mittel
+
+  // "Zufällig aus Liste" Pool für den Übergangseffekt der Uhr-Anzeige
+  EEPROM.get(EepromLayout::EFFECT_RANDOM_POOL_MASK_OFFSET, effectRandomPoolMask);
+  if (effectRandomPoolMask == 0xFFFFU) effectRandomPoolMask = 0; // erased -> leere Liste
+
+  // OTA-Update-Passwort (erased -> otaPasswordSet bleibt false -> Update offen)
+  uint8_t otaPwSetByte = EEPROM.read(EepromLayout::OTA_PASSWORD_SET_OFFSET);
+  otaPasswordSet = (otaPwSetByte == 1);
+  if (otaPasswordSet) {
+    EEPROM.get(EepromLayout::OTA_PASSWORD_OFFSET, otaPassword);
+    SecureStorage::cryptBuffer(otaPassword, sizeof(otaPassword), 4);
+  }
+
+  // Minutengenaue Anzeige (nur 8x8 Mini)
+  uint8_t minuteDotsByte = EEPROM.read(EepromLayout::MINUTE_DOTS_ENABLED_OFFSET);
+  minuteDotsEnabled = (minuteDotsByte == 1);
+  uint8_t minuteDotsColorByte = EEPROM.read(EepromLayout::MINUTE_DOTS_COLOR_OFFSET);
+  minuteDotsColorIdx = (minuteDotsColorByte < 14) ? minuteDotsColorByte : 1; // erased/ungueltig -> rot
+
   // EEPROM Debug: zeige gelesene Werte (vorsichtig, kann leer/garbage sein)
   LOGLN("EEPROM: gelesene Einstellungen:");
   LOG(" SSID: '"); LOG(user_connect.ssid); LOGLN("'");
@@ -216,6 +245,7 @@ void setup() {
   server.on("/ha", handleHAConfig);
   server.on("/ha/discover", handleHADiscover);
   server.on("/factory-reset", handleFactoryReset);
+  server.on("/api/effectsmode", handleEffectsModeApi);
   server.begin();
   LOGLN("Webserver gestartet");
 
@@ -359,7 +389,9 @@ void loop() {
   }
 #endif
 
-if(mode==1 && !ntpInitialSyncPending){
+if (effectsModeActive) {
+  renderLightEffects();
+} else if(mode==1 && !ntpInitialSyncPending){
 
   milliaktuell = millis();
 

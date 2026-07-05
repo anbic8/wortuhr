@@ -25,6 +25,7 @@ int aniMode=0;
 unsigned long anitime=1000;
 int anidepth=3;
 int anistate=0;
+uint16_t effectRandomPoolMask = 0;
 
 String htmlfarben[14]={"weiß","rot","rosa","magenta","violet","blau","azure","turkis","hellgrün","grün","gelbgrün","gelb","orange","aus"};
 int htmlefxtimeint[3]={150,100,50};
@@ -45,3 +46,10 @@ int flypos[3][2]={
   {5,5},
   {5,5}
 };
+
+bool effectsModeActive = false;
+uint8_t selectedLightEffect = 0;
+uint8_t lightEffectSpeedIdx = 1; // mittel
+
+bool minuteDotsEnabled = false;
+int minuteDotsColorIdx = 1; // rot

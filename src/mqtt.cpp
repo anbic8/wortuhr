@@ -22,6 +22,9 @@ static void mqttOnConnected() {
   client.subscribe(topicEfxTimeCmd.c_str());
   client.subscribe(topicAniTimeCmd.c_str());
   client.subscribe(topicAniDepthCmd.c_str());
+  client.subscribe(topicEfxModeCmd.c_str());
+  client.subscribe(topicLightEffectCmd.c_str());
+  client.subscribe(topicLightEffectSpeedCmd.c_str());
   // small settle time after connect
   delay(200);
   client.loop();
@@ -41,6 +44,9 @@ static void mqttOnConnected() {
     ok = publishEfxTimeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishAniTimeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishAniDepthConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishEffectsModeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishLightEffectConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishLightEffectSpeedConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     // Sensor discovery configs
     ok = publishIpAddressSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishUptimeSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
@@ -71,12 +77,17 @@ void connectToMQTT() {
   snprintf(clientId, sizeof(clientId), "%s_%lu", DEVICE_ID.c_str(), ESP.getChipId());
   LOG("Using MQTT clientId: "); LOGLN(clientId);
 
-  if (client.connect(clientId, user_connect.mqtt_user, user_connect.mqtt_password)) {
+  // Last Will: Broker markiert das Topic automatisch als "offline" (retained),
+  // sobald die Verbindung unsauber abbricht (Stromausfall, WLAN-Verlust) -
+  // dadurch zeigt Home Assistant den Geraetestatus korrekt an.
+  if (client.connect(clientId, user_connect.mqtt_user, user_connect.mqtt_password,
+                      topicAvailability.c_str(), 1, true, "offline")) {
     // give library a moment to settle and ensure still connected
     delay(100);
     client.loop();
     if (client.connected()) {
       LOGLN("MQTT verbunden!");
+      client.publish(topicAvailability.c_str(), "online", true);
       mqttOnConnected();
     } else {
       LOG("Verbunden, aber sofort getrennt, state="); LOGLN(client.state());
@@ -100,9 +111,25 @@ void publishAll(){
   publishEfxTimeState();
   publishAniTimeState();
   publishAniDepthState();
+  publishEffectsModeState();
+  publishLightEffectState();
+  publishLightEffectSpeedState();
   publishSensorStates();
 }
 
+void publishEffectsModeState() {
+  client.publish(topicEfxModeState.c_str(), effectsModeActive ? "1" : "0", true);
+}
+void publishLightEffectState() {
+  uint8_t idx = constrain(selectedLightEffect, 0, LIGHT_EFFECT_OPTIONS_COUNT - 1);
+  const char* opt = lightEffectOptions[idx];
+  client.publish(topicLightEffectState.c_str(), opt, true);
+}
+void publishLightEffectSpeedState() {
+  uint8_t idx = constrain(lightEffectSpeedIdx, 0, EFFECTTIME_OPTIONS_COUNT - 1);
+  const char* opt = effecttimeOptions[idx];
+  client.publish(topicLightEffectSpeedState.c_str(), opt, true);
+}
 
 void publishEffectState() {
   uint8_t idx = constrain(effectMode, 0, EFFECT_OPTIONS_COUNT - 1);

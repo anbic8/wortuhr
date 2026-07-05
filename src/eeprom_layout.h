@@ -21,7 +21,40 @@ constexpr int COUNTDOWN_OFFSET = BIRTHDAY_OFFSET + sizeof(geburtstage);
 constexpr int VERSION_STR_OFFSET = COUNTDOWN_OFFSET + sizeof(unsigned long);
 constexpr int HA_FLAG_OFFSET = VERSION_STR_OFFSET + VERSION_STR_MAX;
 constexpr int LAYOUT_VERSION_OFFSET = HA_FLAG_OFFSET + 1;
-constexpr int TOTAL_SIZE = LAYOUT_VERSION_OFFSET + 1;
+
+// Light-effects mode state, appended purely additively after the layout
+// version byte. This does NOT shift any offset above, so it needs no
+// CURRENT_LAYOUT_VERSION bump and has no interaction with the credential
+// encryption migration gated on that version (see main.cpp).
+constexpr int LIGHT_EFFECTS_ENABLED_OFFSET = LAYOUT_VERSION_OFFSET + 1;
+constexpr int LIGHT_EFFECT_INDEX_OFFSET = LIGHT_EFFECTS_ENABLED_OFFSET + 1;
+
+// Effect speed (0/1/2, reuses effecttimeOptions labels) for the light
+// effects. Again purely additive - see note above.
+constexpr int LIGHT_EFFECT_SPEED_OFFSET = LIGHT_EFFECT_INDEX_OFFSET + 1;
+
+// "Zufällig aus Liste" random-pool bitmask for the clock's transition
+// effect (effectMode == EFFECT_RANDOM_FROM_LIST_INDEX; bit i = effect
+// index i included, i in 2..13). Also purely additive.
+constexpr int EFFECT_RANDOM_POOL_MASK_OFFSET = LIGHT_EFFECT_SPEED_OFFSET + 1;
+
+// OTA-Update-Passwort (HTTP Basic Auth auf /update, /upload). Ein neu
+// angeschlossenes Geraet hat OTA_PASSWORD_SET_OFFSET == 0xFF (erased) ->
+// Update bleibt offen, bis der Nutzer ueber die Web-UI ein Passwort setzt.
+// Der eigentliche Passwort-Puffer wird geraete-gebunden verschluesselt
+// gespeichert (siehe secure_storage.h), da es nie eine Klartext-Aera fuer
+// dieses Feld gab, ist keine Versions-Gate-Logik wie bei den WLAN/MQTT-
+// Zugangsdaten noetig.
+constexpr int OTA_PASSWORD_SET_OFFSET = EFFECT_RANDOM_POOL_MASK_OFFSET + 2;
+constexpr int OTA_PASSWORD_OFFSET = OTA_PASSWORD_SET_OFFSET + 1;
+constexpr int OTA_PASSWORD_MAX = 20;
+
+// Minutengenaue Anzeige (nur 8x8 Mini): Enable-Flag + Palettenindex fuer
+// die Farbe der Minuten-Pixel in der untersten Zeile. Rein additiv.
+constexpr int MINUTE_DOTS_ENABLED_OFFSET = OTA_PASSWORD_OFFSET + OTA_PASSWORD_MAX;
+constexpr int MINUTE_DOTS_COLOR_OFFSET = MINUTE_DOTS_ENABLED_OFFSET + 1;
+
+constexpr int TOTAL_SIZE = MINUTE_DOTS_COLOR_OFFSET + 1;
 
 // Bump this whenever the *shape* of the layout changes in the future.
 // A freshly-erased/legacy device reads 0xFF here (never written), which
