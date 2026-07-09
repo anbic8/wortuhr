@@ -3,6 +3,20 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.4.0] - 2026-07-05
+
+### Added
+- Neuer Übergangseffekt "Rainbow Swipe": ein einmaliger Regenbogen-Sweep läuft diagonal von der unteren rechten zur oberen linken Ecke, bevor die Uhrzeit angezeigt wird.
+- Neuer Übergangseffekt "Rainbow Cycle": 3 Sekunden lang rotiert ein Regenbogen-Farbverlauf über die gesamte Matrix, danach erscheint die Uhrzeit. Beide neuen Effekte sind auch bei "Zufällig" und "Zufällig aus Liste" wählbar.
+
+### Fixed
+- Minuten-Pixel der 8x8-Mini-Variante wurden von laufenden Übergangseffekten (Rain, Spirale, Feuerwerk, ...) zwischenzeitlich überschrieben und erst am Ende der Animation wieder korrekt angezeigt; sie werden jetzt in jedem einzelnen Animations-Frame erzwungen und bleiben dadurch durchgehend stabil.
+- Spalten für die Fünf-Uhr-Ausnahme der Minuten-Pixel korrigiert (`0,1,6,7` statt fälschlich `0,2,6,7`).
+- Frisch geflashtes oder gelöschtes EEPROM zeigte auf der WLAN-Setup-Seite kaputte/unleserliche Zeichen im SSID- und Passwort-Feld, statt leerer Felder (rohes `0xFF` aus dem unbeschriebenen EEPROM wurde direkt ins Formular übernommen).
+
+### Notes
+- Version-Bump auf `4.4.0`.
+
 ## [4.3.0] - 2026-07-05
 
 ### Added
