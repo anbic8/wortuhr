@@ -5,7 +5,7 @@ int geburtstage[5][3];
 // Whether Home Assistant discovery publish should run on next MQTT connect
 bool discoveryNeeded = true;
 // Home Assistant discovery enabled (persisted in EEPROM)
-bool haDiscoveryEnabled = true;
+bool haDiscoveryEnabled = false;
 
 // Countdown timestamp (epoch seconds). 0 = disabled
 unsigned long countdown_ts = 0;

@@ -188,16 +188,19 @@ void checkon(){
     }else{
       on=0;
     }
-  }
-  if(an>aus){
+  }else if(an>aus){
     if(zeit<an && zeit>aus){
       on=0;
     }else{
       on=1;
     }
+  }else{
+    // an == aus: kein Zeitplan konfiguriert -> Uhr schaltet nie ab.
+    // Ohne diesen Zweig bleibt `on` unveraendert (siehe letzter Wert), was
+    // "klebt": faellt `on` einmal auf 0, kommt es bei an==aus nie wieder
+    // auf 1 zurueck.
+    on=1;
   }
-
-  
 
   if(mqtton==on){
     mqttonset=0;

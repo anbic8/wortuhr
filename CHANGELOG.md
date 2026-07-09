@@ -3,6 +3,17 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.4.1] - 2026-07-09
+
+### Fixed
+- mDNS-Hostname (`http://<mqtt_prefix>.local/`) wurde beim Boot immer als `wortuhr.local` registriert, unabhängig vom in der Web-UI konfigurierten MQTT-Prefix, weil dieser erst nach `MDNS.begin()` ausgewertet wurde.
+- MQTT und Home-Assistant-Discovery waren auf frisch geflashten oder per Werksreset gelöschten Geräten fälschlich standardmäßig aktiviert, weil ein unbeschriebenes (`0xFF`) EEPROM-Byte als aktivierter Schalter gelesen wurde; beide sind jetzt standardmäßig deaktiviert.
+- Nachtmodus-Zeitplan: bei identischer Ein-/Ausschaltzeit (kein Zeitplan konfiguriert) blieb der Ein/Aus-Zustand der Anzeige am zuletzt berechneten Wert "kleben", statt zuverlässig eingeschaltet zu bleiben.
+- 8x8-Mini: LED-Zuordnung für die Stunde "SIEBEN" korrigiert (fehlendes Pixel).
+
+### Notes
+- Version-Bump auf `4.4.1`.
+
 ## [4.4.0] - 2026-07-05
 
 ### Added

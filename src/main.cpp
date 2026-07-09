@@ -109,6 +109,12 @@ void setup() {
     SecureStorage::cryptFields(user_connect);
   }
 
+  // Derive dns_name (and DEVICE_ID/DEVICE_NAME/CONFIG_URL/MQTT topics) from
+  // the persisted mqtt_prefix now, before MDNS.begin() below - otherwise
+  // mDNS always registers under the default "wortuhr" name because
+  // buildMqttTopics() used to only run later, gated on WiFi+MQTT being up.
+  buildMqttTopics();
+
       // Timezone für Europa einstellen (z.B. CET/CEST)
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
     tzset();  // Timezone aktualisieren - Auto-DST!
@@ -144,7 +150,7 @@ void setup() {
   int haFlagOffset = EepromLayout::HA_FLAG_OFFSET;
   uint8_t haFlag = EEPROM.read(haFlagOffset);
   if (haFlag == 0xFF) {
-    haDiscoveryEnabled = true; // default enabled
+    haDiscoveryEnabled = false; // default disabled
   } else {
     haDiscoveryEnabled = (haFlag != 0);
   }
@@ -295,31 +301,11 @@ LOGLN();
 
 
     EEPROM.get(EepromLayout::DESIGN_OFFSET, user_design);
-   mqttenable = user_design.mqttenable;
-    LOG("MQTT ENABLE: ");
-    LOGLN(mqttenable);
 
-  // MQTT-Client initialisieren (nur wenn Konfiguration plausibel)
-  if (WiFi.status() == WL_CONNECTED && mqttenable == true) {
-    bool mqttServerValid = true;
-    if ((uint8_t)user_connect.mqtt_server[0] == 0xFF || user_connect.mqtt_server[0] == '\0') mqttServerValid = false;
-    if (user_connect.mqtt_port <= 0 || user_connect.mqtt_port > 65535) mqttServerValid = false;
-    if (mqttServerValid) {
-      // Build MQTT topics with configured prefix
-      buildMqttTopics();
-      
-      client.setServer(user_connect.mqtt_server, user_connect.mqtt_port);
-      client.setCallback(mqttCallback);
-      client.setBufferSize(1024);
-    } else {
-      LOGLN("MQTT-Konfiguration ungültig, MQTT deaktiviert");
-      mqttenable = false;
-    }
-  }
-
-
-
-
+    // Gate every field read from user_design on db>-1 (see comment on the
+    // erased-EEPROM check below) - mqttenable used to be read unconditionally
+    // right after EEPROM.get(), so a fresh/erased EEPROM's raw 0xFF byte was
+    // misread as a truthy bool and MQTT came up enabled on first boot.
     if(user_design.db>-1){
   dbv= user_design.db;
   dvv= user_design.dv;
@@ -329,6 +315,7 @@ LOGLN();
   nacht = user_design.nacht;
   sommerzeit = user_design.sommerzeit;
   dimm = user_design.dimm;
+  mqttenable = user_design.mqttenable;
     }else{
       design customDesign = {
     dbv,
@@ -345,6 +332,27 @@ LOGLN();
   EEPROM.put(EepromLayout::DESIGN_OFFSET, customDesign);
   EEPROM.commit();
     }
+
+    LOG("MQTT ENABLE: ");
+    LOGLN(mqttenable);
+
+  // MQTT-Client initialisieren (nur wenn Konfiguration plausibel)
+  if (WiFi.status() == WL_CONNECTED && mqttenable == true) {
+    bool mqttServerValid = true;
+    if ((uint8_t)user_connect.mqtt_server[0] == 0xFF || user_connect.mqtt_server[0] == '\0') mqttServerValid = false;
+    if (user_connect.mqtt_port <= 0 || user_connect.mqtt_port > 65535) mqttServerValid = false;
+    if (mqttServerValid) {
+      // Build MQTT topics with configured prefix
+      buildMqttTopics();
+
+      client.setServer(user_connect.mqtt_server, user_connect.mqtt_port);
+      client.setCallback(mqttCallback);
+      client.setBufferSize(1024);
+    } else {
+      LOGLN("MQTT-Konfiguration ungültig, MQTT deaktiviert");
+      mqttenable = false;
+    }
+  }
 
   LOG("user_design.db = ");
   LOGLN(user_design.db);
