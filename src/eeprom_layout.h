@@ -35,7 +35,7 @@ constexpr int LIGHT_EFFECT_SPEED_OFFSET = LIGHT_EFFECT_INDEX_OFFSET + 1;
 
 // "Zufällig aus Liste" random-pool bitmask for the clock's transition
 // effect (effectMode == EFFECT_RANDOM_FROM_LIST_INDEX; bit i = effect
-// index i included, i in 2..13). Also purely additive.
+// index i included, i in 2..15). Also purely additive.
 constexpr int EFFECT_RANDOM_POOL_MASK_OFFSET = LIGHT_EFFECT_SPEED_OFFSET + 1;
 
 // OTA-Update-Passwort (HTTP Basic Auth auf /update, /upload). Ein neu

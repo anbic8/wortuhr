@@ -347,9 +347,9 @@ void handlecolorPath() {
     EEPROM.write(EepromLayout::LIGHT_EFFECT_INDEX_OFFSET, selectedLightEffect);
     EEPROM.write(EepromLayout::LIGHT_EFFECT_SPEED_OFFSET, lightEffectSpeedIdx);
 
-    // "Zufällig aus Liste" Pool für den Übergangseffekt (echte Effekte 2..13)
+    // "Zufällig aus Liste" Pool für den Übergangseffekt (echte Effekte 2..15)
     uint16_t newEffectPoolMask = 0;
-    for (int i = 2; i <= 13; i++) {
+    for (int i = 2; i <= 15; i++) {
       if (server.hasArg(String("txpool") + i)) {
         newEffectPoolMask |= (uint16_t)(1U << i);
       }
@@ -469,7 +469,7 @@ void handlecolorPath() {
 
     server.sendContent("<label>Zufaellige Liste konfigurieren (fuer Uebergangseffekt 'Zufaellig aus Liste')</label>");
     server.sendContent("<small>Waehle aus, welche Uebergangseffekte in die zufaellige Auswahl aufgenommen werden.</small>");
-    for (int i = 2; i <= 13; i++) {
+    for (int i = 2; i <= 15; i++) {
       bool checked = (effectRandomPoolMask & (1U << i)) != 0;
       server.sendContent("<label class='checkbox-row'>");
       server.sendContent(String("<input type='checkbox' name='txpool") + i + "' value='1' " + (checked ? "checked" : "") + ">");

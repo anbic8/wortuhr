@@ -16,5 +16,7 @@ void spiral();
 void snakeeater();
 void diamond();
 void firework();
+void rainbowSwipe();
+void rainbowCycle();
 
 void showmystrip();

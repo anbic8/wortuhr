@@ -46,7 +46,43 @@ void fadeefx(){
 
 }
 
+#if MATRIX_SIZE == 8
+// Erzwingt die Minuten-Pixel-Farbe in jedem einzelnen Frame, damit die
+// laufenden Übergangseffekte (Fade, Running, Rain, ...) sie nicht mit
+// überblenden/verändern - sie sollen unabhängig von der Animation immer
+// exakt die konfigurierte Farbe zeigen.
+static void applyMinuteDotsOverride(){
+  if (!minuteDotsEnabled) return;
+  int cols[4];
+  minuteDotColumnsForHour(h, cols);
+  int dotRgb[3];
+  getPaletteColor((uint8_t)minuteDotsColorIdx, dotRgb);
+  for (int i = 0; i < 4; i++) {
+    int col = cols[i];
+    if (matrixanzeige[MATRIX_SIZE-1][col] == 1) {
+      anzeige[MATRIX_SIZE-1][col][0] = dotRgb[0];
+      anzeige[MATRIX_SIZE-1][col][1] = dotRgb[1];
+      anzeige[MATRIX_SIZE-1][col][2] = dotRgb[2];
+      strip.setPixelColor(matrix[MATRIX_SIZE-1][col], strip.Color(dotRgb[0], dotRgb[1], dotRgb[2]));
+    }
+  }
+}
+#endif
+
+// Wrapper um strip.show(), der die Minuten-Pixel-Farbe unmittelbar vor jeder
+// Ausgabe erzwingt - so wird sie von keinem der Übergangseffekte, die direkt
+// per strip.setPixelColor() zeichnen, zwischenzeitlich überschrieben.
+static void pushStrip(){
+#if MATRIX_SIZE == 8
+  applyMinuteDotsOverride();
+#endif
+  strip.show();
+}
+
 void showmystrip(){
+#if MATRIX_SIZE == 8
+  applyMinuteDotsOverride();
+#endif
   for(int row=0;row<MATRIX_SIZE; row++){
     for(int col=0;col<MATRIX_SIZE; col++){
         strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
@@ -93,7 +129,7 @@ void running(){
         }else{
           strip.setPixelColor(matrix[row][MATRIX_SIZE-1-col], strip.Color(anzeige[row][MATRIX_SIZE-1-col][0], anzeige[row][MATRIX_SIZE-1-col][1], anzeige[row][MATRIX_SIZE-1-col][2]));
         }
-        strip.show();
+        pushStrip();
         delay(efxtime);
     }
   }
@@ -110,12 +146,12 @@ void schlange(){
     for(int col=0;col<MATRIX_SIZE; col++){
         if(row%2==0){
           strip.setPixelColor(matrix[row][col], strip.Color(255,255,255));
-          strip.show();
+          pushStrip();
           delay(efxtime);
           strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
         }else{
           strip.setPixelColor(matrix[row][MATRIX_SIZE-1-col], strip.Color(255,255,255));
-          strip.show();
+          pushStrip();
           delay(efxtime);
           strip.setPixelColor(matrix[row][MATRIX_SIZE-1-col], strip.Color(anzeige[row][MATRIX_SIZE-1-col][0], anzeige[row][MATRIX_SIZE-1-col][1], anzeige[row][MATRIX_SIZE-1-col][2]));
         }
@@ -123,7 +159,7 @@ void schlange(){
     }
   }
   delay(efxtime);
-  strip.show();
+  pushStrip();
 }
 
 void zeilenefx(){
@@ -136,7 +172,7 @@ void zeilenefx(){
     for(int col=0;col<MATRIX_SIZE; col++){
           strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
     }
-    strip.show();
+    pushStrip();
     delay(efxtime);
   }
 
@@ -157,7 +193,7 @@ void scrollall(){
           strip.setPixelColor(matrix[row][col], strip.Color(anzeige[MATRIX_SIZE-(step-row)][col][0], anzeige[MATRIX_SIZE-(step-row)][col][1], anzeige[MATRIX_SIZE-(step-row)][col][2]));
     }
   }
-  strip.show();
+  pushStrip();
     delay(efxtime);
   }
 
@@ -179,7 +215,7 @@ void slidein(){
           strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][n][0], anzeige[row][n][1], anzeige[row][n][2]));
     }
   }
-  strip.show();
+  pushStrip();
     delay(efxtime);
   }
 
@@ -202,7 +238,7 @@ void diagonal(){
           strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
     }
   }
-  strip.show();
+  pushStrip();
     delay(efxtime);
   }
 
@@ -217,7 +253,7 @@ void rain(){
         strip.setPixelColor(matrix[row][col], strip.Color(hintergrund[row][col][0], hintergrund[row][col][1], hintergrund[row][col][2]));
     }
   }//hintergrund wird angezeigt
-  strip.show();
+  pushStrip();
   delay(efxtime);
   //active initieren
 
@@ -254,7 +290,7 @@ void rain(){
     }
   }
 
-  strip.show();
+  pushStrip();
   delay(efxtime);
   }
   setanzeige();
@@ -267,7 +303,7 @@ void spiral(){
   for(int i=0;i<LED_COUNT;i++){
     strip.setPixelColor(i, strip.Color(0,0,0));
   }
-  strip.show();
+  pushStrip();
   
   // Spiralreihenfolge für 11x11 oder 8x8 Matrix
   // Wir erstellen eine Liste von Koordinaten in Spiralreihenfolge von der Mitte aus
@@ -340,14 +376,14 @@ void spiral(){
     
     // Weißer Punkt an der aktuellen Position (Spitze)
     strip.setPixelColor(matrix[r][c], strip.Color(255, 255, 255));
-    strip.show();
+    pushStrip();
     delay(efxtime);
     
     // Aktuelle Position auf die endgültige Farbe setzen
     strip.setPixelColor(matrix[r][c], strip.Color(anzeige[r][c][0], anzeige[r][c][1], anzeige[r][c][2]));
   }
   
-  strip.show();
+  pushStrip();
 }
 
 void snakeeater(){
@@ -375,7 +411,7 @@ void snakeeater(){
       strip.setPixelColor(matrix[row][col], strip.Color(anzeigealt[row][col][0], anzeigealt[row][col][1], anzeigealt[row][col][2]));
     }
   }
-  strip.show();
+  pushStrip();
   delay(efxtime);
   
   // Sammle alle Vordergrund-Positionen der alten Zeit aus anzeigealt
@@ -477,7 +513,7 @@ void snakeeater(){
           strip.setPixelColor(matrix[snake[i][0]][snake[i][1]], strip.Color(bright, bright, bright));
         }
         
-        strip.show();
+        pushStrip();
         delay(efxtime / 3);
         yield(); // Watchdog reset
       }
@@ -490,7 +526,7 @@ void snakeeater(){
       strip.setPixelColor(matrix[r][c], strip.Color(hintergrund[r][c][0], hintergrund[r][c][1], hintergrund[r][c][2]));
     }
   }
-  strip.show();
+  pushStrip();
   delay(efxtime);
   
   // JETZT erst die neue Zeit vorbereiten (Farben berechnen)
@@ -582,7 +618,7 @@ void snakeeater(){
           strip.setPixelColor(matrix[snake[i][0]][snake[i][1]], strip.Color(bright, bright, bright));
         }
         
-        strip.show();
+        pushStrip();
         delay(efxtime / 3);
         yield(); // Watchdog reset
       }
@@ -621,7 +657,7 @@ void diamond(){
         }
       }
     }
-    strip.show();
+    pushStrip();
     delay(efxtime);
   }
   
@@ -643,7 +679,7 @@ void diamond(){
         }
       }
     }
-    strip.show();
+    pushStrip();
     delay(efxtime);
   }
   
@@ -684,7 +720,7 @@ void firework() {
   for(int i = 0; i < LED_COUNT; i++) {
     strip.setPixelColor(i, strip.Color(0, 0, 0));
   }
-  strip.show();
+  pushStrip();
   
   // Für jedes Pixel in zufälliger Reihenfolge
   for(int p = 0; p < pixelCount; p++) {
@@ -743,7 +779,7 @@ void firework() {
         }
       }
       
-      strip.show();
+      pushStrip();
       delay(efxtime);
       
       // Lösche die Partikel wieder (außer bereits explodierte Pixel)
@@ -772,8 +808,95 @@ void firework() {
     
     yield(); // Watchdog feed
   }
-  
+
   // Finale Anzeige
+  showmystrip();
+}
+
+// Klassischer Hue(0-255)->RGB Farbrad-Helfer für den Regenbogen-Sweep,
+// analog zu lighteffects.cpp's effectsColorWheel() (dort static, daher hier
+// eine eigene Kopie statt eines Cross-TU-Aufrufs).
+static uint32_t rainbowWheel(uint8_t pos) {
+  pos = 255 - pos;
+  if (pos < 85) {
+    return strip.Color(255 - pos * 3, 0, pos * 3);
+  }
+  if (pos < 170) {
+    pos -= 85;
+    return strip.Color(0, pos * 3, 255 - pos * 3);
+  }
+  pos -= 170;
+  return strip.Color(pos * 3, 255 - pos * 3, 0);
+}
+
+// Ein einmaliger Regenbogen-Sweep von unten rechts nach oben links: jede
+// Anti-Diagonale (row+col == step) leuchtet kurz in einer wandernden
+// Regenbogenfarbe auf, bevor sie auf die finale Zielfarbe aus anzeige[][]
+// wechselt - bereits passierte Diagonalen zeigen währenddessen schon ihr
+// Endbild.
+void rainbowSwipe(){
+  setanzeige();
+
+  for(int i=0;i<LED_COUNT;i++){
+    strip.setPixelColor(i, strip.Color(0,0,0));
+  } // alle Lichter aus
+
+  int maxStep = (MATRIX_SIZE - 1) * 2; // groesster row+col Wert = unten rechts
+
+  for(int step=maxStep; step>=0; step--){
+    uint8_t hue = (uint8_t)((step * 255) / maxStep);
+    uint32_t c = rainbowWheel(hue);
+
+    for(int row=0; row<MATRIX_SIZE; row++){
+      int col = step - row;
+      if(col>=0 && col<MATRIX_SIZE){
+        strip.setPixelColor(matrix[row][col], c);
+      }
+    }
+    pushStrip();
+    delay(efxtime);
+
+    // vorherige (weiter unten rechts liegende) Diagonale auf Endfarbe setzen
+    int settledStep = step + 1;
+    if(settledStep <= maxStep){
+      for(int row=0; row<MATRIX_SIZE; row++){
+        int col = settledStep - row;
+        if(col>=0 && col<MATRIX_SIZE){
+          strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
+        }
+      }
+    }
+  }
+
+  // letzte Diagonale (oben links, step==0) ebenfalls auf Endfarbe setzen
+  for(int row=0; row<MATRIX_SIZE; row++){
+    int col = -row;
+    if(col>=0 && col<MATRIX_SIZE){
+      strip.setPixelColor(matrix[row][col], strip.Color(anzeige[row][col][0], anzeige[row][col][1], anzeige[row][col][2]));
+    }
+  }
+  pushStrip();
+}
+
+// Zeigt 3 Sekunden lang einen durchlaufenden Regenbogen-Farbverlauf über
+// die gesamte Matrix, danach die eigentliche Uhrzeit.
+void rainbowCycle(){
+  setanzeige();
+
+  uint8_t offset = 0;
+  unsigned long start = millis();
+  while (millis() - start < 3000UL) {
+    for(int row=0; row<MATRIX_SIZE; row++){
+      for(int col=0; col<MATRIX_SIZE; col++){
+        uint8_t hue = (uint8_t)(offset + (row + col) * (256 / (2 * MATRIX_SIZE)));
+        strip.setPixelColor(matrix[row][col], rainbowWheel(hue));
+      }
+    }
+    pushStrip();
+    delay(20);
+    offset += 2;
+  }
+
   showmystrip();
 }
 

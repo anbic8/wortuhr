@@ -7,7 +7,7 @@ String topicOnState;
 String topicOnCmd;
 String topicEfxState;
 String topicEfxCmd;
-const char* effectOptions[15] = {
+const char* effectOptions[17] = {
   "kein Effekt",
   "zufällig",
   "Fade",
@@ -22,6 +22,8 @@ const char* effectOptions[15] = {
   "Schlangenfresser",
   "Raute",
   "Feuerwerk",
+  "Rainbow Swipe",
+  "Rainbow Cycle",
   "Zufällig aus Liste"
 };
 String topicAniState;

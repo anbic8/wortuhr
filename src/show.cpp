@@ -8,16 +8,16 @@
   #include "rct.h"
 #endif
 
-// Picks a random effect index (2..13) from the "Zufällig aus Liste"
+// Picks a random effect index (2..15) from the "Zufällig aus Liste"
 // pool. Falls back to the same behaviour as the "zufällig" option
-// (random(2,14)) if the pool hasn't been configured yet (empty mask).
+// (random(2,16)) if the pool hasn't been configured yet (empty mask).
 static int pickRandomEffectFromPool(uint16_t mask) {
-  int candidates[12];
+  int candidates[14];
   int count = 0;
-  for (int i = 2; i <= 13; i++) {
+  for (int i = 2; i <= 15; i++) {
     if (mask & (1U << i)) candidates[count++] = i;
   }
-  if (count == 0) return random(2, 14);
+  if (count == 0) return random(2, 16);
   return candidates[random(0, count)];
 }
 
@@ -25,10 +25,10 @@ static int pickRandomEffectFromPool(uint16_t mask) {
 // Minute-Pixel-Spalten in der untersten Zeile (7). ZWÖLF/FÜNF/ACHT belegen
 // dort selbst einige der Standard-Spalten (1,3,5,7), deshalb weichen diese
 // drei Stunden auf andere Spalten aus.
-static void minuteDotColumnsForHour(int hour, int cols[4]) {
+void minuteDotColumnsForHour(int hour, int cols[4]) {
   static const int def[4]    = {1,3,5,7};
   static const int zwoelf[4] = {0,2,4,6}; // hour == 0
-  static const int fuenf[4]  = {0,2,6,7}; // hour == 5
+  static const int fuenf[4]  = {0,1,6,7}; // hour == 5
   static const int acht[4]   = {0,1,4,5}; // hour == 8
   const int *src = def;
   if (hour == 0) src = zwoelf;
@@ -290,7 +290,7 @@ void showClock(){
 
   int welchereffekt = 0;
   if(effectMode==1){
-    welchereffekt= random(2,14);
+    welchereffekt= random(2,16);
   }else if(effectMode==EFFECT_RANDOM_FROM_LIST_INDEX){
     welchereffekt = pickRandomEffectFromPool(effectRandomPoolMask);
   }else{
@@ -344,6 +344,12 @@ void showClock(){
       break;
     case 13:
         firework();
+      break;
+    case 14:
+        rainbowSwipe();
+      break;
+    case 15:
+        rainbowCycle();
       break;
     default:
       noeffect();

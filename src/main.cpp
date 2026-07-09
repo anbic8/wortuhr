@@ -93,11 +93,19 @@ void setup() {
 
   EepromLayout::beginAll();
   EEPROM.get(EepromLayout::SETTINGS_OFFSET, user_connect);
+  // A freshly flashed/erased EEPROM reads back as 0xFF. Without this check
+  // that raw 0xFF ends up in user_connect.ssid/password and gets rendered
+  // straight into the WLAN-Setup form's value='' attributes, which shows up
+  // as garbled/invalid characters in the browser instead of empty fields.
+  bool credentialsErased = ((uint8_t)user_connect.ssid[0] == 0xFF);
+  if (credentialsErased) {
+    memset(&user_connect, 0, sizeof(user_connect));
+  }
   // Credentials are only encrypted once this exact layout version has been
   // written (see webserver.cpp handleWifi()). A device still on legacy
   // (unversioned, reads as 0xFF) or a different future layout keeps its
   // fields in plaintext here - decrypting those would corrupt them.
-  if (EepromLayout::readLayoutVersion() == EepromLayout::CURRENT_LAYOUT_VERSION) {
+  if (!credentialsErased && EepromLayout::readLayoutVersion() == EepromLayout::CURRENT_LAYOUT_VERSION) {
     SecureStorage::cryptFields(user_connect);
   }
 

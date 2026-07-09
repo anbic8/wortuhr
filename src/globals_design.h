@@ -30,7 +30,7 @@ extern int anidepth;
 extern int anistate;
 
 // "Zufällig aus Liste" beim Übergangseffekt (effectMode ==
-// EFFECT_RANDOM_FROM_LIST_INDEX): Bit i gesetzt = Effekt-Index i (2..13)
+// EFFECT_RANDOM_FROM_LIST_INDEX): Bit i gesetzt = Effekt-Index i (2..15)
 // ist Teil der Zufallsauswahl. Nur über die Web-UI konfigurierbar.
 extern uint16_t effectRandomPoolMask;
 

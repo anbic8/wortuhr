@@ -70,7 +70,7 @@ bool publishEffectConfig() {
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicEfxState;
   cfg["command_topic"]= topicEfxCmd;
-  // Liste der Optionen – Reihenfolge entspricht 0 bis 13
+  // Liste der Optionen – Reihenfolge entspricht 0 bis 16
   JsonArray opts = cfg.createNestedArray("options");
   for (int i = 0; i < EFFECT_OPTIONS_COUNT; ++i) opts.add(effectOptions[i]);
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
@@ -475,7 +475,7 @@ bool publishEffectsModeConfig() {
 }
 
 bool publishLightEffectConfig() {
-  // Larger buffer than the other selects: 20 options (vs. 14 for effectOptions)
+  // Larger buffer than the other selects: 20 options (vs. 17 for effectOptions)
   // push this closer to the 512-byte size used elsewhere.
   StaticJsonDocument<1024> cfg;
   cfg["name"]         = "Lichteffekt";
