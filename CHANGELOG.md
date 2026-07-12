@@ -3,6 +3,17 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.5.0] - 2026-07-12
+
+### Added
+- Neue Build-Environment `mini_8x8_kkg-makerspace`: identisch zu `mini_8x8`, aber für die kkg-makerspace-Platine mit abweichender Pin-Belegung (LED-Datenpin 4 statt 2, Taster 1 an Pin 5 statt 4). In CI-Build- und Release-Workflow mit aufgenommen.
+
+### Changed
+- `LED_PIN` und `bt1Pin` sind jetzt per Build-Flag in `platformio.ini` überschreibbar, statt fest im Code zu stehen (Default-Werte für alle bestehenden Varianten unverändert).
+
+### Notes
+- Version-Bump auf `4.5.0`.
+
 ## [4.4.1] - 2026-07-09
 
 ### Fixed
