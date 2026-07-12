@@ -109,6 +109,16 @@ const char* lightEffectOptions[20] = {
 String topicLightEffectSpeedState;
 String topicLightEffectSpeedCmd;
 
+// --- Topics für den Pomodoro-Modus ---
+String topicPomodoroActiveState;
+String topicPomodoroActiveCmd;
+String topicPomodoroActivityMinState;
+String topicPomodoroActivityMinCmd;
+String topicPomodoroPauseMinState;
+String topicPomodoroPauseMinCmd;
+String topicPomodoroPhaseState;
+String topicPomodoroRemainingState;
+
 String topicAvailability;
 
 // --- Topics für Sensoren ---
@@ -194,6 +204,15 @@ void buildMqttTopics() {
 
   topicLightEffectSpeedState = prefix + "lighteffectspeed";
   topicLightEffectSpeedCmd = prefix + "lighteffectspeed/set";
+
+  topicPomodoroActiveState = prefix + "pomodoroactive";
+  topicPomodoroActiveCmd = prefix + "pomodoroactive/set";
+  topicPomodoroActivityMinState = prefix + "pomodoroactivitymin";
+  topicPomodoroActivityMinCmd = prefix + "pomodoroactivitymin/set";
+  topicPomodoroPauseMinState = prefix + "pomodoropausemin";
+  topicPomodoroPauseMinCmd = prefix + "pomodoropausemin/set";
+  topicPomodoroPhaseState = prefix + "pomodorophase";
+  topicPomodoroRemainingState = prefix + "pomodororemaining";
 
   topicAvailability = prefix + "availability";
 

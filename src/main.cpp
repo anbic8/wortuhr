@@ -43,6 +43,7 @@
 #include "birthday.h"
 #include "effects.h"
 #include "lighteffects.h"
+#include "pomodoro.h"
 #ifdef USE_RCT
   #include "rct.h"
 #endif
@@ -198,6 +199,25 @@ void setup() {
   uint8_t minuteDotsColorByte = EEPROM.read(EepromLayout::MINUTE_DOTS_COLOR_OFFSET);
   minuteDotsColorIdx = (minuteDotsColorByte < 14) ? minuteDotsColorByte : 1; // erased/ungueltig -> rot
 
+  // Pomodoro-Einstellungen (Laufzeitstatus pomodoroModeActive bleibt immer
+  // false nach dem Boot, siehe eeprom_layout.h)
+  uint8_t pomActivityByte = EEPROM.read(EepromLayout::POMODORO_ACTIVITY_MIN_OFFSET);
+  pomodoroActivityMinutes = (pomActivityByte >= 1 && pomActivityByte <= 90) ? pomActivityByte : 25;
+  uint8_t pomPauseByte = EEPROM.read(EepromLayout::POMODORO_PAUSE_MIN_OFFSET);
+  pomodoroPauseMinutes = (pomPauseByte >= 1 && pomPauseByte <= 30) ? pomPauseByte : 5;
+  uint8_t pomSchemeByte = EEPROM.read(EepromLayout::POMODORO_SCHEME_OFFSET);
+  pomodoroScheme = (pomSchemeByte < FARBSCHEMA_OPTIONS_COUNT) ? pomSchemeByte : 0;
+  uint8_t pomAnimationByte = EEPROM.read(EepromLayout::POMODORO_ANIMATION_OFFSET);
+  pomodoroAnimationIdx = (pomAnimationByte < POMODORO_ANIMATION_OPTIONS_COUNT) ? pomAnimationByte : 0;
+  uint8_t pomActC1Byte = EEPROM.read(EepromLayout::POMODORO_ACTIVITY_COLOR1_OFFSET);
+  pomodoroActivityColor1Idx = (pomActC1Byte < 14) ? pomActC1Byte : 12;
+  uint8_t pomActC2Byte = EEPROM.read(EepromLayout::POMODORO_ACTIVITY_COLOR2_OFFSET);
+  pomodoroActivityColor2Idx = (pomActC2Byte < 14) ? pomActC2Byte : 1;
+  uint8_t pomPauseC1Byte = EEPROM.read(EepromLayout::POMODORO_PAUSE_COLOR1_OFFSET);
+  pomodoroPauseColor1Idx = (pomPauseC1Byte < 14) ? pomPauseC1Byte : 5;
+  uint8_t pomPauseC2Byte = EEPROM.read(EepromLayout::POMODORO_PAUSE_COLOR2_OFFSET);
+  pomodoroPauseColor2Idx = (pomPauseC2Byte < 14) ? pomPauseC2Byte : 6;
+
   // EEPROM Debug: zeige gelesene Werte (vorsichtig, kann leer/garbage sein)
   LOGLN("EEPROM: gelesene Einstellungen:");
   LOG(" SSID: '"); LOG(user_connect.ssid); LOGLN("'");
@@ -260,6 +280,8 @@ void setup() {
   server.on("/ha/discover", handleHADiscover);
   server.on("/factory-reset", handleFactoryReset);
   server.on("/api/effectsmode", handleEffectsModeApi);
+  server.on("/pomodoro", handlePomodoroPath);
+  server.on("/api/pomodoro", handlePomodoroApi);
   server.begin();
   LOGLN("Webserver gestartet");
 
@@ -405,7 +427,9 @@ void loop() {
   }
 #endif
 
-if (effectsModeActive) {
+if (pomodoroModeActive) {
+  renderPomodoro();
+} else if (effectsModeActive) {
   renderLightEffects();
 } else if(mode==1 && !ntpInitialSyncPending){
 
@@ -513,6 +537,15 @@ if (effectsModeActive) {
     if (client.connected()) {
       publishSensorStates();
       LOGLN("Sensor states published");
+    }
+  }
+  // Pomodoro-Status/Restzeit alle 5 Sekunden, nur waehrend aktiver Sitzung
+  static unsigned long lastPomodoroPublish = 0;
+  if (pomodoroModeActive && millis() - lastPomodoroPublish > 5000) {
+    lastPomodoroPublish = millis();
+    if (client.connected()) {
+      publishPomodoroPhaseState();
+      publishPomodoroRemainingState();
     }
   }
   }

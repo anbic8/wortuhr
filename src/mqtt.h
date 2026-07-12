@@ -20,6 +20,11 @@ void publishAniDepthState();
 void publishEffectsModeState();
 void publishLightEffectState();
 void publishLightEffectSpeedState();
+void publishPomodoroActiveState();
+void publishPomodoroActivityMinState();
+void publishPomodoroPauseMinState();
+void publishPomodoroPhaseState();
+void publishPomodoroRemainingState();
 
 // Sensor publishing
 void publishIpAddress();

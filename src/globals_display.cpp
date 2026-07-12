@@ -199,6 +199,10 @@ int matrixanzeige[8][8]={
 };
 #endif
 
+// Eigenes Farb-Grid fuer den Pomodoro-Modus - keine expliziten Literale
+// noetig, globale Arrays werden in C++ automatisch nullinitialisiert.
+uint8_t pomodoroGrid[MATRIX_SIZE][MATRIX_SIZE][3];
+
 // inverse mapping (filled by buildLedMappings)
 int16_t ledRow[LED_COUNT];
 int16_t ledCol[LED_COUNT];

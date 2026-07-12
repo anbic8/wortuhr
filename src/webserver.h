@@ -26,6 +26,10 @@ void handledesignPath();
 // Leichter AJAX-Endpunkt: aktiviert Effekte-Modus-Aenderungen sofort, ohne
 // dass die ganze /color-Seite mit "Speichern" abgeschickt werden muss.
 void handleEffectsModeApi();
+void handlePomodoroPath();
+// Leichter AJAX-Endpunkt: startet/stoppt Pomodoro sofort, ohne die ganze
+// /pomodoro-Seite mit "Speichern" abzuschicken.
+void handlePomodoroApi();
 void handleUpload();
 void handleUpdate();
 void handleUploading();

@@ -64,7 +64,11 @@ JsonObject dev = cfg.createNestedObject("device");
 }
 
 bool publishEffectConfig() {
-  StaticJsonDocument<512> cfg;
+  // 1024 statt 512: die Optionsliste ist inzwischen auf 17 Eintraege
+  // gewachsen (Rainbow Swipe/Cycle, "Zufällig aus Liste") - mit 512 Bytes
+  // wurde das serialisierte JSON abgeschnitten, wodurch Home Assistant das
+  // Discovery-Payload nicht mehr korrekt lesen konnte.
+  StaticJsonDocument<1024> cfg;
   cfg["name"]         = "Übergangseffekt";
   String uniqueId = DEVICE_ID + "_efx";
   cfg["unique_id"]    = uniqueId;
@@ -87,7 +91,7 @@ bool publishEffectConfig() {
   cfg["availability_topic"] = topicAvailability;
 
   // Serialize mit Null-Terminator
-  char buf[512];
+  char buf[1024];
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
@@ -533,6 +537,152 @@ bool publishLightEffectSpeedConfig() {
   String configTopic = "homeassistant/select/" + DEVICE_ID + "_lighteffectspeed/config";
   bool ok = pubWithCheck(configTopic.c_str(), buf, false);
   LOGF("LightEffectSpeed Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
+  return ok;
+}
+
+// ============ Pomodoro-Modus Discovery Configs ============
+
+bool publishPomodoroActiveConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]          = "Pomodoro";
+  String uniqueId = DEVICE_ID + "_pomodoroactive";
+  cfg["unique_id"]     = uniqueId;
+  cfg["state_topic"]   = topicPomodoroActiveState;
+  cfg["command_topic"] = topicPomodoroActiveCmd;
+  cfg["payload_on"]    = "1";
+  cfg["payload_off"]   = "0";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/switch/" + DEVICE_ID + "_pomodoroactive/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("PomodoroActive Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  return ok;
+}
+
+bool publishPomodoroActivityMinConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]          = "Pomodoro Aktivität (Minuten)";
+  String uniqueId = DEVICE_ID + "_pomodoroactivitymin";
+  cfg["unique_id"]     = uniqueId;
+  cfg["state_topic"]   = topicPomodoroActivityMinState;
+  cfg["command_topic"] = topicPomodoroActivityMinCmd;
+  cfg["min"] = 1;
+  cfg["max"] = 90;
+  cfg["step"] = 1;
+  cfg["unit_of_measurement"] = "min";
+  cfg["mode"] = "box";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/number/" + DEVICE_ID + "_pomodoroactivitymin/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("PomodoroActivityMin Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  return ok;
+}
+
+bool publishPomodoroPauseMinConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]          = "Pomodoro Pause (Minuten)";
+  String uniqueId = DEVICE_ID + "_pomodoropausemin";
+  cfg["unique_id"]     = uniqueId;
+  cfg["state_topic"]   = topicPomodoroPauseMinState;
+  cfg["command_topic"] = topicPomodoroPauseMinCmd;
+  cfg["min"] = 1;
+  cfg["max"] = 30;
+  cfg["step"] = 1;
+  cfg["unit_of_measurement"] = "min";
+  cfg["mode"] = "box";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/number/" + DEVICE_ID + "_pomodoropausemin/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("PomodoroPauseMin Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  return ok;
+}
+
+bool publishPomodoroPhaseConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "Pomodoro Status";
+  String uniqueId = DEVICE_ID + "_pomodorophase";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicPomodoroPhaseState;
+  cfg["icon"]         = "mdi:timer-sand";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_pomodorophase/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("PomodoroPhase Config Publish: %s\n", ok ? "OK" : "FEHLER");
+  return ok;
+}
+
+bool publishPomodoroRemainingConfig() {
+  StaticJsonDocument<512> cfg;
+  cfg["name"]         = "Pomodoro Restzeit";
+  String uniqueId = DEVICE_ID + "_pomodororemaining";
+  cfg["unique_id"]    = uniqueId;
+  cfg["state_topic"]  = topicPomodoroRemainingState;
+  cfg["unit_of_measurement"] = "s";
+  cfg["device_class"] = "duration";
+  cfg["icon"]         = "mdi:timer-outline";
+
+  JsonObject dev = cfg.createNestedObject("device");
+  dev["identifiers"][0] = DEVICE_ID.c_str();
+  dev["name"]           = DEVICE_NAME.c_str();
+  dev["manufacturer"]   = DEVICE_VENDOR;
+  dev["model"]          = DEVICE_MODEL;
+  dev["sw_version"] = FW_VERSION;
+  dev["configuration_url"] = CONFIG_URL.c_str();
+  cfg["availability_topic"] = topicAvailability;
+
+  char buf[512];
+  serializeJson(cfg, buf, sizeof(buf));
+
+  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_pomodororemaining/config";
+  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  LOGF("PomodoroRemaining Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
 

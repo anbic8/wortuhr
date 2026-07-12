@@ -54,7 +54,21 @@ constexpr int OTA_PASSWORD_MAX = 20;
 constexpr int MINUTE_DOTS_ENABLED_OFFSET = OTA_PASSWORD_OFFSET + OTA_PASSWORD_MAX;
 constexpr int MINUTE_DOTS_COLOR_OFFSET = MINUTE_DOTS_ENABLED_OFFSET + 1;
 
-constexpr int TOTAL_SIZE = MINUTE_DOTS_COLOR_OFFSET + 1;
+// Pomodoro-Modus: Aktivitaets-/Pausenminuten, Anzeige-Schema, Aktivierungs-
+// Animation und vier eigene Farben (Aktivitaet 1/2, Pause 1/2) als
+// Palettenindizes. Der Laufzeitstatus (aktiv/Phase/Restzeit) wird bewusst
+// NICHT persistiert (RAM-only, wie newyear_countdown_ts) - nur die
+// Einstellungen. Rein additiv.
+constexpr int POMODORO_ACTIVITY_MIN_OFFSET    = MINUTE_DOTS_COLOR_OFFSET + 1;
+constexpr int POMODORO_PAUSE_MIN_OFFSET       = POMODORO_ACTIVITY_MIN_OFFSET + 1;
+constexpr int POMODORO_SCHEME_OFFSET          = POMODORO_PAUSE_MIN_OFFSET + 1;
+constexpr int POMODORO_ANIMATION_OFFSET       = POMODORO_SCHEME_OFFSET + 1;
+constexpr int POMODORO_ACTIVITY_COLOR1_OFFSET = POMODORO_ANIMATION_OFFSET + 1;
+constexpr int POMODORO_ACTIVITY_COLOR2_OFFSET = POMODORO_ACTIVITY_COLOR1_OFFSET + 1;
+constexpr int POMODORO_PAUSE_COLOR1_OFFSET    = POMODORO_ACTIVITY_COLOR2_OFFSET + 1;
+constexpr int POMODORO_PAUSE_COLOR2_OFFSET    = POMODORO_PAUSE_COLOR1_OFFSET + 1;
+
+constexpr int TOTAL_SIZE = POMODORO_PAUSE_COLOR2_OFFSET + 1;
 
 // Bump this whenever the *shape* of the layout changes in the future.
 // A freshly-erased/legacy device reads 0xFF here (never written), which

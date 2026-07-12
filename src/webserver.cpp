@@ -1,4 +1,6 @@
 #include "webserver.h"
+#include "pomodoro.h"
+#include "mqtt.h"
 
 static void sendPageStart(const char *title) {
   server.setContentLength(CONTENT_LENGTH_UNKNOWN);
@@ -338,6 +340,8 @@ void handlecolorPath() {
     uint8_t newSelectedLightEffect = (uint8_t)constrain(server.arg("lighteffect").toInt(), 0, LIGHT_EFFECT_OPTIONS_COUNT - 1);
     if (effectsModeActive && !newEffectsModeActive) {
       threshold = 0; // sofortiger Uhr-Refresh statt bis zum nächsten Minutenwechsel zu warten
+    } else if (newEffectsModeActive && pomodoroModeActive) {
+      stopPomodoro(); // gegenseitiger Ausschluss der beiden Vollbild-Modi
     }
     effectsModeActive = newEffectsModeActive;
     selectedLightEffect = newSelectedLightEffect;
@@ -551,6 +555,8 @@ void handleEffectsModeApi() {
     bool newActive = server.arg("enabled").toInt() == 1;
     if (effectsModeActive && !newActive) {
       threshold = 0; // sofortiger Uhr-Refresh statt bis zum naechsten Minutenwechsel
+    } else if (newActive && pomodoroModeActive) {
+      stopPomodoro(); // gegenseitiger Ausschluss der beiden Vollbild-Modi
     }
     effectsModeActive = newActive;
     EEPROM.write(EepromLayout::LIGHT_EFFECTS_ENABLED_OFFSET, effectsModeActive ? 1 : 0);
@@ -564,6 +570,127 @@ void handleEffectsModeApi() {
     EEPROM.write(EepromLayout::LIGHT_EFFECT_SPEED_OFFSET, lightEffectSpeedIdx);
   }
   EEPROM.commit();
+  server.send(200, "text/plain", "OK");
+}
+
+// Eigene Seite fuer den Pomodoro-Modus: Einstellungen (Zeiten, Schema,
+// Animation, 4 Farben) per normalem POST+"Speichern", Start/Stop per
+// Sofort-Anwenden-Checkbox (analog zur Effekte-Modus-Karte auf /color).
+void handlePomodoroPath() {
+  if (server.method() == HTTP_POST) {
+    auto hexToNearestIndex = [&](const String &hex, int fallback) -> int {
+      if (hex.length() == 0) return fallback;
+      String s = hex;
+      if (s.charAt(0) == '#') s = s.substring(1);
+      if (s.length() != 6) return fallback;
+      int r = (int)strtol(s.substring(0, 2).c_str(), nullptr, 16);
+      int g = (int)strtol(s.substring(2, 4).c_str(), nullptr, 16);
+      int b = (int)strtol(s.substring(4, 6).c_str(), nullptr, 16);
+      unsigned long bestDist = 0xFFFFFFFFUL;
+      int bestIdx = fallback;
+      for (int i = 0; i < anzahlfarben; i++) {
+        int rgb[3];
+        getPaletteColor((uint8_t)i, rgb);
+        long dr = r - rgb[0], dg = g - rgb[1], db = b - rgb[2];
+        unsigned long dist = (unsigned long)(dr * dr + dg * dg + db * db);
+        if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+      }
+      return bestIdx;
+    };
+
+    pomodoroActivityMinutes = (uint8_t)constrain(server.arg("pomo_activity").toInt(), 1, 90);
+    pomodoroPauseMinutes = (uint8_t)constrain(server.arg("pomo_pause").toInt(), 1, 30);
+    pomodoroScheme = (uint8_t)constrain(server.arg("pomo_scheme").toInt(), 0, FARBSCHEMA_OPTIONS_COUNT - 1);
+    pomodoroAnimationIdx = (uint8_t)constrain(server.arg("pomo_animation").toInt(), 0, POMODORO_ANIMATION_OPTIONS_COUNT - 1);
+
+    if (server.hasArg("pomo_activity_c1")) pomodoroActivityColor1Idx = hexToNearestIndex(server.arg("pomo_activity_c1"), pomodoroActivityColor1Idx);
+    if (server.hasArg("pomo_activity_c2")) pomodoroActivityColor2Idx = hexToNearestIndex(server.arg("pomo_activity_c2"), pomodoroActivityColor2Idx);
+    if (server.hasArg("pomo_pause_c1")) pomodoroPauseColor1Idx = hexToNearestIndex(server.arg("pomo_pause_c1"), pomodoroPauseColor1Idx);
+    if (server.hasArg("pomo_pause_c2")) pomodoroPauseColor2Idx = hexToNearestIndex(server.arg("pomo_pause_c2"), pomodoroPauseColor2Idx);
+
+    EEPROM.write(EepromLayout::POMODORO_ACTIVITY_MIN_OFFSET, pomodoroActivityMinutes);
+    EEPROM.write(EepromLayout::POMODORO_PAUSE_MIN_OFFSET, pomodoroPauseMinutes);
+    EEPROM.write(EepromLayout::POMODORO_SCHEME_OFFSET, pomodoroScheme);
+    EEPROM.write(EepromLayout::POMODORO_ANIMATION_OFFSET, pomodoroAnimationIdx);
+    EEPROM.write(EepromLayout::POMODORO_ACTIVITY_COLOR1_OFFSET, (uint8_t)pomodoroActivityColor1Idx);
+    EEPROM.write(EepromLayout::POMODORO_ACTIVITY_COLOR2_OFFSET, (uint8_t)pomodoroActivityColor2Idx);
+    EEPROM.write(EepromLayout::POMODORO_PAUSE_COLOR1_OFFSET, (uint8_t)pomodoroPauseColor1Idx);
+    EEPROM.write(EepromLayout::POMODORO_PAUSE_COLOR2_OFFSET, (uint8_t)pomodoroPauseColor2Idx);
+    EEPROM.commit();
+
+    publishPomodoroActivityMinState();
+    publishPomodoroPauseMinState();
+
+    server.sendHeader("Location", "/pomodoro");
+    server.send(303);
+  } else {
+    sendPageStart("Pomodoro");
+
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label>Pomodoro-Modus</label>");
+    server.sendContent(String("<input type='checkbox' name='pomodoroactive' onchange=\"fetch('/api/pomodoro?start='+(this.checked?1:0))\" ") + (pomodoroModeActive ? "checked" : "") + ">");
+    String statusText = "Aus";
+    if (pomodoroModeActive) {
+      statusText = String(pomodoroPhase == 0 ? "Aktivität" : "Pause") + " - noch " + String(getPomodoroRemainingSeconds()) + "s";
+    }
+    server.sendContent(String("<p>Status: ") + statusText + "</p>");
+    server.sendContent("</div>");
+
+    server.sendContent("<form action='/pomodoro' method='post'>");
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label for='pomo_activity'>Aktivitätszeit (Minuten)</label>");
+    server.sendContent(String("<input type='number' id='pomo_activity' name='pomo_activity' min='1' max='90' value='") + pomodoroActivityMinutes + "'>");
+    server.sendContent("<label for='pomo_pause'>Pausenzeit (Minuten)</label>");
+    server.sendContent(String("<input type='number' id='pomo_pause' name='pomo_pause' min='1' max='30' value='") + pomodoroPauseMinutes + "'>");
+
+    server.sendContent("<label for='pomo_scheme'>Anzeige-Schema</label>");
+    server.sendContent("<select name='pomo_scheme' id='pomo_scheme'>");
+    for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == pomodoroScheme ? " selected" : "") + ">" + farbschemaOptions[i] + "</option>";
+      server.sendContent(opt);
+    }
+    server.sendContent("</select>");
+
+    server.sendContent("<label for='pomo_animation'>Aktivierungs-Animation</label>");
+    server.sendContent("<select name='pomo_animation' id='pomo_animation'>");
+    for (int i = 0; i < POMODORO_ANIMATION_OPTIONS_COUNT; i++) {
+      String opt = String("<option value='") + i + "'" + (i == pomodoroAnimationIdx ? " selected" : "") + ">" + pomodoroAnimationOptions[i] + "</option>";
+      server.sendContent(opt);
+    }
+    server.sendContent("</select>");
+    server.sendContent("</div>");
+
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label>Farben Aktivitätsphase</label>");
+    int c1[3], c2[3];
+    char buf[8];
+    getPaletteColor((uint8_t)pomodoroActivityColor1Idx, c1);
+    sprintf(buf, "#%02X%02X%02X", c1[0], c1[1], c1[2]);
+    server.sendContent(String("<input type='color' name='pomo_activity_c1' value='") + buf + "'>");
+    getPaletteColor((uint8_t)pomodoroActivityColor2Idx, c2);
+    sprintf(buf, "#%02X%02X%02X", c2[0], c2[1], c2[2]);
+    server.sendContent(String("<input type='color' name='pomo_activity_c2' value='") + buf + "'>");
+
+    server.sendContent("<label>Farben Pausenphase</label>");
+    getPaletteColor((uint8_t)pomodoroPauseColor1Idx, c1);
+    sprintf(buf, "#%02X%02X%02X", c1[0], c1[1], c1[2]);
+    server.sendContent(String("<input type='color' name='pomo_pause_c1' value='") + buf + "'>");
+    getPaletteColor((uint8_t)pomodoroPauseColor2Idx, c2);
+    sprintf(buf, "#%02X%02X%02X", c2[0], c2[1], c2[2]);
+    server.sendContent(String("<input type='color' name='pomo_pause_c2' value='") + buf + "'>");
+    server.sendContent("</div>");
+
+    server.sendContent("<button type='submit'>Speichern</button>");
+    server.sendContent("</form>");
+    sendPageEnd();
+  }
+}
+
+// Sofort-Start/Stop fuer die Pomodoro-Checkbox, per fetch() aufgerufen.
+void handlePomodoroApi() {
+  if (server.hasArg("start")) {
+    if (server.arg("start").toInt() == 1) startPomodoro(); else stopPomodoro();
+  }
   server.send(200, "text/plain", "OK");
 }
 

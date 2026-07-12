@@ -45,6 +45,16 @@ extern const char* lightEffectOptions[20];
 extern String topicLightEffectSpeedState;
 extern String topicLightEffectSpeedCmd;
 
+// --- Topics für den Pomodoro-Modus ---
+extern String topicPomodoroActiveState;
+extern String topicPomodoroActiveCmd;
+extern String topicPomodoroActivityMinState;
+extern String topicPomodoroActivityMinCmd;
+extern String topicPomodoroPauseMinState;
+extern String topicPomodoroPauseMinCmd;
+extern String topicPomodoroPhaseState;      // nur State, kein /set
+extern String topicPomodoroRemainingState;  // nur State, kein /set
+
 // MQTT Last-Will / Verfügbarkeits-Topic: "online" (retained) nach jedem
 // erfolgreichen Connect, vom Broker automatisch auf "offline" gesetzt,
 // wenn die Verbindung unsauber abbricht (Stromausfall, WLAN-Verlust).

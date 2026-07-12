@@ -9,3 +9,4 @@ void spalten(int m, int farbe1[3], int farbe2[3]);
 void fade(int m, int farbe1[3], int farbe2[3]); 
 void einfarbig(int m, int farbe[3]);
 void rainbow(int m );
+void pomodoroFarberstellen(int scheme, int farbe1[3], int farbe2[3]);

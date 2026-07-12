@@ -39,6 +39,10 @@ extern int anzeigealt[MATRIX_SIZE][MATRIX_SIZE][3];
 extern int matrix[MATRIX_SIZE][MATRIX_SIZE];
 extern int matrixanzeige[MATRIX_SIZE][MATRIX_SIZE];
 
+// Eigenes Farb-Grid fuer den Pomodoro-Modus (siehe pomodoro.cpp), damit
+// dessen Farbberechnung unabhaengig von vordergrund/hintergrund ist.
+extern uint8_t pomodoroGrid[MATRIX_SIZE][MATRIX_SIZE][3];
+
 // LED index mappings (built at startup)
 extern int16_t matrixmin_leds[12][MAX_WORD_LEDS];
 extern uint8_t matrixmin_count[12];

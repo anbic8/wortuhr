@@ -3,6 +3,20 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.6.0] - 2026-07-12
+
+### Added
+- Neuer "Pomodoro-Modus": eigene Seite `/pomodoro` mit konfigurierbarer Aktivitäts-/Pausenzeit, Anzeige-Schema (einfarbig/Schachbrett/Spalten/Zeilen/Verlauf/Zufällig, wie beim Uhr-Vordergrund) und 6 Aktivierungs-Animationen (Zeilen, Spirale, Diagonal, Raute, Fallend, Zufall). Während der Aktivitätszeit gehen die Matrix-Pixel nach und nach an, während der Pause in umgekehrter Reihenfolge wieder aus - in eigenen, unterscheidbaren Farben für beide Phasen. Der Zyklus wiederholt automatisch bis zum manuellen Stop; Start schaltet automatisch den Effekte-Modus aus (und umgekehrt).
+- Pomodoro über Home Assistant steuerbar: Start/Stop-Schalter, Aktivitäts-/Pausenminuten (neue MQTT-`number`-Entities), sowie ein Status- und ein Restzeit-Sensor (Restzeit-Sensor aktualisiert alle 5 Sekunden während einer laufenden Sitzung).
+- Neue Build-Environment `mini_8x8_kkg-makerspace` erzeugt jetzt automatisch ihre eigene `firmware_mini_8x8_kkg-makerspace.bin` (siehe Fixed).
+
+### Fixed
+- Übergangseffekt ("Uebergangseffekt") ließ sich über Home Assistant nicht mehr steuern: die HA-Discovery-Konfiguration nutzte noch einen zu kleinen JSON-Puffer (512 Bytes), der durch die inzwischen auf 17 Einträge gewachsene Effekt-Liste (Rainbow Swipe/Cycle, "Zufällig aus Liste") überlief und das Discovery-Payload beim Senden abschnitt. Puffer auf 1024 Bytes vergrößert.
+- `.bin`-Datei-Erstellung nach dem Bauen: das Post-Build-Skript hatte eine fest gepflegte Namensliste, die neue Environments (z.B. `mini_8x8_kkg-makerspace`) nicht automatisch enthielt - jetzt generisch nach dem Environment-Namen benannt, funktioniert automatisch für alle aktuellen und künftigen Environments.
+
+### Notes
+- Version-Bump auf `4.6.0`.
+
 ## [4.5.0] - 2026-07-12
 
 ### Added

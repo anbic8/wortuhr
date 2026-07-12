@@ -2,6 +2,7 @@
 #include "mqtt-callback.h"
 #include "mqtt-ha.h"
 #include "globals.h"
+#include "pomodoro.h"
 #include <PubSubClient.h>
 
 // Non-blocking connect: try once every mqttRetryMs
@@ -25,6 +26,9 @@ static void mqttOnConnected() {
   client.subscribe(topicEfxModeCmd.c_str());
   client.subscribe(topicLightEffectCmd.c_str());
   client.subscribe(topicLightEffectSpeedCmd.c_str());
+  client.subscribe(topicPomodoroActiveCmd.c_str());
+  client.subscribe(topicPomodoroActivityMinCmd.c_str());
+  client.subscribe(topicPomodoroPauseMinCmd.c_str());
   // small settle time after connect
   delay(200);
   client.loop();
@@ -47,6 +51,11 @@ static void mqttOnConnected() {
     ok = publishEffectsModeConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishLightEffectConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishLightEffectSpeedConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishPomodoroActiveConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishPomodoroActivityMinConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishPomodoroPauseMinConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishPomodoroPhaseConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
+    ok = publishPomodoroRemainingConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     // Sensor discovery configs
     ok = publishIpAddressSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
     ok = publishUptimeSensorConfig(); if(!ok) { discoveryNeeded = true; return; } delay(pauseMs); client.loop();
@@ -114,6 +123,9 @@ void publishAll(){
   publishEffectsModeState();
   publishLightEffectState();
   publishLightEffectSpeedState();
+  publishPomodoroActiveState();
+  publishPomodoroActivityMinState();
+  publishPomodoroPauseMinState();
   publishSensorStates();
 }
 
@@ -129,6 +141,32 @@ void publishLightEffectSpeedState() {
   uint8_t idx = constrain(lightEffectSpeedIdx, 0, EFFECTTIME_OPTIONS_COUNT - 1);
   const char* opt = effecttimeOptions[idx];
   client.publish(topicLightEffectSpeedState.c_str(), opt, true);
+}
+
+void publishPomodoroActiveState() {
+  client.publish(topicPomodoroActiveState.c_str(), pomodoroModeActive ? "1" : "0", true);
+}
+void publishPomodoroActivityMinState() {
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%u", pomodoroActivityMinutes);
+  client.publish(topicPomodoroActivityMinState.c_str(), buf, true);
+}
+void publishPomodoroPauseMinState() {
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%u", pomodoroPauseMinutes);
+  client.publish(topicPomodoroPauseMinState.c_str(), buf, true);
+}
+void publishPomodoroPhaseState() {
+  const char* phase = "Aus";
+  if (pomodoroModeActive) {
+    phase = (pomodoroPhase == 0) ? "Aktivität" : "Pause";
+  }
+  client.publish(topicPomodoroPhaseState.c_str(), phase, true);
+}
+void publishPomodoroRemainingState() {
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%ld", getPomodoroRemainingSeconds());
+  client.publish(topicPomodoroRemainingState.c_str(), buf, true);
 }
 
 void publishEffectState() {

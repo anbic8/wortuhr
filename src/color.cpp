@@ -5,12 +5,17 @@
 #include <EEPROM.h>
 
 
-// helper to write a color into the target matrix (m==1 -> vordergrund, else -> hintergrund)
+// helper to write a color into the target matrix (m==1 -> vordergrund,
+// m==2 -> pomodoroGrid, else -> hintergrund)
 static inline void setMatrixCell(int m, int row, int col, int r, int g, int b) {
   if (m == 1) {
     vordergrund[row][col][0] = r;
     vordergrund[row][col][1] = g;
     vordergrund[row][col][2] = b;
+  } else if (m == 2) {
+    pomodoroGrid[row][col][0] = (uint8_t)r;
+    pomodoroGrid[row][col][1] = (uint8_t)g;
+    pomodoroGrid[row][col][2] = (uint8_t)b;
   } else {
     hintergrund[row][col][0] = r;
     hintergrund[row][col][1] = g;
@@ -65,10 +70,37 @@ void hintergrunderstellen(int farbe1[3], int farbe2[3]){
       einfarbig(0, farbe1);
       break;
   }
-  
-   
+
+
   }
-  
+
+// Wie vordergrunderstellen()/hintergrunderstellen(), aber fuer den
+// Pomodoro-Modus: nimmt das Schema als Parameter statt das globale
+// vordergrundschema zu lesen, damit Pomodoro sein eigenes Schema/Farbpaar
+// unabhaengig von der Uhr-Anzeige verwenden kann. Schreibt in pomodoroGrid
+// (m=2), keine Duplikation der Pro-Zelle-Farblogik.
+void pomodoroFarberstellen(int scheme, int farbe1[3], int farbe2[3]){
+  switch (scheme) {
+    case 1:
+      schachbrett(2, farbe1, farbe2);
+      break;
+    case 2:
+      spalten(2, farbe1, farbe2);
+      break;
+    case 3:
+      zeilen(2, farbe1, farbe2);
+      break;
+    case 4:
+      fade(2, farbe1, farbe2);
+      break;
+    case 5:
+      rainbow(2);
+      break;
+    default:
+      einfarbig(2, farbe1);
+      break;
+  }
+}
 
 
 void neuefarbe(){

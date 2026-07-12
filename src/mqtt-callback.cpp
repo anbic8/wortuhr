@@ -6,6 +6,9 @@
 #include <ArduinoJson.h>
 #include "show.h"
 #include "color.h"
+#include "pomodoro.h"
+#include "eeprom_layout.h"
+#include <EEPROM.h>
 
 
 // --- Callback für eingehende Befehle ---
@@ -309,6 +312,8 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     effectsModeActive = (msg == "1");
     if (!effectsModeActive) {
       threshold = 0; // sofortiger Uhr-Refresh statt bis zum nächsten Minutenwechsel zu warten
+    } else if (pomodoroModeActive) {
+      stopPomodoro(); // gegenseitiger Ausschluss der beiden Vollbild-Modi
     }
     LOG("Effekte-Modus: ");
     LOGLN(effectsModeActive);
@@ -334,6 +339,25 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     lightEffectSpeedIdx = (uint8_t)idx;
     LOG("Lichteffekt-Geschwindigkeit: ");
     LOGLN(lightEffectSpeedIdx);
+  }
+  else if (String(topic) == topicPomodoroActiveCmd) {
+    if (msg == "1") startPomodoro(); else stopPomodoro();
+    LOG("Pomodoro aktiv: ");
+    LOGLN(pomodoroModeActive);
+  }
+  else if (String(topic) == topicPomodoroActivityMinCmd) {
+    pomodoroActivityMinutes = (uint8_t)constrain(msg.toInt(), 1, 90);
+    EEPROM.write(EepromLayout::POMODORO_ACTIVITY_MIN_OFFSET, pomodoroActivityMinutes);
+    EEPROM.commit();
+    LOG("Pomodoro Aktivitaetsminuten: ");
+    LOGLN(pomodoroActivityMinutes);
+  }
+  else if (String(topic) == topicPomodoroPauseMinCmd) {
+    pomodoroPauseMinutes = (uint8_t)constrain(msg.toInt(), 1, 30);
+    EEPROM.write(EepromLayout::POMODORO_PAUSE_MIN_OFFSET, pomodoroPauseMinutes);
+    EEPROM.commit();
+    LOG("Pomodoro Pausenminuten: ");
+    LOGLN(pomodoroPauseMinutes);
   }
   checkon();
   publishAll();

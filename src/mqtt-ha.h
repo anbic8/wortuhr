@@ -15,6 +15,13 @@ bool publishEffectsModeConfig();
 bool publishLightEffectConfig();
 bool publishLightEffectSpeedConfig();
 
+// Pomodoro-Modus
+bool publishPomodoroActiveConfig();
+bool publishPomodoroActivityMinConfig();
+bool publishPomodoroPauseMinConfig();
+bool publishPomodoroPhaseConfig();
+bool publishPomodoroRemainingConfig();
+
 // Sensor discovery configs
 bool publishIpAddressSensorConfig();
 bool publishUptimeSensorConfig();
