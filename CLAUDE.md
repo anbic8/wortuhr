@@ -15,6 +15,7 @@ Build with PlatformIO CLI (`pio`). Each variant/mode combination is its own envi
 pio run -e deutsche_11x11
 pio run -e bayrisch_11x11
 pio run -e mini_8x8
+pio run -e mini_8x8_kkg-makerspace   # mini_8x8 with LED_PIN=4/BT1_PIN=5 (kkg-makerspace board)
 pio run -e deutsche_11x11_rct   # RTC variant of each (suffix _rct)
 pio run -e bayrisch_11x11_rct
 pio run -e mini_8x8_rct

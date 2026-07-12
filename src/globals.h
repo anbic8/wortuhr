@@ -24,7 +24,10 @@
 #include "log.h"
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define LED_PIN    2 //Pin 4 für die kkg-makerspace wortuhr
+// Can be overridden by build flags in platformio.ini (z.B. kkg-makerspace: Pin 4)
+#ifndef LED_PIN
+#define LED_PIN 2
+#endif
 
 // How many NeoPixels are attached to the Arduino?
 // Can be overridden by build flags in platformio.ini

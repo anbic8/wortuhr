@@ -2,7 +2,12 @@
 #include "globals.h" // LED_COUNT, VERSION_TYPE build-config macros
 
 //Tasten
-const int bt1Pin = 4; //version alte Platine pins 12, 14 für die KKG-Makerspace hier pin 5 eintragen
+// bt1Pin kann per Build-Flag in platformio.ini ueberschrieben werden
+// (z.B. kkg-makerspace: Pin 5)
+#ifndef BT1_PIN
+#define BT1_PIN 4
+#endif
+const int bt1Pin = BT1_PIN; //version alte Platine pins 12, 14
 const int bt2Pin = 14; // version neue Platine pins 4, 14
 const int bt3Pin = 12; // Btn 1 in alter Version
 

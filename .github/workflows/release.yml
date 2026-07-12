@@ -16,6 +16,7 @@ jobs:
           - deutsche_11x11
           - bayrisch_11x11
           - mini_8x8
+          - mini_8x8_kkg-makerspace
           - deutsche_11x11_rct
           - bayrisch_11x11_rct
           - mini_8x8_rct
