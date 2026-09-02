@@ -68,7 +68,15 @@ constexpr int POMODORO_ACTIVITY_COLOR2_OFFSET = POMODORO_ACTIVITY_COLOR1_OFFSET 
 constexpr int POMODORO_PAUSE_COLOR1_OFFSET    = POMODORO_ACTIVITY_COLOR2_OFFSET + 1;
 constexpr int POMODORO_PAUSE_COLOR2_OFFSET    = POMODORO_PAUSE_COLOR1_OFFSET + 1;
 
-constexpr int TOTAL_SIZE = POMODORO_PAUSE_COLOR2_OFFSET + 1;
+// Konfigurierbare Tasten-Funktionen (nur auf NTP-Builds editierbar; RTC-
+// Builds lassen diese Bytes ungenutzt, da ihre Tasten fest fuer die
+// Uhrzeiteinstellung reserviert sind). Rein additiv.
+constexpr int BTN1_CLICK_FUNCTION_OFFSET = POMODORO_PAUSE_COLOR2_OFFSET + 1;
+constexpr int BTN1_LONG_FUNCTION_OFFSET  = BTN1_CLICK_FUNCTION_OFFSET + 1;
+constexpr int BTN2_CLICK_FUNCTION_OFFSET = BTN1_LONG_FUNCTION_OFFSET + 1;
+constexpr int BTN2_LONG_FUNCTION_OFFSET  = BTN2_CLICK_FUNCTION_OFFSET + 1;
+
+constexpr int TOTAL_SIZE = BTN2_LONG_FUNCTION_OFFSET + 1;
 
 // Bump this whenever the *shape* of the layout changes in the future.
 // A freshly-erased/legacy device reads 0xFF here (never written), which

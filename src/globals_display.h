@@ -31,11 +31,15 @@ extern int baymatrixminmap[12][9];
 extern int baymatrixstundenmap[12][3];
 
 extern int vordergrundschema;
-extern int vordergrund[MATRIX_SIZE][MATRIX_SIZE][3];
+// uint8_t statt int: die Zellen halten immer 0-255 (RGB-Kanaele), nie
+// negative Zwischenwerte - vier Arrays a 1452 Bytes als int wurden zu vier
+// Arrays a 363 Bytes, spart zusammen ueber 4KB vom ohnehin knappen
+// statischen RAM (siehe CHANGELOG).
+extern uint8_t vordergrund[MATRIX_SIZE][MATRIX_SIZE][3];
 extern int hintergrundschema;
-extern int hintergrund[MATRIX_SIZE][MATRIX_SIZE][3];
-extern int anzeige[MATRIX_SIZE][MATRIX_SIZE][3];
-extern int anzeigealt[MATRIX_SIZE][MATRIX_SIZE][3];
+extern uint8_t hintergrund[MATRIX_SIZE][MATRIX_SIZE][3];
+extern uint8_t anzeige[MATRIX_SIZE][MATRIX_SIZE][3];
+extern uint8_t anzeigealt[MATRIX_SIZE][MATRIX_SIZE][3];
 extern int matrix[MATRIX_SIZE][MATRIX_SIZE];
 extern int matrixanzeige[MATRIX_SIZE][MATRIX_SIZE];
 

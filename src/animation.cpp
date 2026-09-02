@@ -191,15 +191,18 @@ void glitter(){
   else if (anidepth == 1) targetCount = 2; // mittel
   else targetCount = 4; // stark
 
-  // persistent state across calls
+  // persistent state across calls - uint8_t statt int: row/col-Indizes,
+  // die Fade-Stufe (0..MAX_FADE=120) und RGB-Kanaele passen alle locker in
+  // ein Byte. Diese sechs static-Arrays zaehlten vorher als int[121] mit
+  // ~2.9KB zum ohnehin knappen statischen RAM (siehe CHANGELOG).
   static bool initialized = false;
-  static int poolR[LED_COUNT];
-  static int poolC[LED_COUNT];
+  static uint8_t poolR[LED_COUNT];
+  static uint8_t poolC[LED_COUNT];
   static int poolSize = 0;
-  static int fade[LED_COUNT];
-  static int origR[LED_COUNT];
-  static int origG[LED_COUNT];
-  static int origB[LED_COUNT];
+  static uint8_t fade[LED_COUNT];
+  static uint8_t origR[LED_COUNT];
+  static uint8_t origG[LED_COUNT];
+  static uint8_t origB[LED_COUNT];
 
   const int MAX_FADE = 120; // larger => slower fade
   const int FADE_STEP = 6;  // decrement per animation step
@@ -264,10 +267,14 @@ void glitter(){
       int gg = origG[i] + (int)((255 - origG[i]) * factor);
       int bb = origB[i] + (int)((255 - origB[i]) * factor);
       strip.setPixelColor(matrix[poolR[i]][poolC[i]], strip.Color(rr, gg, bb));
-      fade[i] -= FADE_STEP;
-      if (fade[i] <= 0){
+      // fade[] ist jetzt uint8_t (unsigned) - erst pruefen statt erst
+      // abzuziehen und danach auf <=0 zu testen, damit kein Unterlauf
+      // (Wrap auf 255) entstehen kann, falls fade[i] < FADE_STEP ist.
+      if (fade[i] <= FADE_STEP){
         fade[i] = 0;
         strip.setPixelColor(matrix[poolR[i]][poolC[i]], strip.Color(origR[i], origG[i], origB[i]));
+      } else {
+        fade[i] -= FADE_STEP;
       }
     }
   }

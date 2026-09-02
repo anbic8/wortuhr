@@ -79,24 +79,29 @@ void handlesettime() {
     int y = server.arg("year").toInt();
 
     setDate(s, m, h, d, month, y);
-    
-    String htmlContent;
-    htmlContent += FPSTR(htmlhead);
-    String body ="<h1>Uhrzeit einstellen</h1> <br/> <p>Deine Uhrzeit wurden gespeichert!<br /> </p></main></body></html>";
-    htmlContent += body;
-    server.send(200, "text/html", htmlContent);
+
+    // Streaming statt eine grosse String zusammenzubauen - `htmlhead` ist
+    // ein mehrere KB grosser PROGMEM-Block; "htmlhead + body" (wie zuvor)
+    // brauchte eine einzige zusammenhaengende Heap-Allokation dieser Groesse
+    // und stuerzte bei knappem/fragmentiertem Heap ab (siehe CHANGELOG).
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/html", "");
+    server.sendContent(FPSTR(htmlhead));
+    server.sendContent("<h1>Uhrzeit einstellen</h1> <br/> <p>Deine Uhrzeit wurden gespeichert!<br /> </p></main></body></html>");
   } else {
-    String body ="<main class='form-signin'> <form action='/settime' method='post'> <h1 class=''>Zeit einstellen</h1><br/>";
-    body += "<div class='form-floating'><label>Uhrzeit hh:mm:ss</label><br>";
-    body += "<input type='number' id='hours' name='hours' min='0' max='23' step='1' value='" + String(stunden) + "'>:";
-    body += "<input type='number' id='minutes' name='minutes' min='0' max='59' step='1' value='" + String(minutes) + "'>:";
-    body += "<input type='number' id='seconds' name='seconds' min='0' max='59' step='1' value='" + String(seconds) + "'></div><br/>";
-    body += "<div class='form-floating'><label>Datum einstellen dd.mm.yyyy</label><br>";
-    body += "<input type='number' id='day' name='day' min='1' max='31' step='1' value='" + String(day) + "'>.";
-    body += "<input type='number' id='month' name='month' min='1' max='12' step='1' value='" + String(month) + "'>.";
-    body += "<input type='number' id='year' name='year' min='2025' max='3000' step='1' value='" + String(year) + "'></div><br/>";
-    body += "<br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>";
-    server.send(200, "text/html", htmlhead + body);
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/html", "");
+    server.sendContent(FPSTR(htmlhead));
+    server.sendContent("<main class='form-signin'> <form action='/settime' method='post'> <h1 class=''>Zeit einstellen</h1><br/>");
+    server.sendContent("<div class='form-floating'><label>Uhrzeit hh:mm:ss</label><br>");
+    server.sendContent(String("<input type='number' id='hours' name='hours' min='0' max='23' step='1' value='") + stunden + "'>:");
+    server.sendContent(String("<input type='number' id='minutes' name='minutes' min='0' max='59' step='1' value='") + minutes + "'>:");
+    server.sendContent(String("<input type='number' id='seconds' name='seconds' min='0' max='59' step='1' value='") + seconds + "'></div><br/>");
+    server.sendContent("<div class='form-floating'><label>Datum einstellen dd.mm.yyyy</label><br>");
+    server.sendContent(String("<input type='number' id='day' name='day' min='1' max='31' step='1' value='") + day + "'>.");
+    server.sendContent(String("<input type='number' id='month' name='month' min='1' max='12' step='1' value='") + month + "'>.");
+    server.sendContent(String("<input type='number' id='year' name='year' min='2025' max='3000' step='1' value='") + year + "'></div><br/>");
+    server.sendContent("<br/><button type='submit'>Save</button><p></p><p style='text-align: right'>(c) by Andy B</p></form></main> </body></html>");
   }
 }
 

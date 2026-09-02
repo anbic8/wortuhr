@@ -3,9 +3,48 @@
 #include "eeprom_layout.h"
 #include "show.h"
 #include "effects.h"
+#include "pomodoro.h"
+#include <EEPROM.h>
 #ifdef USE_RCT
   #include "rct.h"
 #endif
+
+// Fuehrt die unter /setting zugewiesene Funktion einer Taste aus (nur
+// NTP-Builds - siehe globals_buttons.h fuer die Optionsliste).
+void applyButtonFunction(uint8_t fn) {
+  switch (fn) {
+    case 1: // Helligkeit erhoehen
+      dimm += 50;
+      if (dimm > 255) dimm = 50;
+      strip.setBrightness(dimm);
+      strip.show();
+      break;
+    case 2: // Nachtmodus umschalten - identische Logik wie die bisherige bt1longs()
+      mqttonset = 1;
+      mqtton = (on == 0) ? 1 : 0;
+      readTime();
+      showClock();
+      break;
+    case 3: // Pomodoro umschalten
+      if (pomodoroModeActive) stopPomodoro(); else startPomodoro();
+      break;
+    case 4: // Effekte-Modus umschalten (gegenseitiger Ausschluss mit Pomodoro)
+      effectsModeActive = !effectsModeActive;
+      if (effectsModeActive && pomodoroModeActive) stopPomodoro();
+      if (!effectsModeActive) threshold = 0;
+      EEPROM.write(EepromLayout::LIGHT_EFFECTS_ENABLED_OFFSET, effectsModeActive ? 1 : 0);
+      EEPROM.commit();
+      break;
+    case 5: // Naechster Uebergangseffekt
+      effectMode = (effectMode + 1) % EFFECT_OPTIONS_COUNT;
+      threshold = 0;
+      readTime();
+      showClock();
+      break;
+    default:
+      break; // 0 = Keine Funktion
+  }
+}
 
 
 void bt1click(){
@@ -35,13 +74,8 @@ void bt1click(){
         showwhilesetting();
       }
     #else
-      // NTP-Modus: Nur Helligkeit anpassen
-      dimm=dimm+50;
-      if(dimm>255){
-        dimm=50;
-      }
-      strip.setBrightness(dimm);
-      strip.show();
+      // NTP-Modus: konfigurierbare Funktion (siehe /setting)
+      applyButtonFunction(btn1ClickFunction);
     #endif
 
     
@@ -58,16 +92,22 @@ void bt1double(){
 }
 void bt1longs(){
   if(mode==1){
-  //nachmodus aktivieren
-  mqttonset=1;
-  if(on==0){
-    mqtton=1;
-    }else{
-      mqtton=0;
-    }
-}
-readTime();
-showClock();
+    #ifdef USE_RCT
+      // RTC-Modus: Taste 1 lang bleibt Nachtmodus-Umschalter, ist nicht
+      // Teil des Uhreinstell-Ablaufs (siehe /setting-Info-Karte).
+      mqttonset=1;
+      if(on==0){
+        mqtton=1;
+      }else{
+        mqtton=0;
+      }
+    #else
+      // NTP-Modus: konfigurierbare Funktion (siehe /setting)
+      applyButtonFunction(btn1LongFunction);
+    #endif
+  }
+  readTime();
+  showClock();
 }
 void bt2click(){
   if(mode==1){
@@ -116,10 +156,8 @@ void bt2click(){
         LOG("Minuten: "); LOGLN(minutes);
       }
     #else
-      // NTP-Modus: Demo - Minuten ändern
-      minutes=minutes+5;
-      minutes=minutes%60;
-      showClock();
+      // NTP-Modus: konfigurierbare Funktion (siehe /setting)
+      applyButtonFunction(btn2ClickFunction);
     #endif
      
   }else{
@@ -146,6 +184,9 @@ void bt2longs(){
         setDate(seconds, minutes, stunden, day, month, year);
         LOG("Zeit eingestellt");
       }
+    #else
+      // NTP-Modus: konfigurierbare Funktion (siehe /setting)
+      applyButtonFunction(btn2LongFunction);
     #endif
   }
 }

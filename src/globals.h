@@ -57,5 +57,6 @@
 #include "globals_design.h"
 #include "globals_birthday.h"
 #include "globals_pomodoro.h"
+#include "globals_buttons.h"
 
 #endif // GLOBALS_H

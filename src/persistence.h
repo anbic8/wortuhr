@@ -5,7 +5,7 @@
 
 // Size of firmware version string stored in EEPROM
 #define VERSION_STR_MAX 16
-#define FW_VERSION "4.6.0"
+#define FW_VERSION "4.7.0"
 
 typedef struct {
   char ssid[30];

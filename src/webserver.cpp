@@ -188,6 +188,20 @@ void handledesignPath() {
     EEPROM.commit();
 #endif
 
+#ifndef USE_RCT
+    // Tasten-Funktionen (nur NTP-Builds editierbar - RTC-Tasten sind fest
+    // fuer die Uhrzeiteinstellung reserviert, siehe Info-Karte im GET-Zweig)
+    btn1ClickFunction = (uint8_t)constrain(server.arg("btn1click").toInt(), 0, BUTTON_FUNCTION_OPTIONS_COUNT - 1);
+    btn1LongFunction  = (uint8_t)constrain(server.arg("btn1long").toInt(), 0, BUTTON_FUNCTION_OPTIONS_COUNT - 1);
+    btn2ClickFunction = (uint8_t)constrain(server.arg("btn2click").toInt(), 0, BUTTON_FUNCTION_OPTIONS_COUNT - 1);
+    btn2LongFunction  = (uint8_t)constrain(server.arg("btn2long").toInt(), 0, BUTTON_FUNCTION_OPTIONS_COUNT - 1);
+    EEPROM.write(EepromLayout::BTN1_CLICK_FUNCTION_OFFSET, btn1ClickFunction);
+    EEPROM.write(EepromLayout::BTN1_LONG_FUNCTION_OFFSET, btn1LongFunction);
+    EEPROM.write(EepromLayout::BTN2_CLICK_FUNCTION_OFFSET, btn2ClickFunction);
+    EEPROM.write(EepromLayout::BTN2_LONG_FUNCTION_OFFSET, btn2LongFunction);
+    EEPROM.commit();
+#endif
+
     sendPageStart("Einstellungen");
     server.sendContent("<div class='card'><p>Deine Einstellungen wurden gespeichert und uebernommen.</p></div>");
     sendPageEnd();
@@ -247,6 +261,46 @@ void handledesignPath() {
     sprintf(dotBuf, "#%02X%02X%02X", dotRgb[0], dotRgb[1], dotRgb[2]);
     server.sendContent("<label for='minutedots_color'>Farbe der Minuten-Pixel</label>");
     server.sendContent(String("<input type='color' id='minutedots_color' name='minutedots_color' value='") + dotBuf + "'>");
+    server.sendContent("</div>");
+#endif
+
+#ifndef USE_RCT
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label for='btn1click'>Taste 1 - Klick</label>");
+    server.sendContent("<select name='btn1click' id='btn1click'>");
+    for (int i = 0; i < BUTTON_FUNCTION_OPTIONS_COUNT; i++) {
+      server.sendContent(String("<option value='") + i + "'" + (i == btn1ClickFunction ? " selected" : "") + ">" + buttonFunctionOptions[i] + "</option>");
+    }
+    server.sendContent("</select>");
+
+    server.sendContent("<label for='btn1long'>Taste 1 - Langer Druck</label>");
+    server.sendContent("<select name='btn1long' id='btn1long'>");
+    for (int i = 0; i < BUTTON_FUNCTION_OPTIONS_COUNT; i++) {
+      server.sendContent(String("<option value='") + i + "'" + (i == btn1LongFunction ? " selected" : "") + ">" + buttonFunctionOptions[i] + "</option>");
+    }
+    server.sendContent("</select>");
+
+    server.sendContent("<label for='btn2click'>Taste 2 - Klick</label>");
+    server.sendContent("<select name='btn2click' id='btn2click'>");
+    for (int i = 0; i < BUTTON_FUNCTION_OPTIONS_COUNT; i++) {
+      server.sendContent(String("<option value='") + i + "'" + (i == btn2ClickFunction ? " selected" : "") + ">" + buttonFunctionOptions[i] + "</option>");
+    }
+    server.sendContent("</select>");
+
+    server.sendContent("<label for='btn2long'>Taste 2 - Langer Druck</label>");
+    server.sendContent("<select name='btn2long' id='btn2long'>");
+    for (int i = 0; i < BUTTON_FUNCTION_OPTIONS_COUNT; i++) {
+      server.sendContent(String("<option value='") + i + "'" + (i == btn2LongFunction ? " selected" : "") + ">" + buttonFunctionOptions[i] + "</option>");
+    }
+    server.sendContent("</select>");
+    server.sendContent("</div>");
+#else
+    server.sendContent("<div class='card'>");
+    server.sendContent("<label>Tasten-Funktionen (fest, dient der Uhrzeiteinstellung)</label>");
+    server.sendContent("<p>Taste 1 - Klick: Wert verringern (Helligkeit / Stunde / Minute, je nach Einstellmodus)</p>");
+    server.sendContent("<p>Taste 1 - Lang: Nachtmodus umschalten</p>");
+    server.sendContent("<p>Taste 2 - Klick: Wert erhoehen (Sommerzeit / Stunde / Minute, je nach Einstellmodus)</p>");
+    server.sendContent("<p>Taste 2 - Lang: Naechster Einstellungsschritt (Helligkeit -&gt; Stunde -&gt; Minute -&gt; Speichern)</p>");
     server.sendContent("</div>");
 #endif
 

@@ -28,11 +28,24 @@ static bool pubWithCheck(const char* topic, const char* payload, bool retain=tru
   return ok;
 }
 
+// Baut "<DEVICE_ID>_<suffix>" (fuer unique_id) und
+// "homeassistant/<domain>/<DEVICE_ID>_<suffix>/config" (fuer den Discovery-
+// Topic) in vom Aufrufer bereitgestellte Puffer, statt wie zuvor bei jeder
+// der ~28 Discovery-Funktionen zwei temporaere String-Objekte per
+// Verkettung zu erzeugen. Dieser Burst von über 50 Kurzzeit-Allokationen
+// bei jedem MQTT-(Re-)Connect fragmentierte den ohnehin knappen
+// ESP8266-Heap spuerbar (siehe CHANGELOG).
+static void buildHaIds(const char* domain, const char* suffix, char* idOut, size_t idOutSize, char* topicOut, size_t topicOutSize) {
+  snprintf(idOut, idOutSize, "%s_%s", DEVICE_ID.c_str(), suffix);
+  snprintf(topicOut, topicOutSize, "homeassistant/%s/%s/config", domain, idOut);
+}
+
 // --- Funktion, die Home Assistant per Discovery konfiguriert ---
 bool publishOnOffConfig() {
     StaticJsonDocument<512> cfg;
   cfg["name"]          = "Wortuhr Power";
-  String uniqueId = DEVICE_ID + "_power";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("switch", "power", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicOnState;
   cfg["command_topic"] = topicOnCmd;
@@ -57,8 +70,7 @@ JsonObject dev = cfg.createNestedObject("device");
   LOGLN(buf);
 
   // Publish und Ergebnis
-  String configTopic = "homeassistant/switch/" + DEVICE_ID + "_power/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -70,7 +82,8 @@ bool publishEffectConfig() {
   // Discovery-Payload nicht mehr korrekt lesen konnte.
   StaticJsonDocument<1024> cfg;
   cfg["name"]         = "Übergangseffekt";
-  String uniqueId = DEVICE_ID + "_efx";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "efx", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicEfxState;
   cfg["command_topic"]= topicEfxCmd;
@@ -95,23 +108,23 @@ bool publishEffectConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_efx/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Effect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAnimationConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationseffekt";
-  
-  String uniqueId = DEVICE_ID + "_ani";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "ani", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicAniState;
   cfg["command_topic"]= topicAniCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
   for (int i = 0; i < ANI_OPTIONS_COUNT; ++i) opts.add(aniOptions[i]);
-  
+
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;
@@ -130,8 +143,7 @@ bool publishAnimationConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_ani/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -139,14 +151,15 @@ bool publishAnimationConfig() {
 bool publishV1LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Vordergrundfarbe 1";
-  
-  String uniqueId = DEVICE_ID + "_v1";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("light", "v1", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicV1State;
   cfg["command_topic"] = topicV1Cmd;
 
   cfg["schema"]        = "json";   // JSON Schema!
-  
+
 
   JsonArray modes = cfg.createNestedArray("supported_color_modes");
   modes.add("rgb");
@@ -165,8 +178,7 @@ bool publishV1LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/light/" + DEVICE_ID + "_v1/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -174,14 +186,15 @@ bool publishV1LightConfig() {
 bool publishV2LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Vordergrundfarbe 2";
-  
-  String uniqueId = DEVICE_ID + "_v2";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("light", "v2", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicV2State;
   cfg["command_topic"] = topicV2Cmd;
 
   cfg["schema"]        = "json";   // JSON Schema!
-  
+
 
   JsonArray modes = cfg.createNestedArray("supported_color_modes");
   modes.add("rgb");
@@ -200,8 +213,7 @@ bool publishV2LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/light/" + DEVICE_ID + "_v2/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -209,14 +221,15 @@ bool publishV2LightConfig() {
 bool publishH1LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Hintergrundfarbe 1";
-  
-  String uniqueId = DEVICE_ID + "_h1";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("light", "h1", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicH1State;
   cfg["command_topic"] = topicH1Cmd;
 
   cfg["schema"]        = "json";   // JSON Schema!
-  
+
 
   JsonArray modes = cfg.createNestedArray("supported_color_modes");
   modes.add("rgb");
@@ -235,22 +248,22 @@ bool publishH1LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/light/" + DEVICE_ID + "_h1/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishH2LightConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Hintergrundfarbe 2";
-  
-  String uniqueId = DEVICE_ID + "_h2";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("light", "h2", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicH2State;
   cfg["command_topic"] = topicH2Cmd;
 
   cfg["schema"]        = "json";   // JSON Schema!
-  
+
 
   JsonArray modes = cfg.createNestedArray("supported_color_modes");
   modes.add("rgb");
@@ -269,23 +282,23 @@ bool publishH2LightConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/light/" + DEVICE_ID + "_h2/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("v1-Light Config Publish: %s\n%s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishVsConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Vordergrundfarbschema";
-  
-  String uniqueId = DEVICE_ID + "_vs";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "vs", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicVsState;
   cfg["command_topic"]= topicVsCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
   for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; ++i) opts.add(farbschemaOptions[i]);
-  
+
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;
@@ -304,23 +317,23 @@ bool publishVsConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_vs/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishHsConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Hintergrundfarbschema";
-  
-  String uniqueId = DEVICE_ID + "_hs";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "hs", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicHsState;
   cfg["command_topic"]= topicHsCmd;
   // Liste der Optionen – Reihenfolge entspricht 0 bis 9
   JsonArray opts = cfg.createNestedArray("options");
   for (int i = 0; i < FARBSCHEMA_OPTIONS_COUNT; ++i) opts.add(farbschemaOptions[i]);
-  
+
   // Optional: Optimistic, falls Dein Gerät den State nicht unmittelbar zurückmeldet
   cfg["optimistic"]     = false;
   cfg["qos"]            = 1;
@@ -339,16 +352,16 @@ bool publishHsConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_hs/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishEfxTimeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Übergangsgeschwindigkeit";
-  
-  String uniqueId = DEVICE_ID + "_efxtime";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "efxtime", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicEfxTimeState;
   cfg["command_topic"]= topicEfxTimeCmd;
@@ -374,16 +387,16 @@ bool publishEfxTimeConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_efxtime/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAniTimeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationsgeschwindigkeit";
-  
-  String uniqueId = DEVICE_ID + "_anitime";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "anitime", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicAniTimeState;
   cfg["command_topic"]= topicAniTimeCmd;
@@ -409,16 +422,16 @@ bool publishAniTimeConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_anitime/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
 bool publishAniDepthConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Animationsstärke";
-  
-  String uniqueId = DEVICE_ID + "_anidepth";
+
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "anidepth", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicAniDepthState;
   cfg["command_topic"]= topicAniDepthCmd;
@@ -444,8 +457,7 @@ bool publishAniDepthConfig() {
   serializeJson(cfg, buf, sizeof(buf));
 
   // Publish mit retain=true
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_anidepth/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("Ani Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -453,7 +465,8 @@ bool publishAniDepthConfig() {
 bool publishEffectsModeConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Effekte-Modus";
-  String uniqueId = DEVICE_ID + "_effectsmode";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("switch", "effectsmode", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicEfxModeState;
   cfg["command_topic"] = topicEfxModeCmd;
@@ -472,8 +485,7 @@ bool publishEffectsModeConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/switch/" + DEVICE_ID + "_effectsmode/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("EffectsMode Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -483,7 +495,8 @@ bool publishLightEffectConfig() {
   // push this closer to the 512-byte size used elsewhere.
   StaticJsonDocument<1024> cfg;
   cfg["name"]         = "Lichteffekt";
-  String uniqueId = DEVICE_ID + "_lighteffect";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "lighteffect", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicLightEffectState;
   cfg["command_topic"]= topicLightEffectCmd;
@@ -504,8 +517,7 @@ bool publishLightEffectConfig() {
   char buf[1024];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_lighteffect/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("LightEffect Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -513,7 +525,8 @@ bool publishLightEffectConfig() {
 bool publishLightEffectSpeedConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Lichteffekt-Geschwindigkeit";
-  String uniqueId = DEVICE_ID + "_lighteffectspeed";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("select", "lighteffectspeed", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicLightEffectSpeedState;
   cfg["command_topic"]= topicLightEffectSpeedCmd;
@@ -534,8 +547,7 @@ bool publishLightEffectSpeedConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/select/" + DEVICE_ID + "_lighteffectspeed/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("LightEffectSpeed Config Publish: %s\nJSON: %s\n", ok ? "OK" : "FEHLER", buf);
   return ok;
 }
@@ -545,7 +557,8 @@ bool publishLightEffectSpeedConfig() {
 bool publishPomodoroActiveConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Pomodoro";
-  String uniqueId = DEVICE_ID + "_pomodoroactive";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("switch", "pomodoroactive", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicPomodoroActiveState;
   cfg["command_topic"] = topicPomodoroActiveCmd;
@@ -564,8 +577,7 @@ bool publishPomodoroActiveConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/switch/" + DEVICE_ID + "_pomodoroactive/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("PomodoroActive Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -573,7 +585,8 @@ bool publishPomodoroActiveConfig() {
 bool publishPomodoroActivityMinConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Pomodoro Aktivität (Minuten)";
-  String uniqueId = DEVICE_ID + "_pomodoroactivitymin";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("number", "pomodoroactivitymin", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicPomodoroActivityMinState;
   cfg["command_topic"] = topicPomodoroActivityMinCmd;
@@ -595,8 +608,7 @@ bool publishPomodoroActivityMinConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/number/" + DEVICE_ID + "_pomodoroactivitymin/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("PomodoroActivityMin Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -604,7 +616,8 @@ bool publishPomodoroActivityMinConfig() {
 bool publishPomodoroPauseMinConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]          = "Pomodoro Pause (Minuten)";
-  String uniqueId = DEVICE_ID + "_pomodoropausemin";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("number", "pomodoropausemin", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]     = uniqueId;
   cfg["state_topic"]   = topicPomodoroPauseMinState;
   cfg["command_topic"] = topicPomodoroPauseMinCmd;
@@ -626,8 +639,7 @@ bool publishPomodoroPauseMinConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/number/" + DEVICE_ID + "_pomodoropausemin/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("PomodoroPauseMin Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -635,7 +647,8 @@ bool publishPomodoroPauseMinConfig() {
 bool publishPomodoroPhaseConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Pomodoro Status";
-  String uniqueId = DEVICE_ID + "_pomodorophase";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "pomodorophase", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicPomodoroPhaseState;
   cfg["icon"]         = "mdi:timer-sand";
@@ -652,8 +665,7 @@ bool publishPomodoroPhaseConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_pomodorophase/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("PomodoroPhase Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -661,7 +673,8 @@ bool publishPomodoroPhaseConfig() {
 bool publishPomodoroRemainingConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Pomodoro Restzeit";
-  String uniqueId = DEVICE_ID + "_pomodororemaining";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "pomodororemaining", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicPomodoroRemainingState;
   cfg["unit_of_measurement"] = "s";
@@ -680,8 +693,7 @@ bool publishPomodoroRemainingConfig() {
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
 
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_pomodororemaining/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   LOGF("PomodoroRemaining Config Publish: %s\n", ok ? "OK" : "FEHLER");
   return ok;
 }
@@ -691,7 +703,8 @@ bool publishPomodoroRemainingConfig() {
 bool publishIpAddressSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "IP Adresse";
-  String uniqueId = DEVICE_ID + "_ip_address";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "ip_address", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicIpAddress;
   cfg["icon"]         = "mdi:ip";
@@ -708,15 +721,15 @@ bool publishIpAddressSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_ip_address/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishUptimeSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Uptime";
-  String uniqueId = DEVICE_ID + "_uptime";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "uptime", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicUptime;
   cfg["unit_of_measurement"] = "s";
@@ -735,15 +748,15 @@ bool publishUptimeSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_uptime/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishRssiSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "WiFi Signalstärke";
-  String uniqueId = DEVICE_ID + "_rssi";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "rssi", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicRssi;
   cfg["unit_of_measurement"] = "dBm";
@@ -762,15 +775,15 @@ bool publishRssiSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_rssi/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishHeapMemorySensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Freier Speicher";
-  String uniqueId = DEVICE_ID + "_heap_memory";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "heap_memory", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicHeapMemory;
   cfg["unit_of_measurement"] = "Byte";
@@ -789,15 +802,15 @@ bool publishHeapMemorySensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_heap_memory/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishBrightnessSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "LED Helligkeit";
-  String uniqueId = DEVICE_ID + "_brightness";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "brightness", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicBrightness;
   cfg["unit_of_measurement"] = "%";
@@ -815,15 +828,15 @@ bool publishBrightnessSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_brightness/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishLastNtpSyncSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "Letzter NTP Sync";
-  String uniqueId = DEVICE_ID + "_last_ntp_sync";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "last_ntp_sync", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicLastNtpSync;
   cfg["device_class"] = "timestamp";
@@ -841,15 +854,15 @@ bool publishLastNtpSyncSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_last_ntp_sync/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishTemperatureSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "CPU Temperatur";
-  String uniqueId = DEVICE_ID + "_temperature";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "temperature", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicTemperature;
   cfg["unit_of_measurement"] = "°C";
@@ -868,15 +881,15 @@ bool publishTemperatureSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_temperature/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }
 
 bool publishSystemLoadSensorConfig() {
   StaticJsonDocument<512> cfg;
   cfg["name"]         = "System Auslastung";
-  String uniqueId = DEVICE_ID + "_system_load";
+  char uniqueId[48], configTopic[80];
+  buildHaIds("sensor", "system_load", uniqueId, sizeof(uniqueId), configTopic, sizeof(configTopic));
   cfg["unique_id"]    = uniqueId;
   cfg["state_topic"]  = topicSystemLoad;
   cfg["unit_of_measurement"] = "%";
@@ -894,7 +907,6 @@ bool publishSystemLoadSensorConfig() {
 
   char buf[512];
   serializeJson(cfg, buf, sizeof(buf));
-  String configTopic = "homeassistant/sensor/" + DEVICE_ID + "_system_load/config";
-  bool ok = pubWithCheck(configTopic.c_str(), buf, false);
+  bool ok = pubWithCheck(configTopic, buf, false);
   return ok;
 }

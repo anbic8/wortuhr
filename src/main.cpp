@@ -218,6 +218,16 @@ void setup() {
   uint8_t pomPauseC2Byte = EEPROM.read(EepromLayout::POMODORO_PAUSE_COLOR2_OFFSET);
   pomodoroPauseColor2Idx = (pomPauseC2Byte < 14) ? pomPauseC2Byte : 6;
 
+  // Konfigurierbare Tasten-Funktionen (nur auf NTP-Builds editierbar/genutzt)
+  uint8_t b1cByte = EEPROM.read(EepromLayout::BTN1_CLICK_FUNCTION_OFFSET);
+  btn1ClickFunction = (b1cByte < BUTTON_FUNCTION_OPTIONS_COUNT) ? b1cByte : 1;
+  uint8_t b1lByte = EEPROM.read(EepromLayout::BTN1_LONG_FUNCTION_OFFSET);
+  btn1LongFunction = (b1lByte < BUTTON_FUNCTION_OPTIONS_COUNT) ? b1lByte : 2;
+  uint8_t b2cByte = EEPROM.read(EepromLayout::BTN2_CLICK_FUNCTION_OFFSET);
+  btn2ClickFunction = (b2cByte < BUTTON_FUNCTION_OPTIONS_COUNT) ? b2cByte : 5;
+  uint8_t b2lByte = EEPROM.read(EepromLayout::BTN2_LONG_FUNCTION_OFFSET);
+  btn2LongFunction = (b2lByte < BUTTON_FUNCTION_OPTIONS_COUNT) ? b2lByte : 3;
+
   // EEPROM Debug: zeige gelesene Werte (vorsichtig, kann leer/garbage sein)
   LOGLN("EEPROM: gelesene Einstellungen:");
   LOG(" SSID: '"); LOG(user_connect.ssid); LOGLN("'");
@@ -231,8 +241,13 @@ void setup() {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(user_connect.ssid, user_connect.password);
-  // Use modem sleep mode for better stability and power management
-  WiFi.setSleepMode(WIFI_MODEM_SLEEP);
+  // Modem sleep periodically powers down the WiFi radio between DTIM
+  // beacon intervals to save power - on a mains-powered device like this
+  // one, that tradeoff isn't worth it: incoming connections (e.g. browser
+  // requests to the web UI) can be missed or delayed while the radio is
+  // asleep, causing intermittent "sometimes reachable, sometimes not"
+  // behavior. Keep the radio fully awake instead.
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
   
   byte tries = 0;
   while (WiFi.status() != WL_CONNECTED) {
@@ -240,6 +255,7 @@ void setup() {
     // Keep buttons and the watchdog serviced during this blocking wait.
     bt1.tick();
     bt2.tick();
+    bt3.tick();
     ESP.wdtFeed();
     if (tries++ > 20) {
       WiFi.mode(WIFI_AP);
@@ -477,7 +493,10 @@ if (pomodoroModeActive) {
   //Listen to Buttons
   bt1.tick();
   bt2.tick();
-  
+  bt3.tick(); // war bisher nie eingebunden - Taste 1 reagierte dadurch
+              // nicht, wenn sie physisch am aelteren bt3Pin (GPIO12)
+              // statt am neueren bt1Pin (GPIO4) angeschlossen ist
+
   // Watchdog feed to prevent resets
   ESP.wdtFeed();
   

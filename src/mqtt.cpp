@@ -313,8 +313,14 @@ void forceMqttReconnect() {
 
 void publishIpAddress() {
   if (!client.connected()) return;
-  String ip = WiFi.localIP().toString();
-  client.publish(topicIpAddress.c_str(), ip.c_str(), true);
+  // Formatiert direkt in einen Stack-Puffer statt String::toString() zu
+  // nutzen - dieser Aufruf laeuft alle 60s und erzeugte davor bei jedem
+  // Durchlauf eine temporaere heap-allozierte String, was zur beobachteten
+  // schleichenden Heap-Fragmentierung beitrug.
+  IPAddress ip = WiFi.localIP();
+  char buf[16];
+  snprintf(buf, sizeof(buf), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+  client.publish(topicIpAddress.c_str(), buf, true);
 }
 
 void publishUptime() {

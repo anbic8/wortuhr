@@ -6,11 +6,12 @@
 3. [Weboberfläche](#3-weboberfläche)
 4. [Einstellungen](#4-einstellungen)
 5. [Farben und Design](#5-farben-und-design)
-6. [Geburtstage](#6-geburtstage)
-7. [MQTT und Home Assistant](#7-mqtt-und-home-assistant)
-8. [Firmware-Update](#8-firmware-update)
-9. [Bedienung mit Tasten](#9-bedienung-mit-tasten)
-10. [Fehlerbehebung](#10-fehlerbehebung)
+6. [Pomodoro-Modus](#6-pomodoro-modus)
+7. [Geburtstage und Countdown](#7-geburtstage-und-countdown)
+8. [MQTT und Home Assistant](#8-mqtt-und-home-assistant)
+9. [Firmware-Update](#9-firmware-update)
+10. [Bedienung mit Tasten](#10-bedienung-mit-tasten)
+11. [Fehlerbehebung](#11-fehlerbehebung)
 
 ---
 
@@ -81,9 +82,10 @@ Die Weboberfläche hat folgende Menüpunkte:
 | Symbol | Menü | Funktion |
 |--------|------|----------|
 | 📶 | **Verbindung** | WLAN und MQTT konfigurieren |
-| ⚙️ | **Einstellungen** | Zeitanzeige, Nachtmodus, Helligkeit |
-| 🎨 | **Farben** | Farben, Effekte und Animationen |
-| 🎂 | **Geburtstage** | Geburtstagserinnerungen eintragen |
+| ⚙️ | **Einstellungen** | Zeitanzeige, Nachtmodus, Helligkeit, Tasten-Funktionen |
+| 🎨 | **Farben** | Farben, Effekte, Effekte-Modus und Animationen |
+| 🍅 | **Pomodoro** | Pomodoro-Timer mit eigenem Farbschema und Animation |
+| 🎂 | **Geburtstage** | Geburtstagserinnerungen und Countdown eintragen |
 | ℹ️ | **Info** | Informationen zur Uhr |
 | 📤 | **Update** | Firmware aktualisieren |
 
@@ -142,6 +144,29 @@ Die **Helligkeit** kannst du mit einem Schieberegler einstellen (0-255):
 - Abends: 100-150
 - Nachtmodus gedimmt: 30-80
 
+### Tasten-Funktionen (nur Modelle ohne RTC-Zeitbaustein)
+
+Für Taste 1 und Taste 2 kannst du jeweils getrennt festlegen, was ein **kurzer Klick** und ein **langer Druck** auslösen. Taste 3 (falls an deinem Modell vorhanden) verhält sich immer wie Taste 1.
+
+Verfügbare Funktionen:
+- **Keine Funktion**
+- **Helligkeit erhöhen**
+- **Nachtmodus umschalten**
+- **Pomodoro umschalten** (Start/Stop)
+- **Effekte-Modus umschalten** (Start/Stop)
+- **Nächster Übergangseffekt**
+
+**Standardbelegung:**
+
+| Taste | Klick | Langer Druck |
+|-------|-------|---------------|
+| Taste 1 | Helligkeit erhöhen | Nachtmodus umschalten |
+| Taste 2 | Nächster Übergangseffekt | Pomodoro umschalten |
+
+Wähle unter **Einstellungen** die gewünschte Funktion aus den Dropdowns und klicke auf **Speichern**.
+
+**Hinweis für Modelle mit RTC-Zeitbaustein (Batteriepufferung):** Bei diesen Uhren sind die Tasten fest für die Uhrzeiteinstellung reserviert und können nicht umbelegt werden. Die Seite zeigt dort nur informativ an, was jede Taste tut (siehe auch [Bedienung mit Tasten](#10-bedienung-mit-tasten)).
+
 ---
 
 ## 5. Farben und Design
@@ -190,6 +215,13 @@ Effekte steuern, **wie** neue Wörter eingeblendet werden:
 | **Rain** | Regen-Effekt von oben |
 | **Spirale** | Spiralförmige Animation |
 | **Schlangenfresser** | Snake-Game-ähnlich |
+| **Raute** | Rautenförmige Animation von innen nach außen |
+| **Feuerwerk** | Buchstaben "explodieren" funkensprühend in Position |
+| **Rainbow Swipe** | Einmaliger Regenbogen-Wisch diagonal über die Matrix |
+| **Rainbow Cycle** | Kurzer, durchlaufender Regenbogen-Farbverlauf |
+| **Zufällig aus Liste** | Zufälliger Effekt aus einer selbst gewählten Teilmenge |
+
+Bei "Zufällig aus Liste" legst du auf der Farben-Seite per Checkboxen fest, welche Effekte in die Zufallsauswahl aufgenommen werden.
 
 **Effekt-Geschwindigkeit:**
 - Langsam, Mittel, Schnell
@@ -215,9 +247,46 @@ Animationen laufen **dauerhaft** im Hintergrund:
 
 **Hinweis:** Animationen verbrauchen mehr Strom und können bei schwachen Netzteilen zu Problemen führen.
 
+### Effekte-Modus
+
+Der **Effekte-Modus** zeigt anstelle der Uhrzeit fortlaufende, WLED-artige Lichteffekte auf der Matrix (Regenbogen, Feuer, Lauflicht, Funkeln, Kometen und mehr).
+
+1. Gehe zu **Farben**
+2. Aktiviere **Effekte-Modus** (wirkt sofort, ohne Speichern)
+3. Wähle einen **Lichteffekt** und die **Geschwindigkeit**
+
+Der Effekte-Modus lässt sich zusätzlich über eine Taste (siehe [Bedienung mit Tasten](#10-bedienung-mit-tasten)) oder über Home Assistant umschalten. **Effekte-Modus und Pomodoro-Modus schließen sich gegenseitig aus** - startet einer der beiden, wird der andere automatisch beendet.
+
 ---
 
-## 6. Geburtstage
+## 6. Pomodoro-Modus
+
+Die Uhr lässt sich als **Pomodoro-Timer** nutzen: Während der Aktivitätszeit gehen die Matrix-Pixel nach und nach an, bis alle leuchten. Während der Pausenzeit gehen sie in umgekehrter Reihenfolge wieder aus - in einer anderen Farbe, damit auf einen Blick erkennbar ist, in welcher Phase man sich gerade befindet. Der Zyklus wiederholt sich automatisch, bis der Timer gestoppt wird.
+
+### Einrichtung
+
+1. Gehe zu **Pomodoro** im Menü
+2. Stelle **Aktivitätszeit** und **Pausenzeit** (jeweils in Minuten) ein
+3. Wähle ein **Anzeige-Schema** (einfarbig, Schachbrett, Verlauf, ...) - dasselbe Prinzip wie bei den Uhr-Vordergrundfarben
+4. Wähle eine **Aktivierungs-Animation**: Zeilen, Spirale, Diagonal, Raute, Fallend oder Zufall
+5. Lege je zwei eigene Farben für die Aktivitäts- und für die Pausenphase fest
+6. Klicke auf **Speichern**
+
+### Starten und Stoppen
+
+Aktiviere die Checkbox **Pomodoro-Modus** auf derselben Seite - das wirkt sofort. Der Pomodoro-Modus lässt sich außerdem über eine Taste (siehe [Bedienung mit Tasten](#10-bedienung-mit-tasten)) oder über Home Assistant starten/stoppen.
+
+**Hinweise:**
+- Pomodoro-Modus und Effekte-Modus schließen sich gegenseitig aus.
+- Nach einem Neustart der Uhr ist der Pomodoro-Modus immer deaktiviert - die Einstellungen (Zeiten, Farben, Animation) bleiben aber erhalten.
+
+### Steuerung über Home Assistant
+
+Über MQTT/Home Assistant lassen sich Aktivitäts- und Pausenzeit einstellen sowie der Timer starten/stoppen. Zusätzlich gibt es einen Status-Sensor (Aktivität/Pause/Aus) und einen Restzeit-Sensor, der alle 5 Sekunden aktualisiert wird. Details siehe [MQTT-Anleitung](MQTT_ANLEITUNG.md).
+
+---
+
+## 7. Geburtstage und Countdown
 
 Die Uhr kann bis zu **5 Geburtstage** speichern und anzeigen.
 
@@ -240,9 +309,13 @@ Die Uhr kann bis zu **5 Geburtstage** speichern und anzeigen.
 **Deaktivieren:**
 - Klicke auf Löschen und speichern
 
+### Countdown
+
+Auf derselben Seite kannst du einen **Countdown** zu einem beliebigen Datum und einer Uhrzeit einstellen. In den letzten 99 Sekunden zeigt die Matrix die verbleibende Zeit als große Ziffern an. Zusätzlich zeigt die Uhr ganz ohne Einrichtung automatisch einen Countdown zu Silvester (nächster 1. Januar, 00:00 Uhr).
+
 ---
 
-## 7. MQTT und Home Assistant
+## 8. MQTT und Home Assistant
 
 Mit MQTT kannst du die Uhr in dein Smart Home einbinden.
 
@@ -277,7 +350,7 @@ Siehe die ausführliche **[MQTT-Anleitung](MQTT_ANLEITUNG.md)** für:
 
 ---
 
-## 8. Firmware-Update
+## 9. Firmware-Update
 
 ### Warum Updates?
 - Neue Funktionen
@@ -287,8 +360,8 @@ Siehe die ausführliche **[MQTT-Anleitung](MQTT_ANLEITUNG.md)** für:
 ### Update durchführen
 
 1. **Firmware-Datei besorgen**
-   - Datei endet mit `.bin` (z.B. `firmware_v4.2.1.bin`)
-   - Von mir per E-Mail oder Download-Link
+   - Datei endet mit `.bin` (z.B. `firmware_deutsche_11x11.bin`) - der Name muss zu deinem Modell passen
+   - Von mir per E-Mail, Download-Link oder von den GitHub Releases
 
 2. **Update hochladen**
    - Gehe zu **Update** im Menü
@@ -311,30 +384,43 @@ Siehe die ausführliche **[MQTT-Anleitung](MQTT_ANLEITUNG.md)** für:
 - Stelle sicher, dass die Datei korrekt ist (`.bin` Endung)
 - Bei Verbindungsproblemen: Näher am Router platzieren
 
----
+### Update-Schutz (optional)
 
-## 9. Bedienung mit Tasten
-
-Die Uhr hat **3 Tasten** (je nach Modell an unterschiedlichen Positionen):
-
-### Taste 1 (Links)
-- **Kurzer Klick**: Uhr ein-/ausschalten
-- **Langer Klick**: Nächster Effekt
-- **Doppelklick**: Helligkeit erhöhen (+25)
-
-### Taste 2 (Mitte)
-- **Kurzer Klick**: Nächstes Farbschema (Vordergrund)
-- **Langer Klick**: Nächste Animation
-- **Doppelklick**: Helligkeit verringern (-25)
-
-### Taste 3 (Rechts)
-- Funktionen wie Taste 1 (Backup, falls Taste 1 defekt)
-
-**Hinweis:** Die Tastenbelegung kann je nach Firmware-Version leicht variieren.
+Standardmäßig kann jeder im selben Netzwerk eine neue Firmware hochladen. Auf der **Update**-Seite kannst du ein Passwort vergeben, das ab dann für jeden Upload abgefragt wird (Benutzername: `admin`). Leeres Passwort setzen entfernt den Schutz wieder.
 
 ---
 
-## 10. Fehlerbehebung
+## 10. Bedienung mit Tasten
+
+Die Uhr hat je nach Modell **2 oder 3 Tasten**. Was Klick und langer Druck auslösen, hängt vom Modell ab:
+
+### Modelle ohne RTC-Zeitbaustein
+
+Die Funktion jeder Taste ist frei konfigurierbar (siehe [Tasten-Funktionen](#4-einstellungen)). Ab Werk ist das so belegt:
+
+| Taste | Klick | Langer Druck |
+|-------|-------|---------------|
+| Taste 1 | Helligkeit erhöhen | Nachtmodus umschalten |
+| Taste 2 | Nächster Übergangseffekt | Pomodoro umschalten |
+| Taste 3 (falls vorhanden) | wie Taste 1 | wie Taste 1 |
+
+Zur Auswahl stehen außerdem: Keine Funktion, Pomodoro umschalten, Effekte-Modus umschalten. Die Zuordnung änderst du unter **Einstellungen**.
+
+### Modelle mit RTC-Zeitbaustein (Batteriepufferung)
+
+Bei diesen Uhren sind die Tasten fest für die Uhrzeiteinstellung reserviert und **nicht** umbelegbar:
+
+| Taste | Klick | Langer Druck |
+|-------|-------|---------------|
+| Taste 1 | Wert verringern (Helligkeit / Stunde / Minute, je nach Einstellmodus) | Nachtmodus umschalten |
+| Taste 2 | Wert erhöhen (Sommerzeit / Stunde / Minute, je nach Einstellmodus) | Nächster Einstellungsschritt (Helligkeit → Stunde → Minute → Speichern) |
+| Taste 3 (falls vorhanden) | wie Taste 1 | wie Taste 1 |
+
+Alternativ lässt sich die Uhrzeit auch bequem über **http://wortuhr.local/settime** in der Weboberfläche einstellen.
+
+---
+
+## 11. Fehlerbehebung
 
 ### Uhr zeigt keine Zeit / LEDs leuchten nicht
 
@@ -346,9 +432,20 @@ Die Uhr hat **3 Tasten** (je nach Modell an unterschiedlichen Positionen):
 
 **Lösung:**
 1. Prüfe die Stromversorgung (USB-Kabel fest eingesteckt?)
-2. Drücke Taste 1 (Ein/Aus)
-3. Drücke Taste 1 doppelt (Helligkeit erhöhen)
-4. Öffne Weboberfläche und prüfe Einstellungen
+2. Drücke Taste 1 lang (schaltet standardmäßig den Nachtmodus um)
+3. Öffne die Weboberfläche und prüfe Helligkeit sowie Nachtmodus-Einstellungen
+
+### Eine Taste reagiert nicht
+
+**Mögliche Ursachen:**
+- Auf `/setting` ist "Keine Funktion" zugewiesen
+- Kein Taster an der jeweiligen Position angelötet
+- Bei älteren Platinen-Revisionen kann Taste 1 an einer anderen Pin-Position sitzen
+
+**Lösung:**
+1. Prüfe unter **Einstellungen**, welche Funktion der Taste zugewiesen ist
+2. Wähle bei Bedarf eine andere Funktion aus und speichere
+3. Stelle sicher, dass die Taste korrekt angelötet ist
 
 ### WLAN-Verbindung schlägt fehl
 
@@ -513,6 +610,11 @@ Die Uhr hat **3 Tasten** (je nach Modell an unterschiedlichen Positionen):
 - Kompakteres Modell
 - 64 LEDs
 - Verkürzte Anzeige
+- Zusätzlich mit minutengenauer Anzeige zuschaltbar (siehe Einstellungen)
+
+### Mini Wortuhr kkg-makerspace (8x8)
+- Sonderedition für die kkg-makerspace-Platine
+- Baugleich zur Mini Wortuhr, abweichende Pin-Belegung für LEDs und Taste 1
 
 ---
 
@@ -559,8 +661,8 @@ Die Uhr hat **3 Tasten** (je nach Modell an unterschiedlichen Positionen):
 ## Credits
 
 **Entwicklung:** Andy B  
-**Firmware-Version:** 4.2.1  
-**Datum:** Dezember 2025
+**Firmware-Version:** 4.7.0  
+**Datum:** Juli 2026
 
 ### Open-Source-Komponenten
 - ESP8266WiFi

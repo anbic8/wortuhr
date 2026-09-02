@@ -3,6 +3,21 @@
 Alle bemerkenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/).
 
+## [4.7.0] - 2026-07-12
+
+### Added
+- Konfigurierbare Tasten-Funktionen (nur NTP-Builds): unter `/setting` kann für Taste 1 und Taste 2 je eine Funktion für Klick und langen Druck gewählt werden - zur Auswahl stehen Keine Funktion, Helligkeit erhöhen, Nachtmodus umschalten, Pomodoro umschalten, Effekte-Modus umschalten und Nächster Übergangseffekt. Taste 3 spiegelt weiterhin Taste 1. RTC-Builds zeigen stattdessen informativ (nicht editierbar) an, was ihre Tasten fest für die Uhrzeiteinstellung tun.
+- Bedienungsanleitung (`ANLEITUNG.md`) überarbeitet: neue Abschnitte für Pomodoro-Modus, Effekte-Modus, Countdown und Tasten-Funktionen, aktualisierte Effekt-Liste und Menü-Übersicht.
+
+### Fixed
+- Taste 1 reagierte auf Geräten mit älterer Platinen-Revision (Taste 1 physisch an GPIO12 statt GPIO4) gar nicht: `bt3.tick()` wurde nirgends aufgerufen, wodurch dieser Taster nie abgefragt/entprellt wurde, obwohl ihm dieselben Aktionen wie Taste 1 zugewiesen sind.
+- `/settime`-Seite (RTC-Zeiteinstellung) konnte bei knappem Speicher mit einer Exception abstürzen: `htmlhead + body` verkettete das mehrere KB große Seiten-Grundgerüst mit einer `String` in einer einzigen, zusammenhängenden Heap-Allokation. Auf Streaming-Ausgabe umgestellt (wie bei allen anderen Seiten).
+- Web-UI war "mal erreichbar, mal nicht": `WiFi.setSleepMode(WIFI_MODEM_SLEEP)` ließ das WLAN-Modul periodisch schlafen, wodurch eingehende Verbindungen verpasst wurden. Auf `WIFI_NONE_SLEEP` umgestellt (auf einem dauerhaft am Strom betriebenen Gerät ohne Nachteil).
+- Statischer RAM-Verbrauch deutlich gesenkt (u.a. `vordergrund`/`hintergrund`/`anzeige`/`anzeigealt` sowie die Glitter-Animation von `int` auf `uint8_t` umgestellt, da nur Werte 0-255 vorkommen) und die MQTT/Home-Assistant-Discovery-Funktionen von String-Verkettung auf Stack-Puffer umgestellt - behebt Heap-Fragmentierung, die zu den beiden oben genannten Symptomen (leere Web-Antworten, Abstürze) beigetragen hat.
+
+### Notes
+- Version-Bump auf `4.7.0`.
+
 ## [4.6.0] - 2026-07-12
 
 ### Added
